@@ -45,8 +45,8 @@ public slots:
         tcpSocket = new QTcpSocket(this);
 
         //for test
-        connect(tcpSocket, &QTcpSocket::disconnected, this, [](){qDebug() << "socket disconnect sig";});
-        connect(reconnect_timer, &QTimer::timeout, this, [](){qDebug() << "reconnect_timer timeout sig";});
+        connect(tcpSocket, &QTcpSocket::disconnected, this, [=](){emit log("socket disconnect sig");});
+        connect(reconnect_timer, &QTimer::timeout, this, [=](){emit log("reconnect_timer timeout sig");});
      //================================
         in.setDevice(tcpSocket);
         in.setVersion(QDataStream::Qt_5_12);
@@ -118,7 +118,7 @@ private slots:
         timeout.tv_usec = 10000;
         udpSocket = new QUdpSocket(this);
 
-        connect(udpSocket, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()));
+        connect(udpSocket, &QUdpSocket::readyRead, this, &network::processPendingDatagrams);
         while ( !udpSocket->bind( QHostAddress::Any, udpPort ) )  //слушаю все
         {
             emit log("Server Error - Unable to start the UDP listener: " + udpSocket->errorString());
@@ -130,7 +130,7 @@ private slots:
  //       tcpSocket->setSocketOption(QAbstractSocket::TypeOfServiceOption, 160);
   //              setsockopt (tcpSocket->socketDescriptor(), SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout) );
    //             setsockopt (tcpSocket->socketDescriptor(), SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout) );
-        connect(tcpSocket, SIGNAL(readyRead()), SLOT(tcp_readyRead_slot()));
+        connect(tcpSocket, &QTcpSocket::readyRead, this, &network::tcp_readyRead_slot);
   //      connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(slotError(QAbstractSocket::SocketError)));
 //        connect(&tcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT( slot_stateChanged(QAbstractSocket::SocketState)));
     }

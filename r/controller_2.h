@@ -101,7 +101,7 @@ public slots:
     void new_cmd_parse(QString msg)
     {
         QStringList cmd_list = msg.split('\n');
-qDebug() << msg;
+//emit log( msg+"\n");
         for ( QString sssssssssss : cmd_list )
         {
             QStringList cmd_w_value = sssssssssss.split('=');
@@ -112,17 +112,20 @@ qDebug() << msg;
                 {
                     if ( i == 3 )
                     {
-                        qDebug() << "time betwen send barcode and recieve open ========================================================== wrong: " << t->nsecsElapsed()/1000000 << "ms    " <<cmd_w_value.at(0);
+ //emit log("time betwen send barcode and recieve open ========================================================== wrong: " +
+ //                           QString::number(t->nsecsElapsed()/1000000) + "ms    " +cmd_w_value.at(0)+"\n");
                         t->restart();
                     }
                     if ( i == 4 )
                     {
-                        qDebug() << "time betwen send barcode and recieve exit ========================================================== wrong: " << t->nsecsElapsed()/1000000 << "ms    " <<cmd_w_value.at(0);
+//emit log("time betwen send barcode and recieve exit ========================================================== wrong: " +
+ //                       QString::number(t->nsecsElapsed()/1000000) + "ms    " +cmd_w_value.at(0)+"\n");
                         t->restart();
                     }
                     if ( i == 9 )
                     {
-                        qDebug() << "time betwen send barcode and recieve wrong ========================================================== wrong: " << t->nsecsElapsed()/1000000 << "ms    " <<cmd_w_value.at(0);
+emit log("time betwen send barcode and recieve wrong ========================================================== wrong: " +
+                        QString::number(t->nsecsElapsed()/1000000)+ "ms    " +cmd_w_value.at(0)+"\n");
                         t->restart();
                     }
                     (this->*server_cmd[i].cmd_ptr)();

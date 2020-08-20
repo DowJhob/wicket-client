@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
     QObject::connect( &network_client, &network::enter_STATE_server_search_signal,      &_controller,    &controller::ext_provided_server_search);
     QObject::connect( &network_client, &network::readyRead,                 &_controller,    &controller::new_cmd_parse);
     QObject::connect( &_controller,    &controller::send_to_server,         &network_client, &network::SendToServer);
+    QObject::connect( &_controller,    &controller::log,         &lcd_display, &picture2::log);
 
 ///========================== OBJECTS threads start =========================================
     controller_thread.start(QThread::TimeCriticalPriority);
