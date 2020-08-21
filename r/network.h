@@ -16,6 +16,7 @@
 
 
 #include <common_types.h>
+#include "command.h"
 
 class network : public QObject
 {
@@ -29,7 +30,7 @@ public:
     quint16 control_tcp_port = 27005;
     quint16 file_transfer_port = 27008;
     bool iron_mode = false;
-    QString msg;
+    command msg;
     network(int reconnect_interval = 20000): reconnect_interval(reconnect_interval)
     {
 
@@ -75,7 +76,7 @@ public slots:
                                                                    localIP = tcpSocket->localAddress().toString();
                                                                    network_status = state::ready;
                                                                    emit log("TCP connected:\n");
-                                                                   SendToServer( "register=" + MACAddress);
+                                                                   SendToServer(command(_type::command, "register=" + MACAddress));
                                                                    emit network_ready();});
         connect(network_TCPconnected, &QState::exited, this, [=](){network_status = state::disconnected;
                                                                    //        test_data = QString::number(reconnect_timer->remainingTime());
@@ -92,7 +93,7 @@ public slots:
        // server_search();
       //  reconnect();
     }
-    void SendToServer(QString in)
+    void SendToServer(command in)
     {
         if ( tcpSocket->state() != QAbstractSocket::ConnectedState )
             return; 
@@ -266,7 +267,7 @@ QTimer *reconnect_timer2;
     QDataStream in;
 
 signals:
-    void readyRead(QString);
+    void readyRead(command);
     void signal_reconnect();
     void network_ready();
     void network_unavailable();

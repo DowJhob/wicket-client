@@ -1,15 +1,17 @@
 #include <QApplication>
 #include <common_types.h>
 //#include <controller.h>
+#include <network.h>
 #include <controller_2.h>
 #include <async_threaded_reader.h>
 #include <picture2.h>
-#include <network.h>
+
 #include <NFC.h>
 
 
 int main(int argc, char *argv[])
 {
+    qRegisterMetaType<command>("command");
     QApplication a(argc, argv, false);      //https://forum.qt.io/topic/2002/linux-non-gui-application-drawimage-crash/6
                                             //Constructs an application object with argc command line arguments in argv.
                                             //If GUIenabled is true, a GUI application is constructed, otherwise a non-GUI

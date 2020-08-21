@@ -21,6 +21,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         async_threaded_reader.cpp \
+        command.cpp \
         main.cpp
 
 INSTALLS += target
@@ -32,6 +33,7 @@ HEADERS += common_types.h \
     async_threaded_reader.h \
 #controller.h \
 #    barcode_qt.h \
+    command.h \
     controller_2.h \
     network.h \
     nikiret.h \
