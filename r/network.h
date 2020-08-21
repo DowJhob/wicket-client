@@ -76,7 +76,7 @@ public slots:
                                                                    localIP = tcpSocket->localAddress().toString();
                                                                    network_status = state::ready;
                                                                    emit log("TCP connected:\n");
-                                                                   SendToServer(command(_type::command, "register=" + MACAddress));
+                                                                   SendToServer(command(_type::command, _comm::_register, QVariant(MACAddress)));
                                                                    emit network_ready();});
         connect(network_TCPconnected, &QState::exited, this, [=](){network_status = state::disconnected;
                                                                    //        test_data = QString::number(reconnect_timer->remainingTime());

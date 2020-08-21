@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.4, 2020-08-19T11:18:41. -->
+<!-- Written by QtCreator 4.12.4, 2020-08-21T17:27:51. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -351,9 +351,9 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">1</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">r (on KP 1:7 imx28 - 10.1.7.210)</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">RemoteLinuxRunConfiguration:/home/a/Desktop/r/r.pro</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/a/Desktop/r/r.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">r (on KP-3:1ex--imx10.1.7.210)</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">RemoteLinuxRunConfiguration:/home/a/Documents/GitHub/wicket-client/r/r.pro</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/a/Documents/GitHub/wicket-client/r/r.pro</value>
     <value type="int" key="RemoteLinux.EnvironmentAspect.Version">1</value>
     <value type="QString" key="RemoteLinux.RunConfig.AlternateRemoteExecutable"></value>
     <value type="bool" key="RemoteLinux.RunConfig.UseAlternateRemoteExecutable">false</value>

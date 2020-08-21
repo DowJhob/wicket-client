@@ -61,8 +61,8 @@ public slots:
         connect(this,   &controller::from_server_setUnLocked, serverFound, &wicketLocker::from_server_setUnLocked); // тут подаем кросборде сигнал на разблокирование турникета
         connect(this,   &controller::from_server_to_ready,    serverFound, &wicketLocker::from_crsbrd_armed);   //безусловная установка родительское состояние что бы из любого состояния получить рэди
 
-        connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(command(_type::command, "wicketArmed")); });
-        connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(command(_type::command, "wicketUnlocked"));
+        connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(command(_type::command, _comm::wicketArmed, "wicketArmed")); });
+        connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(command(_type::command, _comm::wicketUnlocked, "wicketUnlocked"));
                                                                                setPictureSIG(picture::pict_access, "");
                                                                                wicket->setGREEN();});
 
@@ -83,9 +83,9 @@ public slots:
                                                                                  qDebug() << "time to enterd WRONG state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";});
         connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::_wicketEntry_slot);  //вошли в состояния прохода, открыли калитку, зажгли лампы
         connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::_wicketExit_slot);
-        connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(command(_type::command, "entry-passed"));} );   // Когда входим в это состояние отсылаем сообщение на сервер
-        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(command(_type::command, "exit-passed"));} );
-        connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ emit send_to_server(command(_type::command, "pass-dropped"));} );
+        connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::entry_passed, "entry-passed"));} );   // Когда входим в это состояние отсылаем сообщение на сервер
+        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::entry_passed, "exit-passed"));} );
+        connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::pass_dropped, "pass-dropped"));} );
 
         connect(serverFound->Armed->UncondTimeout, &QState::entered, this, [=](){ setPictureSIG(picture::pict_timeout, "");} );
         ///-----------------------------------------------------
@@ -101,37 +101,61 @@ public slots:
     }
     void new_cmd_parse(command msg)
     {
-        QStringList cmd_list = msg.body.toString().split('\n');
-//emit log( msg+"\n");
-        for ( QString sssssssssss : cmd_list )
-        {
-            QStringList cmd_w_value = sssssssssss.split('=');
-            if (cmd_w_value.count() > 1)
-                cmd_arg = cmd_w_value.at(1);
-            for( int i = 0; i < 11; i++ )
-                if ( cmd_w_value.at(0).indexOf(server_cmd[i].cmd_name) >= 0 )
-                {
-                    if ( i == 3 )
-                    {
- //emit log("time betwen send barcode and recieve open ========================================================== wrong: " +
- //                           QString::number(t->nsecsElapsed()/1000000) + "ms    " +cmd_w_value.at(0)+"\n");
-                        t->restart();
-                    }
-                    if ( i == 4 )
-                    {
-//emit log("time betwen send barcode and recieve exit ========================================================== wrong: " +
- //                       QString::number(t->nsecsElapsed()/1000000) + "ms    " +cmd_w_value.at(0)+"\n");
-                        t->restart();
-                    }
-                    if ( i == 9 )
-                    {
-//emit log("time betwen send barcode and recieve wrong ========================================================== wrong: " +
- //                       QString::number(t->nsecsElapsed()/1000000)+ "ms    " +cmd_w_value.at(0)+"\n");
-                        t->restart();
-                    }
-                    (this->*server_cmd[i].cmd_ptr)();
-                }
-        }
+//        QStringList cmd_list = msg.body.toString().split('\n');
+////emit log( msg+"\n");
+//        for ( QString sssssssssss : cmd_list )
+//        {
+//            QStringList cmd_w_value = sssssssssss.split('=');
+//            if (cmd_w_value.count() > 1)
+//                cmd_arg = cmd_w_value.at(1);
+//            for( int i = 0; i < 11; i++ )
+//                if ( cmd_w_value.at(0).indexOf(server_cmd[i].cmd_name) >= 0 )
+//                {
+//                    if ( i == 3 )
+//                    {
+// //emit log("time betwen send barcode and recieve open ========================================================== wrong: " +
+// //                           QString::number(t->nsecsElapsed()/1000000) + "ms    " +cmd_w_value.at(0)+"\n");
+//                        t->restart();
+//                    }
+//                    if ( i == 4 )
+//                    {
+////emit log("time betwen send barcode and recieve exit ========================================================== wrong: " +
+// //                       QString::number(t->nsecsElapsed()/1000000) + "ms    " +cmd_w_value.at(0)+"\n");
+//                        t->restart();
+//                    }
+//                    if ( i == 9 )
+//                    {
+////emit log("time betwen send barcode and recieve wrong ========================================================== wrong: " +
+// //                       QString::number(t->nsecsElapsed()/1000000)+ "ms    " +cmd_w_value.at(0)+"\n");
+//                        t->restart();
+//                    }
+//      //              (this->*server_cmd[i].cmd_ptr)();
+//                }
+//        }
+        cmd_arg = msg.body.toString();
+        switch (msg.comm) {
+         //     case _comm::heartbeat: ;
+              //from main to wicket
+              case _comm::set_test :     from_server_set_test();break;
+              case _comm::set_normal:    from_server_set_normal();break;
+              case _comm::set_iron_mode: from_server_set_iron_mode();break;
+              case _comm::set_type_out:  from_server_set_type_OUT();break;
+              case _comm::armed:         from_server_setArmed();break;
+              case _comm::unlock:        from_server_setUnLocked();break;
+              case _comm::onCheck:       from_server_onCheck();break;
+              case _comm::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ========================================================== WRONG: "
+                                                << QString::number(t->nsecsElapsed()/1000000) << "ms";
+                                                 t->restart();
+                                                 from_server_to_wrong ();break;//+ description
+              case _comm::set_ready:     from_server_to_ready();break;
+              case _comm::entry_open:    qDebug()<<"time betwen send barcode and recieve open ========================================================== OPEN: "
+                                                << QString::number(t->nsecsElapsed()/1000000) << "ms";
+                                                 t->restart();
+                                                  from_server_to_entry();break;
+              case _comm::exit_open:     from_server_to_exit();break;
+              }
+
+
     }
     void send_barcode(QByteArray data)
     {
@@ -145,10 +169,10 @@ public slots:
             if(iron_mode_flag)
             {
                 (this->*handler_opener)();   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
-                emit send_to_server(command(_type::command,  "iron-bc=" + data ));
+                emit send_to_server(command(_type::command, _comm::iron_bc,  "iron-bc=" + data ));
             }
             else
-                emit send_to_server(command(_type::command,  "barcode=" + data ));
+                emit send_to_server(command(_type::command, _comm::barcode,  "barcode=" + data ));
         }
 
 
@@ -228,22 +252,7 @@ private:
         QString cmd_name;
         MyCoolMethod cmd_ptr;
     };
-    const server_cmd server_cmd[12] {
-        {"set_ready",    &controller::from_server_to_ready},
-        {"onCheck",      &controller::from_server_onCheck},
-        {"set_type_out", &controller::from_server_set_type_OUT},
-        {"entry-open",   &controller::from_server_to_entry},               //хоть это и сигнал
-        {"exit-open",    &controller::from_server_to_exit},
-        {"set_test",     &controller::from_server_set_test},
-        {"set_normal",   &controller::from_server_set_normal},
-        {"armed",        &controller::from_server_setArmed},
-        {"unlock",       &controller::from_server_setUnLocked},
-        {"wrong",        &controller::from_server_to_wrong},
-        {"set_iron_mode",    &controller::from_server_set_iron_mode}
-        //,{"sys_command", &controller::},
-        //{"crsbrd_command", &controller::},
-        //{"update", &controller::}
-    };
+
     QString cmd_arg{};
     void (controller::*handler_opener)() = &controller::from_server_to_entry;
     void from_server_set_type_OUT()                          //Переключаем в режим на ВЫХОД
@@ -276,19 +285,19 @@ private:
     }
     void send_state(QString temp)
     {
-        emit send_to_server(command(_type::command, temp));
+        emit send_to_server(command(_type::command, _comm::temp, temp));
         if ( machine->isRunning() )
         {
             //qDebug() << machine->configuration();
             if (machine->configuration().contains( serverFound->Armed->Ready))
-                emit send_to_server(command(_type::command, "_wicketReady"));
+                emit send_to_server(command(_type::command, _comm::_wicketReady, "_wicketReady"));
             if ( machine->configuration().contains( serverFound->Armed ) )
-                emit send_to_server(command(_type::command, "wicketArmed"));
+                emit send_to_server(command(_type::command, _comm::wicketArmed, "wicketArmed"));
             if ( machine->configuration().contains( serverFound->UnLocked ) )
-                emit send_to_server(command(_type::command, "wicketUnLocked"));
+                emit send_to_server(command(_type::command, _comm::wicketUnlocked, "wicketUnLocked"));
         }
         else
-            emit send_to_server(command(_type::command, "wicket state machine not ready"));
+            emit send_to_server(command(_type::command, _comm::wicket_state_machine_not_ready, "wicket state machine not ready"));
 
     }
     signals:
