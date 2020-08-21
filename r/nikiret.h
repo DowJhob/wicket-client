@@ -206,7 +206,7 @@ private:
         temp_pos = buff.indexOf("TEMP");
         if ( temp_pos >= 0 )
         {
-            cross_brd_temp = buff.mid( temp_pos, 9 );
+            cross_brd_temp = buff.mid( temp_pos + 5, 4 );
             if( cross_brd_temp.mid( 5, 2 ).toInt() < 15 )
             {
                 if ( heater == 'D' )

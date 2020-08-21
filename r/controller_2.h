@@ -101,37 +101,6 @@ public slots:
     }
     void new_cmd_parse(command msg)
     {
-//        QStringList cmd_list = msg.body.toString().split('\n');
-////emit log( msg+"\n");
-//        for ( QString sssssssssss : cmd_list )
-//        {
-//            QStringList cmd_w_value = sssssssssss.split('=');
-//            if (cmd_w_value.count() > 1)
-//                cmd_arg = cmd_w_value.at(1);
-//            for( int i = 0; i < 11; i++ )
-//                if ( cmd_w_value.at(0).indexOf(server_cmd[i].cmd_name) >= 0 )
-//                {
-//                    if ( i == 3 )
-//                    {
-// //emit log("time betwen send barcode and recieve open ========================================================== wrong: " +
-// //                           QString::number(t->nsecsElapsed()/1000000) + "ms    " +cmd_w_value.at(0)+"\n");
-//                        t->restart();
-//                    }
-//                    if ( i == 4 )
-//                    {
-////emit log("time betwen send barcode and recieve exit ========================================================== wrong: " +
-// //                       QString::number(t->nsecsElapsed()/1000000) + "ms    " +cmd_w_value.at(0)+"\n");
-//                        t->restart();
-//                    }
-//                    if ( i == 9 )
-//                    {
-////emit log("time betwen send barcode and recieve wrong ========================================================== wrong: " +
-// //                       QString::number(t->nsecsElapsed()/1000000)+ "ms    " +cmd_w_value.at(0)+"\n");
-//                        t->restart();
-//                    }
-//      //              (this->*server_cmd[i].cmd_ptr)();
-//                }
-//        }
         cmd_arg = msg.body.toString();
         switch (msg.comm) {
          //     case _comm::heartbeat: ;
@@ -169,10 +138,10 @@ public slots:
             if(iron_mode_flag)
             {
                 (this->*handler_opener)();   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
-                emit send_to_server(command(_type::command, _comm::iron_bc,  "iron-bc=" + data ));
+                emit send_to_server(command(_type::command, _comm::iron_bc, data ));
             }
             else
-                emit send_to_server(command(_type::command, _comm::barcode,  "barcode=" + data ));
+                emit send_to_server(command(_type::command, _comm::barcode, data ));
         }
 
 
