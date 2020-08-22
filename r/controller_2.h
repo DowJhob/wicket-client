@@ -61,8 +61,8 @@ public slots:
         connect(this,   &controller::from_server_setUnLocked, serverFound, &wicketLocker::from_server_setUnLocked); // тут подаем кросборде сигнал на разблокирование турникета
         connect(this,   &controller::from_server_to_ready,    serverFound, &wicketLocker::from_crsbrd_armed);   //безусловная установка родительское состояние что бы из любого состояния получить рэди
 
-        connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(command(_type::command, _comm::wicketArmed, "wicketArmed")); });
-        connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(command(_type::command, _comm::wicketUnlocked, "wicketUnlocked"));
+        connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(command(_type::command, _comm::wicketArmed)); });
+        connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(command(_type::command, _comm::wicketUnlocked));
                                                                                setPictureSIG(picture::pict_access, "");
                                                                                wicket->setGREEN();});
 
@@ -75,7 +75,10 @@ public slots:
         connect(this,   &controller::from_server_to_exit,   serverFound->Armed, &wicketFSM::set_FSM_to_exit);
         connect(wicket, &nikiret::passed,                   serverFound->Armed, &wicketFSM::set_FSM_passed);   //по сигналу прохода от турникета перейдем в состояние проход
 
-        connect(serverFound->Armed->Ready,         &QState::entered, this, [=](){ready_state_flag = true; wicket->setLightOFF(); setPictureSIG(picture::pict_ready, "");});
+        connect(serverFound->Armed->Ready,         &QState::entered, this, [=](){ready_state_flag = true;
+            wicket->setLightOFF();
+            setPictureSIG(picture::pict_ready, "");
+         emit send_to_server(command(_type::command, _comm::_wicketReady));});
         connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
         connect(serverFound->Armed->OnCheck,       &QState::entered, this, [=](){setPictureSIG(picture::pict_onCheck, "");});
         connect(serverFound->Armed->dbTimeout,     &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, "Ошибка базы данных" ); wicket->setRED(); });
@@ -83,9 +86,9 @@ public slots:
                                                                                  qDebug() << "time to enterd WRONG state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";});
         connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::_wicketEntry_slot);  //вошли в состояния прохода, открыли калитку, зажгли лампы
         connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::_wicketExit_slot);
-        connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::entry_passed, "entry-passed"));} );   // Когда входим в это состояние отсылаем сообщение на сервер
-        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::entry_passed, "exit-passed"));} );
-        connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::pass_dropped, "pass-dropped"));} );
+        connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::entry_passed));} );   // Когда входим в это состояние отсылаем сообщение на сервер
+        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::entry_passed));} );
+        connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::pass_dropped));} );
 
         connect(serverFound->Armed->UncondTimeout, &QState::entered, this, [=](){ setPictureSIG(picture::pict_timeout, "");} );
         ///-----------------------------------------------------
@@ -259,14 +262,14 @@ private:
         {
             //qDebug() << machine->configuration();
             if (machine->configuration().contains( serverFound->Armed->Ready))
-                emit send_to_server(command(_type::command, _comm::_wicketReady, "_wicketReady"));
+                emit send_to_server(command(_type::command, _comm::_wicketReady));
             if ( machine->configuration().contains( serverFound->Armed ) )
-                emit send_to_server(command(_type::command, _comm::wicketArmed, "wicketArmed"));
+                emit send_to_server(command(_type::command, _comm::wicketArmed));
             if ( machine->configuration().contains( serverFound->UnLocked ) )
-                emit send_to_server(command(_type::command, _comm::wicketUnlocked, "wicketUnLocked"));
+                emit send_to_server(command(_type::command, _comm::wicketUnlocked));
         }
         else
-            emit send_to_server(command(_type::command, _comm::wicket_state_machine_not_ready, "wicket state machine not ready"));
+            emit send_to_server(command(_type::command, _comm::wicket_state_machine_not_ready));
 
     }
     signals:
