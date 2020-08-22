@@ -30,7 +30,7 @@ public:
     quint16 control_tcp_port = 27005;
     quint16 file_transfer_port = 27008;
     bool iron_mode = false;
-    command msg;
+    message msg;
     network(int reconnect_interval = 20000): reconnect_interval(reconnect_interval)
     {
 
@@ -76,7 +76,7 @@ public slots:
                                                                    localIP = tcpSocket->localAddress().toString();
                                                                    network_status = state::ready;
                                                                    emit log("TCP connected:\n");
-                                                                   SendToServer(command(_type::command, _comm::_register, QVariant(MACAddress)));
+                                                                   SendToServer(message(msg_type::command, command::_register, QVariant(MACAddress)));
                                                                    emit network_ready();});
         connect(network_TCPconnected, &QState::exited, this, [=](){network_status = state::disconnected;
                                                                    //        test_data = QString::number(reconnect_timer->remainingTime());
@@ -93,7 +93,7 @@ public slots:
        // server_search();
       //  reconnect();
     }
-    void SendToServer(command in)
+    void SendToServer(message in)
     {
         if ( tcpSocket->state() != QAbstractSocket::ConnectedState )
             return; 
@@ -267,7 +267,7 @@ QTimer *reconnect_timer2;
     QDataStream in;
 
 signals:
-    void readyRead(command);
+    void readyRead(message);
     void signal_reconnect();
     void network_ready();
     void network_unavailable();

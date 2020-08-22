@@ -61,8 +61,8 @@ public slots:
         connect(this,   &controller::from_server_setUnLocked, serverFound, &wicketLocker::from_server_setUnLocked); // тут подаем кросборде сигнал на разблокирование турникета
         connect(this,   &controller::from_server_to_ready,    serverFound, &wicketLocker::from_crsbrd_armed);   //безусловная установка родительское состояние что бы из любого состояния получить рэди
 
-        connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(command(_type::command, _comm::wicketArmed)); });
-        connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(command(_type::command, _comm::wicketUnlocked));
+        connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(message(msg_type::command, command::wicketArmed)); });
+        connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(message(msg_type::command, command::wicketUnlocked));
                                                                                setPictureSIG(picture::pict_access, "");
                                                                                wicket->setGREEN();});
 
@@ -78,7 +78,7 @@ public slots:
         connect(serverFound->Armed->Ready,         &QState::entered, this, [=](){ready_state_flag = true;
             wicket->setLightOFF();
             setPictureSIG(picture::pict_ready, "");
-         emit send_to_server(command(_type::command, _comm::_wicketReady));});
+         emit send_to_server(message(msg_type::command, command::_wicketReady));});
         connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
         connect(serverFound->Armed->OnCheck,       &QState::entered, this, [=](){setPictureSIG(picture::pict_onCheck, "");});
         connect(serverFound->Armed->dbTimeout,     &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, "Ошибка базы данных" ); wicket->setRED(); });
@@ -86,9 +86,9 @@ public slots:
                                                                                  qDebug() << "time to enterd WRONG state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";});
         connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::_wicketEntry_slot);  //вошли в состояния прохода, открыли калитку, зажгли лампы
         connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::_wicketExit_slot);
-        connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::entry_passed));} );   // Когда входим в это состояние отсылаем сообщение на сервер
-        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::entry_passed));} );
-        connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ emit send_to_server(command(_type::command, _comm::pass_dropped));} );
+        connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::entry_passed));} );   // Когда входим в это состояние отсылаем сообщение на сервер
+        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::entry_passed));} );
+        connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::pass_dropped));} );
 
         connect(serverFound->Armed->UncondTimeout, &QState::entered, this, [=](){ setPictureSIG(picture::pict_timeout, "");} );
         ///-----------------------------------------------------
@@ -102,29 +102,29 @@ public slots:
         machine->start();
 
     }
-    void new_cmd_parse(command msg)
+    void new_cmd_parse(message msg)
     {
         cmd_arg = msg.body.toString();
         switch (msg.comm) {
          //     case _comm::heartbeat: ;
               //from main to wicket
-              case _comm::set_test :     from_server_set_test();break;
-              case _comm::set_normal:    from_server_set_normal();break;
-              case _comm::set_iron_mode: from_server_set_iron_mode();break;
-              case _comm::set_type_out:  from_server_set_type_OUT();break;
-              case _comm::armed:         from_server_setArmed();break;
-              case _comm::unlock:        from_server_setUnLocked();break;
-              case _comm::onCheck:       from_server_onCheck();break;
-              case _comm::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ========================================================== WRONG: "
+              case command::set_test :     from_server_set_test();break;
+              case command::set_normal:    from_server_set_normal();break;
+              case command::set_iron_mode: from_server_set_iron_mode();break;
+              case command::set_type_out:  from_server_set_type_OUT();break;
+              case command::armed:         from_server_setArmed();break;
+              case command::unlock:        from_server_setUnLocked();break;
+              case command::onCheck:       from_server_onCheck();break;
+              case command::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ========================================================== WRONG: "
                                                 << QString::number(t->nsecsElapsed()/1000000) << "ms";
                                                  t->restart();
                                                  from_server_to_wrong ();break;//+ description
-              case _comm::set_ready:     from_server_to_ready();break;
-              case _comm::entry_open:    qDebug()<<"time betwen send barcode and recieve open ========================================================== OPEN: "
+              case command::set_ready:     from_server_to_ready();break;
+              case command::entry_open:    qDebug()<<"time betwen send barcode and recieve open ========================================================== OPEN: "
                                                 << QString::number(t->nsecsElapsed()/1000000) << "ms";
                                                  t->restart();
                                                   from_server_to_entry();break;
-              case _comm::exit_open:     from_server_to_exit();break;
+              case command::exit_open:     from_server_to_exit();break;
               }
 
 
@@ -141,10 +141,10 @@ public slots:
             if(iron_mode_flag)
             {
                 (this->*handler_opener)();   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
-                emit send_to_server(command(_type::command, _comm::iron_bc, data ));
+                emit send_to_server(message(msg_type::command, command::iron_bc, data ));
             }
             else
-                emit send_to_server(command(_type::command, _comm::barcode, data ));
+                emit send_to_server(message(msg_type::command, command::barcode, data ));
         }
 
 
@@ -257,26 +257,26 @@ private:
     }
     void send_state(QString temp)
     {
-        emit send_to_server(command(_type::command, _comm::temp, temp));
+        emit send_to_server(message(msg_type::command, command::temp, temp));
         if ( machine->isRunning() )
         {
             //qDebug() << machine->configuration();
             if (machine->configuration().contains( serverFound->Armed->Ready))
-                emit send_to_server(command(_type::command, _comm::_wicketReady));
+                emit send_to_server(message(msg_type::command, command::_wicketReady));
             if ( machine->configuration().contains( serverFound->Armed ) )
-                emit send_to_server(command(_type::command, _comm::wicketArmed));
+                emit send_to_server(message(msg_type::command, command::wicketArmed));
             if ( machine->configuration().contains( serverFound->UnLocked ) )
-                emit send_to_server(command(_type::command, _comm::wicketUnlocked));
+                emit send_to_server(message(msg_type::command, command::wicketUnlocked));
         }
         else
-            emit send_to_server(command(_type::command, _comm::wicket_state_machine_not_ready));
+            emit send_to_server(message(msg_type::command, command::wicket_state_machine_not_ready));
 
     }
     signals:
     //================= network ===========================
     void ext_provided_network_readySIG();
     void ext_provided_server_searchSIG();
-    void send_to_server(command);
+    void send_to_server(message);
 
     void setPictureSIG(int, QString);
     void set_onCheck();

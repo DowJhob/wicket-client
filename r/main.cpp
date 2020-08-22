@@ -11,7 +11,7 @@
 
 int main(int argc, char *argv[])
 {
-    qRegisterMetaType<command>("command");
+    qRegisterMetaType<message>("message");
     QApplication a(argc, argv, false);      //https://forum.qt.io/topic/2002/linux-non-gui-application-drawimage-crash/6
                                             //Constructs an application object with argc command line arguments in argv.
                                             //If GUIenabled is true, a GUI application is constructed, otherwise a non-GUI

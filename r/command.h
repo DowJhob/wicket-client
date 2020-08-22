@@ -11,12 +11,12 @@
 #include <QString>
 
 
-enum class _type {
+enum class msg_type {
     command,
     parameter
 };
 
-enum class _comm {
+enum class command {
     heartbeat,
     //from main to wicket
     set_test,
@@ -46,31 +46,31 @@ enum class _comm {
 };
 
 typedef struct _command{
-    _type type;
-    _comm comm;
+    msg_type type;
+    command comm;
     QVariant body;
-    _command(_type type = _type::command, _comm comm = _comm::heartbeat, QVariant body = "heartbeat"):type(type), comm(comm), body(body)
+    _command(msg_type type = msg_type::command, command comm = command::heartbeat, QVariant body = "heartbeat"):type(type), comm(comm), body(body)
     {
 
     }
-}command;
+}message;
 
-inline QDataStream &operator <<(QDataStream &stream,const  command &command) // сериализуем;
+inline QDataStream &operator <<(QDataStream &stream,const  message &_command) // сериализуем;
 {
-    stream << static_cast<int>(command.type);
-    stream << static_cast<int>(command.comm);
-    stream << command.body;
+    stream << static_cast<int>(_command.type);
+    stream << static_cast<int>(_command.comm);
+    stream << _command.body;
     return stream;
 }
 
-inline QDataStream &operator >>(QDataStream &stream,  command &command) // десериализуем;
+inline QDataStream &operator >>(QDataStream &stream,  message &_command) // десериализуем;
 {
     int i;
     stream >> i;
-    command.type = static_cast<_type>(i);
+    _command.type = static_cast<msg_type>(i);
     stream >> i;
-    command.comm = static_cast<_comm>(i);
-    stream >> command.body;
+    _command.comm = static_cast<command>(i);
+    stream >> _command.body;
     return stream;
 }
 
