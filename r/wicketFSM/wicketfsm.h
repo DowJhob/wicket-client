@@ -56,6 +56,10 @@ public:
         entryPassed->addTransition( UncondTimeout );                                       // и сразу в задержку прохода по пути отослав данные на сервер
 
         OnCheck->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit);
+
+Ready->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit); //if this set as dual type
+
+
         Exit->addTransition(wait_pass_timer,             &QTimer::timeout,               Drop);
         Exit->addTransition(this,                        &wicketFSM::set_FSM_passed,     exitPassed);
         exitPassed->addTransition( UncondTimeout );
