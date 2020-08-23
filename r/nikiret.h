@@ -207,9 +207,10 @@ private:
         if ( temp_pos >= 0 )
         {
             cross_brd_temp = buff.mid( temp_pos + 5, 4 );
-            if( cross_brd_temp.mid( 5, 2 ).toInt() < 15 )
+            if( cross_brd_temp.mid( 0, 2 ).toInt() < 15 )
             {
                 if ( heater == 'D' )
+
                     send_to_crossboard("HEATER_ON\r");
             }
             else
