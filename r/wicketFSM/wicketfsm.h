@@ -57,8 +57,8 @@ public:
 
         OnCheck->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit);
 
-Ready->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit); //if this set as dual type
-
+Ready->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit); //В случае когда мы определены как двойной ридер нужно разрешить прямые переходы от связанного ридера
+//Exit->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Ready);
 
         Exit->addTransition(wait_pass_timer,             &QTimer::timeout,               Drop);
         Exit->addTransition(this,                        &wicketFSM::set_FSM_passed,     exitPassed);

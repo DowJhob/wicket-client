@@ -59,7 +59,7 @@ public slots:
         connect(wicket, &nikiret::armed,                      serverFound, &wicketLocker::from_crsbrd_armed);
         connect(this,   &controller::from_server_setArmed,    serverFound, &wicketLocker::from_server_setArmed);
         connect(this,   &controller::from_server_setUnLocked, serverFound, &wicketLocker::from_server_setUnLocked); // тут подаем кросборде сигнал на разблокирование турникета
-        connect(this,   &controller::from_server_to_ready,    serverFound, &wicketLocker::from_crsbrd_armed);   //безусловная установка родительское состояние что бы из любого состояния получить рэди
+        connect(this,   &controller::from_server_to_ready,    serverFound, &wicketLocker::from_server_setArmed);   //безусловная установка родительское состояние что бы из любого состояния получить рэди
 
         connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(message(msg_type::command, command::wicketArmed)); });
         connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(message(msg_type::command, command::wicketUnlocked));
