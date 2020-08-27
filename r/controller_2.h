@@ -92,15 +92,12 @@ public slots:
 
         connect(serverFound->Armed->UncondTimeout, &QState::entered, this, [=](){ setPictureSIG(picture::pict_timeout, "");} );
         ///-----------------------------------------------------
-
         //==================================================================================================================
         _updater.setPort( FILE_TRANSFER_PORT );
         _updater.setFilename( QCoreApplication::applicationFilePath() );
         connect(&_updater, &updater::ready, [ this ](){ emit exit(42); } );
         //==================================================================================================================
-
         machine->start();
-
     }
     void new_cmd_parse(message msg)
     {
