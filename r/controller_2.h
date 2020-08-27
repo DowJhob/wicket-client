@@ -87,7 +87,7 @@ public slots:
         connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::_wicketEntry_slot);  //вошли в состояния прохода, открыли калитку, зажгли лампы
         connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::_wicketExit_slot);
         connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::entry_passed));} );   // Когда входим в это состояние отсылаем сообщение на сервер
-        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::entry_passed));} );
+        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::exit_passed));} );
         connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::pass_dropped));} );
 
         connect(serverFound->Armed->UncondTimeout, &QState::entered, this, [=](){ setPictureSIG(picture::pict_timeout, "");} );
@@ -152,9 +152,7 @@ private slots:
         test_state_flag = true;
         testt->start(3000);
         connect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
-        if(main_direction == direction_state::dir_entry )
             connect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
-        else
             connect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
     }
     void from_server_set_normal()
