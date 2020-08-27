@@ -115,19 +115,15 @@ public slots:
               case command::armed:         emit from_server_setArmed();break;
               case command::unlock:        emit from_server_setUnLocked();break;
               case command::onCheck:       emit set_onCheck();break;
-              case command::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ========================================================== WRONG: "
-                                                << QString::number(t->nsecsElapsed()/1000000) << "ms";
-                                                 t->restart();
-                                                 emit from_server_to_wrong ();break;//+ description
+              case command::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ================================= WRONG: " << QString::number(t->nsecsElapsed()/1000000) << "ms";
+                                           t->restart();
+                                           emit from_server_to_wrong ();break;//+ description
               case command::set_ready:     from_server_to_ready();break;
-              case command::entry_open:    qDebug()<<"time betwen send barcode and recieve open ========================================================== OPEN: "
-                                                << QString::number(t->nsecsElapsed()/1000000) << "ms";
-                                                 t->restart();
-                                                  emit from_server_to_entry();break;
+              case command::entry_open:    qDebug()<<"time betwen send barcode and recieve open  ================================= OPEN: " << QString::number(t->nsecsElapsed()/1000000) << "ms";
+                                           t->restart();
+                                           emit from_server_to_entry();break;
               case command::exit_open:     emit from_server_to_exit();break;
               }
-
-
     }
     void send_barcode(QByteArray data)
     {
@@ -157,12 +153,9 @@ private slots:
         testt->start(3000);
         connect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
         if(main_direction == direction_state::dir_entry )
-        {
             connect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
+        else
             connect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
-        }
-    //    else
-
     }
     void from_server_set_normal()
     {
@@ -189,10 +182,6 @@ private slots:
     {
         qDebug() << "set iron ==============================================================================IRON";
         iron_mode_flag = true;
-    }
-    void from_server_reset_iron_mode()
-    {
-        iron_mode_flag = false;
     }
     //======================================================================
     void _wicketEntry_slot()
