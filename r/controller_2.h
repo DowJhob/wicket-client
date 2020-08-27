@@ -75,10 +75,10 @@ public slots:
         connect(this,   &controller::from_server_to_exit,   serverFound->Armed, &wicketFSM::set_FSM_to_exit);
         connect(wicket, &nikiret::passed,                   serverFound->Armed, &wicketFSM::set_FSM_passed);   //по сигналу прохода от турникета перейдем в состояние проход
 
-        connect(serverFound->Armed->Ready,         &QState::entered, this, [=](){ready_state_flag = true;
-            wicket->setLightOFF();
-            setPictureSIG(picture::pict_ready, "");
-         emit send_to_server(message(msg_type::command, command::_wicketReady));});
+        connect(serverFound->Armed->Ready,         &QState::entered, this, [=](){ ready_state_flag = true;
+                                                                                  wicket->setLightOFF();
+                                                                                  setPictureSIG(picture::pict_ready, "");
+                                                                                  emit send_to_server(message(msg_type::command, command::_wicketReady));});
         connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
         connect(serverFound->Armed->OnCheck,       &QState::entered, this, [=](){setPictureSIG(picture::pict_onCheck, "");});
         connect(serverFound->Armed->dbTimeout,     &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, "Ошибка базы данных" ); wicket->setRED(); });
@@ -108,23 +108,23 @@ public slots:
         switch (msg.comm) {
          //     case _comm::heartbeat: ;
               //from main to wicket
-              case command::set_test :     from_server_set_test();break;
-              case command::set_normal:    from_server_set_normal();break;
-              case command::set_iron_mode: from_server_set_iron_mode();break;
-              case command::set_type_out:  from_server_set_type_OUT();break;
-              case command::armed:         from_server_setArmed();break;
-              case command::unlock:        from_server_setUnLocked();break;
-              case command::onCheck:       from_server_onCheck();break;
+              case command::set_test :     emit from_server_set_test();break;
+              case command::set_normal:    emit from_server_set_normal();break;
+              case command::set_iron_mode: emit from_server_set_iron_mode();break;
+              case command::set_type_out:  emit from_server_set_type_OUT();break;
+              case command::armed:         emit from_server_setArmed();break;
+              case command::unlock:        emit from_server_setUnLocked();break;
+              case command::onCheck:       emit set_onCheck();break;
               case command::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ========================================================== WRONG: "
                                                 << QString::number(t->nsecsElapsed()/1000000) << "ms";
                                                  t->restart();
-                                                 from_server_to_wrong ();break;//+ description
+                                                 emit from_server_to_wrong ();break;//+ description
               case command::set_ready:     from_server_to_ready();break;
               case command::entry_open:    qDebug()<<"time betwen send barcode and recieve open ========================================================== OPEN: "
                                                 << QString::number(t->nsecsElapsed()/1000000) << "ms";
                                                  t->restart();
-                                                  from_server_to_entry();break;
-              case command::exit_open:     from_server_to_exit();break;
+                                                  emit from_server_to_entry();break;
+              case command::exit_open:     emit from_server_to_exit();break;
               }
 
 
@@ -137,7 +137,6 @@ public slots:
             emit set_onCheck();
             if (!test_state_flag)
                 wicket->alarm();
-
             if(iron_mode_flag)
             {
                 (this->*handler_opener)();   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
@@ -146,8 +145,6 @@ public slots:
             else
                 emit send_to_server(message(msg_type::command, command::barcode, data ));
         }
-
-
     }
 
 private slots:
@@ -159,8 +156,13 @@ private slots:
         test_state_flag = true;
         testt->start(3000);
         connect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
-        connect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
-        connect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
+        if(main_direction == direction_state::dir_entry )
+        {
+            connect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
+            connect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
+        }
+    //    else
+
     }
     void from_server_set_normal()
     {
@@ -170,8 +172,12 @@ private slots:
         iron_mode_flag = false;
         testt->stop();
         testt_pass->stop();
-        disconnect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
+     //   if(main_direction == direction_state::dir_entry )
+            disconnect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
+     //   else
+
         disconnect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
+        disconnect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
     }
     void timer_wrapper()
     {
@@ -272,7 +278,8 @@ private:
             emit send_to_server(message(msg_type::command, command::wicket_state_machine_not_ready));
 
     }
-    signals:
+
+signals:
     //================= network ===========================
     void ext_provided_network_readySIG();
     void ext_provided_server_searchSIG();
@@ -287,7 +294,7 @@ private:
     void from_server_to_entry();
     void from_server_to_exit();
     void from_server_to_wrong();
-    void from_server_onCheck();
+//    void from_server_onCheck();
     void from_server_setArmed();
     void from_server_setUnLocked();
     void log(QString);

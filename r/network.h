@@ -41,13 +41,13 @@ public:
 public slots:
     void start()
     {
- //       reconnect_timer2 = new QTimer(this);
-        reconnect_timer = new QTimer(this);
+        reconnect_timer2 = new QTimer(this);
+        reconnect_timeout_timer = new QTimer(this);
         tcpSocket = new QTcpSocket(this);
 
         //for test
         connect(tcpSocket, &QTcpSocket::disconnected, this, [=](){emit log("socket disconnect sig");});
-        connect(reconnect_timer, &QTimer::timeout, this, [=](){emit log("reconnect_timer timeout sig");});
+        connect(reconnect_timeout_timer, &QTimer::timeout, this, [=](){emit log("reconnect_timer timeout sig");});
      //================================
         in.setDevice(tcpSocket);
         in.setVersion(QDataStream::Qt_5_12);
@@ -62,17 +62,17 @@ public slots:
  //       machine->addState( network_TCPconnected );
         machine->setInitialState( broadcast_server_search );
 
-        broadcast_server_search->addTransition(   reconnect_timer,     &QTimer::timeout,         broadcast_server_search);    // если за время реконнекта не найдем сервер заново установим начальное состояние
+        broadcast_server_search->addTransition(   reconnect_timeout_timer,     &QTimer::timeout,         broadcast_server_search);    // если за время реконнекта не найдем сервер заново установим начальное состояние
         broadcast_server_search->addTransition(              this,    &network::TCPserver_found, network_StartTCPconnection); // если бродкастом нашли переходим к попытке соединения
-        network_StartTCPconnection->addTransition(reconnect_timer,     &QTimer::timeout,         broadcast_server_search);    // если тут залипнем то по таймеру начнем сначала
+        network_StartTCPconnection->addTransition(reconnect_timeout_timer,     &QTimer::timeout,         broadcast_server_search);    // если тут залипнем то по таймеру начнем сначала
         network_StartTCPconnection->addTransition(      tcpSocket, &QTcpSocket::connected,       network_TCPconnected);       // если соединились то запускаем таймер пересоединения в слоте
         network_TCPconnected->addTransition(            tcpSocket, &QTcpSocket::disconnected,    broadcast_server_search);    // тут все понятно, если дисконеткт сокета то снова ищем
-        network_TCPconnected->addTransition(      reconnect_timer,     &QTimer::timeout,         broadcast_server_search);    // но сигнала дисконект не будет если просто вынуть провод
+        network_TCPconnected->addTransition(      reconnect_timeout_timer,     &QTimer::timeout,         broadcast_server_search);    // но сигнала дисконект не будет если просто вынуть провод
         //---------------------
         connect(broadcast_server_search, &QState::entered, this, &network::server_search);
         connect(network_StartTCPconnection, &QState::entered, this, &network::reconnect);
 
-        connect(network_TCPconnected, &QState::entered, this, [=](){reconnect_timer->start();
+        connect(network_TCPconnected, &QState::entered, this, [=](){reconnect_timeout_timer->start();
                                                                    localIP = tcpSocket->localAddress().toString();
                                                                    network_status = state::ready;
                                                                    emit log("TCP connected:\n");
@@ -84,7 +84,7 @@ public slots:
 //connect(network_TCPconnected, &QState::entered, reconnect_timer2, &QTimer::stop);
         sockets_init();
         //========================================= timers setup ========================================
-        reconnect_timer->setInterval(reconnect_interval);
+        reconnect_timeout_timer->setInterval(reconnect_interval);
 //reconnect_timer2->setSingleShot(true);
 //connect(reconnect_timer2, &QTimer::timeout, this, &network::server_search);
 //        reconnect_timer2->setInterval(reconnect_interval);
@@ -93,7 +93,7 @@ public slots:
        // server_search();
       //  reconnect();
     }
-    void SendToServer(message in)
+    void SendToServer( message in)
     {
         if ( tcpSocket->state() != QAbstractSocket::ConnectedState )
             return; 
@@ -109,7 +109,7 @@ public slots:
 
     void set_reconnect_interval(int reconnect_interval)
     {
-        reconnect_timer->setInterval(reconnect_interval);
+        reconnect_timeout_timer->setInterval(reconnect_interval);
     }
 
 private slots:
@@ -155,7 +155,7 @@ private slots:
                     udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
                 }
         emit enter_STATE_server_search_signal();
-        reconnect_timer->start();
+        reconnect_timeout_timer->start();
   //      reconnect_timer2->start();
     }
 
@@ -166,7 +166,7 @@ private slots:
   //      int time = reconnect_timer->remainingTime();
   //      if (time < 100)
  //           qDebug() << QString::number(time);
-        reconnect_timer->start();
+        reconnect_timeout_timer->start();
         for (uint i = 0; i < 0xFFFF; i++)
         {
             if (!m_nNextBlockSize) {
@@ -237,7 +237,7 @@ private slots:
     }
     void reconnect()
     {
-        reconnect_timer->start();
+        reconnect_timeout_timer->start();
         emit log("TCP reconnect:\n");
         //        connected = false;
         tcpSocket->connectToHost(server_ip_addr, control_tcp_port, QIODevice::ReadWrite);
@@ -257,7 +257,7 @@ private:
     QUdpSocket *udpSocket;
     QTcpSocket *tcpSocket;
     quint16 m_nNextBlockSize = 0;
-    QTimer *reconnect_timer;
+    QTimer *reconnect_timeout_timer;
 QTimer *reconnect_timer2;
     int reconnect_interval;// = 3000;
 
