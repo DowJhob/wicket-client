@@ -58,7 +58,7 @@ public:
         OnCheck->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit);
 
 //Ready->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit); //В случае когда мы определены как двойной ридер нужно разрешить прямые переходы от связанного ридера
-//Exit->addTransition(this,                     &wicketFSM::set_FSM_to_red,    Ready);//В случае когда мы определены как выходной, по команде с сервера потушить лампы
+//Entry->addTransition(this,                     &wicketFSM::set_FSM_to_,    Ready);//В случае когда мы определены как выходной, по команде с сервера потушить лампы
 
         Exit->addTransition(wait_pass_timer,             &QTimer::timeout,               Drop);
         Exit->addTransition(this,                        &wicketFSM::set_FSM_passed,     exitPassed);

@@ -148,9 +148,13 @@ private slots:
         qDebug() << "set test ==============================================================================TEST";
         test_state_flag = true;
         testt->start(3000);
-        connect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
+
+        if(main_direction == direction_state::dir_entry )
+        {
+            connect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
             connect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
             connect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
+        }
     }
     void from_server_set_normal()
     {
