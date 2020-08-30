@@ -66,6 +66,7 @@ public:
         exitPassed->addTransition( Ready );
 
         UncondTimeout->addTransition(UncondTimeoutTimer, &QTimer::timeout,               Ready);
+        UncondTimeout->addTransition(this,               &wicketFSM::set_FSM_to_onCheck, OnCheck); //Для возможности быстро чекнуть билет на выход не дожидаясь таймаута на досмотр
         Drop->addTransition(Ready);
 
         //=================================================================================================

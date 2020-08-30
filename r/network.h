@@ -31,9 +31,20 @@ public:
     quint16 file_transfer_port = 27008;
     bool iron_mode = false;
     message msg;
-    network(int reconnect_interval = 20000): reconnect_interval(reconnect_interval)
+    network(int reconnect_interval = 2000, int timeout_interval = 20000): reconnect_interval(reconnect_interval), timeout_interval(timeout_interval)
     {
-
+        for(QNetworkInterface netInterface : QNetworkInterface::allInterfaces())
+            for (QNetworkAddressEntry entry : netInterface.addressEntries())
+                if ( (netInterface.flags().testFlag(QNetworkInterface::IsUp)) &&
+                     (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) && (!entry.ip().isLoopback()) )
+                {
+                    broadcast_addr = entry.broadcast();
+                    MACAddress = netInterface.hardwareAddress();
+                    localIP = entry.ip().toString();
+                    fprintf(stdout,"%s\n", ( netInterface.name() + "/" + localIP + "/" + entry.netmask().toString() + "/" + MACAddress).toStdString().c_str());
+                    fflush(stdout);
+                    break;
+                }
     }
     ~network()
     {
@@ -41,7 +52,7 @@ public:
 public slots:
     void start()
     {
-        reconnect_timer2 = new QTimer(this);
+//        reconnect_timer2 = new QTimer(this);
         reconnect_timeout_timer = new QTimer(this);
         tcpSocket = new QTcpSocket(this);
 
@@ -52,46 +63,35 @@ public slots:
         in.setDevice(tcpSocket);
         in.setVersion(QDataStream::Qt_5_12);
         machine = new QStateMachine(this);
-        broadcast_server_search = new QState(machine);
-        network_StartTCPconnection = new QState(machine);
-        network_TCPconnected = new QState(machine);
+        serverSearch = new QState(machine);
+        startTCPconnection = new QState(machine);
+        TCPconnected = new QState(machine);
 
         //========================================== search host ========================================
- //       machine->addState( broadcast_server_search );
- //       machine->addState( network_StartTCPconnection );
- //       machine->addState( network_TCPconnected );
-        machine->setInitialState( broadcast_server_search );
+        machine->setInitialState( serverSearch );
 
-        broadcast_server_search->addTransition(   reconnect_timeout_timer,     &QTimer::timeout,         broadcast_server_search);    // если за время реконнекта не найдем сервер заново установим начальное состояние
-        broadcast_server_search->addTransition(              this,    &network::TCPserver_found, network_StartTCPconnection); // если бродкастом нашли переходим к попытке соединения
-        network_StartTCPconnection->addTransition(reconnect_timeout_timer,     &QTimer::timeout,         broadcast_server_search);    // если тут залипнем то по таймеру начнем сначала
-        network_StartTCPconnection->addTransition(      tcpSocket, &QTcpSocket::connected,       network_TCPconnected);       // если соединились то запускаем таймер пересоединения в слоте
-        network_TCPconnected->addTransition(            tcpSocket, &QTcpSocket::disconnected,    broadcast_server_search);    // тут все понятно, если дисконеткт сокета то снова ищем
-        network_TCPconnected->addTransition(      reconnect_timeout_timer,     &QTimer::timeout,         broadcast_server_search);    // но сигнала дисконект не будет если просто вынуть провод
+        serverSearch->addTransition(      reconnect_timeout_timer, &QTimer::timeout,          serverSearch);    // если за время реконнекта не найдем сервер заново установим начальное состояние
+        serverSearch->addTransition(                         this, &network::TCPserver_found, startTCPconnection); // если бродкастом нашли переходим к попытке соединения
+        startTCPconnection->addTransition(reconnect_timeout_timer, &QTimer::timeout,          serverSearch);    // если тут залипнем то по таймеру начнем сначала
+        startTCPconnection->addTransition(              tcpSocket, &QTcpSocket::connected,    TCPconnected);       // если соединились то запускаем таймер пересоединения в слоте
+        TCPconnected->addTransition(                    tcpSocket, &QTcpSocket::disconnected, serverSearch);    // тут все понятно, если дисконеткт сокета то снова ищем
+        TCPconnected->addTransition(      reconnect_timeout_timer, &QTimer::timeout,          serverSearch);    // но сигнала дисконект не будет если просто вынуть провод
         //---------------------
-        connect(broadcast_server_search, &QState::entered, this, &network::server_search);
-        connect(network_StartTCPconnection, &QState::entered, this, &network::reconnect);
+        connect(serverSearch,       &QState::entered, this, &network::server_search);
+        connect(startTCPconnection, &QState::entered, this, &network::reconnect);
 
-        connect(network_TCPconnected, &QState::entered, this, [=](){reconnect_timeout_timer->start();
-                                                                   localIP = tcpSocket->localAddress().toString();
-                                                                   network_status = state::ready;
-                                                                   emit log("TCP connected:\n");
-                                                                   SendToServer(message(msg_type::command, command::_register, QVariant(MACAddress)));
-                                                                   emit network_ready();});
-        connect(network_TCPconnected, &QState::exited, this, [=](){network_status = state::disconnected;
-                                                                   //        test_data = QString::number(reconnect_timer->remainingTime());
-                                                                   emit log("TCP disconnected:\n");});
-//connect(network_TCPconnected, &QState::entered, reconnect_timer2, &QTimer::stop);
+        connect(TCPconnected, &QState::entered, this, [=](){ reconnect_timeout_timer->setInterval(timeout_interval);
+                                                             reconnect_timeout_timer->start();
+                                                             localIP = tcpSocket->localAddress().toString();
+                                                             network_status = state::ready;
+                                                             emit log("TCP connected:\n");
+                                                             SendToServer(message(msg_type::command, command::_register, QVariant(MACAddress)));
+                                                             emit network_ready();});
+        connect(TCPconnected, &QState::exited, this, [=](){ network_status = state::disconnected;
+                                                            emit log("TCP disconnected:\n");});
         sockets_init();
         //========================================= timers setup ========================================
-        reconnect_timeout_timer->setInterval(reconnect_interval);
-//reconnect_timer2->setSingleShot(true);
-//connect(reconnect_timer2, &QTimer::timeout, this, &network::server_search);
-//        reconnect_timer2->setInterval(reconnect_interval);
-
         machine->start();
-       // server_search();
-      //  reconnect();
     }
     void SendToServer( message in)
     {
@@ -137,29 +137,17 @@ private slots:
     }
     void server_search()
     {
+        reconnect_timeout_timer->setInterval(reconnect_interval);
         tcpSocket->abort();
         network_status = state::network_search_host;
         emit log("server search started:\n");
-        foreach(QNetworkInterface netInterface, QNetworkInterface::allInterfaces())
-            foreach (QNetworkAddressEntry entry, netInterface.addressEntries())
-                if ((entry.ip().protocol() == QAbstractSocket::IPv4Protocol) && (!entry.ip().isLoopback()))
-                {
-                    quint32 first_subnet_address = entry.ip().toIPv4Address() & entry.netmask().toIPv4Address();
-                    quint32 count_subnet_address = ~entry.netmask().toIPv4Address();
-                    broadcast_addr = QHostAddress(first_subnet_address + count_subnet_address);
-                    MACAddress = netInterface.hardwareAddress();
-                    localIP = entry.ip().toString();
-                    fprintf(stdout,"%s\n", ( netInterface.name() + " / " + localIP + "/" + entry.netmask().toString() + "/" + MACAddress).toStdString().c_str());
-                    fflush(stdout);
+
                     QByteArray datagram = "turnstile";
                     udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
-                }
+
         emit enter_STATE_server_search_signal();
         reconnect_timeout_timer->start();
-  //      reconnect_timer2->start();
     }
-
-
     void tcp_readyRead_slot()
     {
 
@@ -245,21 +233,20 @@ private slots:
 //            emit network_unavailable();
     }
 private:
-//    QString test_data{};
-
     QElapsedTimer t;
     QStateMachine *machine;
-    QState *broadcast_server_search;
-    QState *network_StartTCPconnection;
-    QState *network_TCPconnected;
+    QState *serverSearch;
+    QState *startTCPconnection;
+    QState *TCPconnected;
     struct timeval timeout;
     QHostAddress broadcast_addr;
     QUdpSocket *udpSocket;
     QTcpSocket *tcpSocket;
     quint16 m_nNextBlockSize = 0;
     QTimer *reconnect_timeout_timer;
-QTimer *reconnect_timer2;
+//QTimer *reconnect_timer2;
     int reconnect_interval;// = 3000;
+    int timeout_interval;
 
     int attempt_count = 0;
     int max_attempt_count = 10;
@@ -268,12 +255,10 @@ QTimer *reconnect_timer2;
 
 signals:
     void readyRead(message);
-    void signal_reconnect();
-    void network_ready();
-    void network_unavailable();
 
     void enter_STATE_server_search_signal();
     void TCPserver_found();
+    void network_ready();
 
     void log(QString);
 };
