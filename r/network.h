@@ -33,18 +33,7 @@ public:
     message msg;
     network(int reconnect_interval = 2000, int timeout_interval = 20000): reconnect_interval(reconnect_interval), timeout_interval(timeout_interval)
     {
-        for(QNetworkInterface netInterface : QNetworkInterface::allInterfaces())
-            for (QNetworkAddressEntry entry : netInterface.addressEntries())
-                if ( (netInterface.flags().testFlag(QNetworkInterface::IsUp)) &&
-                     (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) && (!entry.ip().isLoopback()) )
-                {
-                    broadcast_addr = entry.broadcast();
-                    MACAddress = netInterface.hardwareAddress();
-                    localIP = entry.ip().toString();
-                    fprintf(stdout,"%s\n", ( netInterface.name() + "/" + localIP + "/" + entry.netmask().toString() + "/" + MACAddress).toStdString().c_str());
-                    fflush(stdout);
-                    break;
-                }
+
     }
     ~network()
     {
@@ -111,7 +100,21 @@ public slots:
     {
         reconnect_timeout_timer->setInterval(reconnect_interval);
     }
-
+void get_interface()
+{
+    for(QNetworkInterface netInterface : QNetworkInterface::allInterfaces())
+        for (QNetworkAddressEntry entry : netInterface.addressEntries())
+            if ( (netInterface.flags().testFlag(QNetworkInterface::IsUp)) &&
+                 (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) && (!entry.ip().isLoopback()) )
+            {
+                broadcast_addr = entry.broadcast();
+                MACAddress = netInterface.hardwareAddress();
+                localIP = entry.ip().toString();
+                fprintf(stdout,"%s\n", ( netInterface.name() + "/" + localIP + "/" + entry.netmask().toString() + "/" + MACAddress).toStdString().c_str());
+                fflush(stdout);
+                break;
+            }
+}
 private slots:
     void sockets_init()
     {
@@ -141,7 +144,7 @@ private slots:
         tcpSocket->abort();
         network_status = state::network_search_host;
         emit log("server search started:\n");
-
+get_interface();
                     QByteArray datagram = "turnstile";
                     udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
 
