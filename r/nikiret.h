@@ -142,7 +142,10 @@ public slots:
     }
     void lock_unlock_sequence()
     {
-        send_to_crossboard("PIN3_ON\r");
+        if ( state == state::ready )
+            send_to_crossboard("PIN3_ON\rLIGHT_OFF\r");
+        else
+            send_to_crossboard("PIN3_ON\rLIGHT_ON\r");
         lock_unlock_timer_sequence->start();
     }
 
@@ -207,18 +210,7 @@ private:
             heater = buff.at(temp_pos + 7);
         temp_pos = buff.indexOf("TEMP");
         if ( temp_pos >= 0 )
-        {
-            cross_brd_temp = buff.mid( temp_pos + 5, 4 );
-            if( cross_brd_temp.mid( 0, 2 ).toInt() < 15 )
-            {
-                if ( heater == 'D' )
-
-                    send_to_crossboard("HEATER_ON\r");
-            }
-            else
-                if ( heater == 'E' )
-                    send_to_crossboard("HEATER_OFF\r");
-        }
+            termostatProcessing(temp_pos);
         buff.clear();
     }
     void RDY_IO_processing(int turnstile_state)
@@ -232,13 +224,20 @@ private:
             }
         if ( turnstile_state == state::unlocked )
         {
-            emit unlock();
+            emit unlocked();
         }
     }
-
+    void termostatProcessing(int temp_pos)
+    {
+        cross_brd_temp = buff.mid( temp_pos + 5, 4 );
+        if( cross_brd_temp.mid( 0, 2 ).toInt() < 15 && heater == 'D')
+            send_to_crossboard("HEATER_ON\r");
+        else
+            send_to_crossboard("HEATER_OFF\r");
+    }
 signals:
     void armed();
-    void unlock();
+    void unlocked();
     void passed();
     void error();
     void temp(QString);

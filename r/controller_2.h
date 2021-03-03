@@ -55,7 +55,7 @@ public slots:
         machine->setInitialState( serverSearch );
         ///--------------------------- Машина сброса-взвода прохода -----------------------------------------------
         //        connect(this,   &controller::from_server_setReady,    _wicketLocker_serverFound, &wicketLocker::in_uncond);
-        connect(wicket, &nikiret::unlock,                     serverFound, &wicketLocker::from_crsbrd_unlock);
+        connect(wicket, &nikiret::unlocked,                     serverFound, &wicketLocker::from_crsbrd_unlock);
         connect(wicket, &nikiret::armed,                      serverFound, &wicketLocker::from_crsbrd_armed);
         connect(this,   &controller::from_server_setArmed,    serverFound, &wicketLocker::from_server_setArmed);
         connect(this,   &controller::from_server_setUnLocked, serverFound, &wicketLocker::from_server_setUnLocked); // тут подаем кросборде сигнал на разблокирование турникета
