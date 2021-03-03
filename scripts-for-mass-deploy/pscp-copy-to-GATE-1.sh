@@ -1,6 +1,6 @@
-HOST_LIST='/home/a/Desktop/attempt-threaded-wicket-gate-client/host-listS/host_list-GATE-1.txt'
+HOST_LIST='/host-listS/host_list-GATE-1.txt'
 echo "=============================== COPY to SERVER ========================"
-pscp -p 32 -t 4 -v -h $HOST_LIST /home/a/Desktop/attempt-threaded-wicket-gate-client/build-r-Debug/r /usr/r
+pscp -p 32 -t 4 -v -h $HOST_LIST r /usr/r
 echo "==================================== SYNC ============================="
 pssh -p 32 -t 4 -v -i -h $HOST_LIST sync
 echo "================================ COPY to RUN =========================="

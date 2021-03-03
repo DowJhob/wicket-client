@@ -44,6 +44,10 @@ enum class command {
     wicket_state_machine_not_ready
 
 };
+/*!
+  *\brief gg::ggg
+  *\param gdfg
+*/
 
 typedef struct _command{
     msg_type type;

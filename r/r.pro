@@ -20,6 +20,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+#        PN532-PN532_HSU/PN532/PN532.cpp \
+#        PN532-PN532_HSU/PN532/emulatetag.cpp \
+#        PN532-PN532_HSU/PN532/llcp.cpp \
+#        PN532-PN532_HSU/PN532/mac_link.cpp \
+#        PN532-PN532_HSU/PN532/snep.cpp \
+#        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
         async_threaded_reader.cpp \
         command.cpp \
         main.cpp
@@ -30,6 +36,15 @@ target.files = rd
 
 HEADERS += common_types.h \
 #    NFC.h \
+#    PN532-PN532_HSU/PN532/PN532.h \
+#    PN532-PN532_HSU/PN532/PN532Interface.h \
+#    PN532-PN532_HSU/PN532/PN532_debug.h \
+#    PN532-PN532_HSU/PN532/emulatetag.h \
+#    PN532-PN532_HSU/PN532/llcp.h \
+#    PN532-PN532_HSU/PN532/mac_link.h \
+#    PN532-PN532_HSU/PN532/snep.h \
+#    PN532-PN532_HSU/PN532/PN532_HSU.h \
+    NFC_copy.h \
     async_threaded_reader.h \
 #controller.h \
 #    barcode_qt.h \
@@ -58,13 +73,11 @@ QMAKE_CXXFLAGS += -Ofast
 #QMAKE_CXXFLAGS += -O3
 
 #QMAKE_CFLAGS -= -fno-keep-inline-dllexport
-#FORMS +=
-#LIBS += -lusb
-#LIBS += -L$$PWD/./libs
-#LIBS +=          libusb-1.0.so
-LIBS += -Llibs/libusb -lusb-1.0
+
+#LIBS += -Llibs/libusb
+LIBS += -lusb-1.0
 INCLUDEPATH += libs/libusb/include
-#PRE_TARGETDEPS+= libusb-1.0.so
+
 #INCLUDEPATH += ./
 #DEPENDPATH += ./
 RESOURCES += \

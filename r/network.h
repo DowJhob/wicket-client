@@ -41,14 +41,14 @@ public:
 public slots:
     void start()
     {
-//        reconnect_timer2 = new QTimer(this);
+        //        reconnect_timer2 = new QTimer(this);
         reconnect_timeout_timer = new QTimer(this);
         tcpSocket = new QTcpSocket(this);
 
         //for test
         connect(tcpSocket, &QTcpSocket::disconnected, this, [=](){emit log("socket disconnect sig");});
         connect(reconnect_timeout_timer, &QTimer::timeout, this, [=](){emit log("reconnect_timer timeout sig");});
-     //================================
+        //================================
         in.setDevice(tcpSocket);
         in.setVersion(QDataStream::Qt_5_12);
         machine = new QStateMachine(this);
@@ -70,14 +70,14 @@ public slots:
         connect(startTCPconnection, &QState::entered, this, &network::reconnect);
 
         connect(TCPconnected, &QState::entered, this, [=](){ reconnect_timeout_timer->setInterval(timeout_interval);
-                                                             reconnect_timeout_timer->start();
-                                                             localIP = tcpSocket->localAddress().toString();
-                                                             network_status = state::ready;
-                                                             emit log("TCP connected:\n");
-                                                             SendToServer(message(msg_type::command, command::_register, QVariant(MACAddress)));
-                                                             emit network_ready();});
+            reconnect_timeout_timer->start();
+            localIP = tcpSocket->localAddress().toString();
+            network_status = state::ready;
+            emit log("TCP connected:\n");
+            SendToServer(message(msg_type::command, command::_register, QVariant(MACAddress)));
+            emit network_ready();});
         connect(TCPconnected, &QState::exited, this, [=](){ network_status = state::disconnected;
-                                                            emit log("TCP disconnected:\n");});
+            emit log("TCP disconnected:\n");});
         sockets_init();
         //========================================= timers setup ========================================
         machine->start();
@@ -85,14 +85,14 @@ public slots:
     void SendToServer( message in)
     {
         if ( tcpSocket->state() != QAbstractSocket::ConnectedState )
-            return; 
+            return;
         QByteArray  arrBlock;
-                QDataStream out(&arrBlock, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_5_12);
-                out << quint16(0) << in;
-                out.device()->seek(0);
-                out << quint16(arrBlock.size() - sizeof(quint16));
-  //      qDebug()<< "send to server: " << in << "--" << arrBlock.size() << arrBlock.toStdString().c_str();
+        QDataStream out(&arrBlock, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_5_12);
+        out << quint16(0) << in;
+        out.device()->seek(0);
+        out << quint16(arrBlock.size() - sizeof(quint16));
+        //      qDebug()<< "send to server: " << in << "--" << arrBlock.size() << arrBlock.toStdString().c_str();
         tcpSocket->write(arrBlock);
     }
 
@@ -100,21 +100,26 @@ public slots:
     {
         reconnect_timeout_timer->setInterval(reconnect_interval);
     }
-void get_interface()
-{
-    for(QNetworkInterface netInterface : QNetworkInterface::allInterfaces())
-        for (QNetworkAddressEntry entry : netInterface.addressEntries())
-            if ( (netInterface.flags().testFlag(QNetworkInterface::IsUp)) &&
-                 (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) && (!entry.ip().isLoopback()) )
-            {
-                broadcast_addr = entry.broadcast();
-                MACAddress = netInterface.hardwareAddress();
-                localIP = entry.ip().toString();
-                fprintf(stdout,"%s\n", ( netInterface.name() + "/" + localIP + "/" + entry.netmask().toString() + "/" + MACAddress).toStdString().c_str());
-                fflush(stdout);
-                break;
-            }
-}
+    void get_interface()
+    {
+        for(QNetworkInterface netInterface : QNetworkInterface::allInterfaces())
+            for (QNetworkAddressEntry entry : netInterface.addressEntries())
+                if ( (netInterface.flags().testFlag(QNetworkInterface::IsUp)) &&
+                     (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) && (!entry.ip().isLoopback()) )
+                {
+                    broadcast_addr = entry.broadcast();
+                    MACAddress = netInterface.hardwareAddress();
+                    localIP = entry.ip().toString();
+                    fprintf(stdout,"%s\n", ( netInterface.name() + "/" + localIP + "/" + entry.netmask().toString() + "/" + MACAddress).toStdString().c_str());
+                    fflush(stdout);
+                    break;
+                }
+    }
+    void logger(QString log)
+    {
+        SendToServer(message(msg_type::parameter, command::heartbeat, log));
+    }
+
 private slots:
     void sockets_init()
     {
@@ -129,14 +134,14 @@ private slots:
             udpSocket->close();
         }
         //========================================= tcpSocket setup ========================================
-//        tcpSocket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
-//        tcpSocket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
- //       tcpSocket->setSocketOption(QAbstractSocket::TypeOfServiceOption, 160);
-  //              setsockopt (tcpSocket->socketDescriptor(), SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout) );
-   //             setsockopt (tcpSocket->socketDescriptor(), SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout) );
+        //        tcpSocket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+        //        tcpSocket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
+        //       tcpSocket->setSocketOption(QAbstractSocket::TypeOfServiceOption, 160);
+        //              setsockopt (tcpSocket->socketDescriptor(), SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout) );
+        //             setsockopt (tcpSocket->socketDescriptor(), SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout) );
         connect(tcpSocket, &QTcpSocket::readyRead, this, &network::tcp_readyRead_slot);
-  //      connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(slotError(QAbstractSocket::SocketError)));
-//        connect(&tcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT( slot_stateChanged(QAbstractSocket::SocketState)));
+        //      connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(slotError(QAbstractSocket::SocketError)));
+        //        connect(&tcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT( slot_stateChanged(QAbstractSocket::SocketState)));
     }
     void server_search()
     {
@@ -144,9 +149,9 @@ private slots:
         tcpSocket->abort();
         network_status = state::network_search_host;
         emit log("server search started:\n");
-get_interface();
-                    QByteArray datagram = "turnstile";
-                    udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
+        get_interface();
+        QByteArray datagram = "turnstile";
+        udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
 
         emit enter_STATE_server_search_signal();
         reconnect_timeout_timer->start();
@@ -154,9 +159,9 @@ get_interface();
     void tcp_readyRead_slot()
     {
 
-  //      int time = reconnect_timer->remainingTime();
-  //      if (time < 100)
- //           qDebug() << QString::number(time);
+        //      int time = reconnect_timer->remainingTime();
+        //      if (time < 100)
+        //           qDebug() << QString::number(time);
         reconnect_timeout_timer->start();
         for (uint i = 0; i < 0xFFFF; i++)
         {
@@ -186,12 +191,12 @@ get_interface();
                              "The connection was refused." :
                              QString(tcpSocket->errorString())
                              );
-//        test_data = "TCP client error: " + strError;
+        //        test_data = "TCP client error: " + strError;
         emit log("TCP error: " + strError + "\n");
     }
     void slot_stateChanged(QAbstractSocket::SocketState socketState)
     {
-    //    QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
+        //    QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
 
         QString strError =
                 (socketState == QAbstractSocket::UnconnectedState ?
@@ -232,8 +237,8 @@ get_interface();
         emit log("TCP reconnect:\n");
         //        connected = false;
         tcpSocket->connectToHost(server_ip_addr, control_tcp_port, QIODevice::ReadWrite);
-//        if ( ++attempt_count > max_attempt_count )
-//            emit network_unavailable();
+        //        if ( ++attempt_count > max_attempt_count )
+        //            emit network_unavailable();
     }
 private:
     QElapsedTimer t;
@@ -247,7 +252,7 @@ private:
     QTcpSocket *tcpSocket;
     quint16 m_nNextBlockSize = 0;
     QTimer *reconnect_timeout_timer;
-//QTimer *reconnect_timer2;
+    //QTimer *reconnect_timer2;
     int reconnect_interval;// = 3000;
     int timeout_interval;
 

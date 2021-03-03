@@ -1,5 +1,5 @@
-#ifndef NFC_H
-#define NFC_H
+#ifndef NFC_COPY_H
+#define NFC_COPY_H
 
 #include <stdio.h>
 //#include <termios.h>
@@ -143,69 +143,61 @@ public:
     QByteArray Err = QByteArray::fromHex("01FF00");
     QByteArray _get_version = QByteArray::fromHex("02");
     QByteArray _get_status = QByteArray::fromHex("04");
-    QByteArray _SAMConfig = QByteArray::fromHex("14010100");
+    QByteArray _SAMConfig = QByteArray::fromHex("14011401");
     QByteArray _inListPassiveTarget = QByteArray::fromHex("4A0100");
-    QByteArray _InAutoPoll = QByteArray::fromHex("60FF0100010203041011122023404142");
+    QByteArray _InAutoPoll = QByteArray::fromHex("60"  //PollNr specifies the number of polling (one polling is a polling for each Type j).
+                                                 "FF"  //0x01 – 0xFE : 1 up to 254 polling
+                                                 //0xFF : Endless polling.
+                                                 "0F"  //Period (0x01 – 0x0F) indicates the polling period in units of 150 ms,
+                                                 "00"//Type 1 indicates the mandatory target type to be polled at the 1st time,
+                                                 "01"//Type 2 to Type N indicate the optional target types to be polled at the 2nd up to
+                                                 "02"//the Nth time (N ≤ 15).
+                                                 "03"//The format used for these fields is:
+                                                 "04"
+                                                 "10"
+                                                 "11"
+                                                 "12"
+                                                 "20"
+                                                 "23"
+                                                 "40"
+                                                 "41"
+                                                 "428081");
 
-    void open()
-    {
-        serialPort.setPortName(serial_port_name);
-        serialPort.setBaudRate(QSerialPort::Baud115200, QSerialPort::AllDirections);
-        serialPort.setFlowControl(QSerialPort::NoFlowControl);
-        if(!serialPort.open(QIODevice::ReadWrite))
-        {
-            error_string = "NFC error: " + QString::number(serialPort.error());
-            fprintf(stdout, "NFC turnstile module can't open device %s / error: %s\n", serial_port_name.toStdString().c_str(), error_string.toStdString().c_str());
-        }
-        else
-        {
-            fprintf(stdout, "NFC module open device: %s\n", serial_port_name.toStdString().c_str());
-            error_string = "no error";
-            connect(&serialPort, &QSerialPort::readyRead, this, &NFC::slot_readyRead//, Qt::QueuedConnection
-                    );
-        }
-        fflush(stdout);
-        _timeout.setSingleShot(true);
-        _timeout.setInterval(timeout);
-        connect(&_timeout, &QTimer::timeout, this, &NFC::Command_timeout_slot);
-        ACKtimeout.setSingleShot(true);
-        ACKtimeout.setInterval(timeout);
-        connect(&ACKtimeout, &QTimer::timeout, this, &NFC::ACKtimeout_slot);
-        connect(this, &NFC::next_comm, this, &NFC::deque_comm );
-        //      serialPort.clear(QSerialPort::AllDirections);
-    }
     void wakeup()
     {
         qDebug() << "send wakeup";
-        qint64 h = serialPort.write(QByteArray::fromHex("5555000000"));
+        serialPort->write(QByteArray::fromHex("5555000000"));
     }
-    quint32 get_version()
+    void get_version()
     {
         qDebug() << "send get_version";
-        comm_enqueue(&_get_version);
-        return 10;
+        writeCommand2222(&_get_version);
     }
     void get_status()
     {
         qDebug() << "send get_status";
-        comm_enqueue(&_get_status);
-        //serialPort.waitForReadyRead(100);
+        writeCommand2222(&_get_status);
     }
     void SAMConfig()
     {
         qDebug() << "send SAMConfig";
-        comm_enqueue(&_SAMConfig);
-        //serialPort.waitForReadyRead(100);
+        writeCommand2222(&_SAMConfig);
     }
     void inListPassiveTarget()
     {
         qDebug() << "send inListPassiveTarget";
-        comm_enqueue(&_inListPassiveTarget);
+        writeCommand2222(&_inListPassiveTarget);
+        if (serialPort->waitForReadyRead(-1))
+        {
+            qDebug() << "hop inlist";
+            slot_readyRead();
+        }
     }
     void InAutoPoll ()
     {
         qDebug() << "send InAutoPoll";
-        comm_enqueue(&_InAutoPoll);
+        writeCommand2222(&_InAutoPoll);
+qDebug() << "exit InAutoPoll";
     }
     /**************************************************************************/
     /*!
@@ -221,16 +213,14 @@ public:
     {
         qDebug() << "send inDataExchange";
         //        uint8_t i;
-
         //      char inDataExchange[2]{0x40, // PN532_COMMAND_INDATAEXCHANGE;
         //              ,inListedTag};
         QByteArray inDataExchange;
         inDataExchange.append(0x40); // PN532_COMMAND_INDATAEXCHANGE;
         inDataExchange.append(inListedTag);
         inDataExchange += *send;
-        comm_enqueue(&inDataExchange);
-
-        return ;
+        writeCommand2222(&inDataExchange);
+        // return ;
     }
 private:
     QTimer _timeout;
@@ -238,31 +228,42 @@ private:
 
     int timeout = 200;
 
-    QSerialPort serialPort;
+    QSerialPort *serialPort;
     QString serial_port_name;
     QByteArray readDATA{};
     QByteArray payload{};
     uint8_t inListedTag; // Tg number of inlisted tag.
-    QQueue <QByteArray>command_queue;
-    bool ready_flag = true;
-    bool magic = true;
     QByteArray buff_last_command;
     QByteArray last_command;
-
-    void comm_enqueue(QByteArray *comm_data )
+    void recieve()
     {
-        //qDebug() << "command_ENqueue: " << comm_data.toHex('x') <<" " <<comm_data.lenght();
-        command_queue.enqueue(QByteArray(*comm_data));
-        if ( ready_flag )
+        if (serialPort->waitForReadyRead(timeout))
         {
-            deque_comm();
-            ready_flag = false;
+            slot_readyRead();
+            return;
+        }
+    }
+
+    void writeCommand2222(QByteArray *data_in)
+    {
+        while (true)
+        {
+            writeCommand(data_in);
+            if (serialPort->waitForReadyRead(timeout))  //wait for ACK
+            {
+                slot_readyRead();
+                break;
+            }
+        }
+        if (serialPort->waitForReadyRead(-1))    //wait for payload
+        {
+            slot_readyRead();
+            return;
         }
     }
 
     void writeCommand(QByteArray *data_in)
     {
-        ready_flag = false;
         uint8_t hlen = data_in->length();
         buff_last_command.clear();
         buff_last_command.append(PREAMBLE_STARTCODE);
@@ -278,48 +279,22 @@ private:
         uint8_t checksum = ~sum + 1;            // checksum of TFI + DATA
         buff_last_command += checksum;
         buff_last_command += (char)PN532_POSTAMBLE;
- //       qDebug() << "command_WRITE: " << lost_command.toHex('x');
-        qint64 y = serialPort.write(buff_last_command);
-        ACKtimeout.start(100);  //15 from datasheet
+        //       qDebug() << "command_WRITE: " << lost_command.toHex('x');
+        qint64 y = serialPort->write(buff_last_command);
+        //        ACKtimeout.start(100);  //15 from datasheet
         //command_timeout.start(350);
     }
-    int indexOf() //собственная реализация, потому что QByteArray::indexOf построена на циклах и блокирует сигнал слоты
+    void processed_payload(int TFI)
     {
-        int pos = 0;int c = readDATA.length();
-        while( c >= (pos + 6) )
-        {
-            int new_pos = 0;
-            if ( readDATA.at(pos) == 0x00 && readDATA.at(pos + 1) == 0x00 && readDATA.at(pos + 2) == 0xFF )
-                new_pos = pos;
-            else new_pos = -1;
-            //qDebug() << "new_pos: " << new_pos << "    readDATA.lenght(): "<<readDATA.lenght();
-            ///             найдем вхождение
-            ///                      |    проверим что вычитали минимально необходимое  количество данных( до байта с длинной пакета)
-            ///                      |         |                    проверим что вычитали весь пакет вместе хидером
-            ///                      |         |                                                  |                       проверим что это вообще нам
-            ///                      |         |                                                  |                                  |
-            if ( new_pos >= 0 && c >= (new_pos + 4) && (readDATA.at(new_pos + 4) +  7) >= c && readDATA.at( new_pos + 5) == 0xD5 )  //info frame
-            {
-                return new_pos;
-            }
-            else
-                pos++;
-        }
-        return -1;
-    }
-    void check_payload_response_code(int ret)
-    {
-        ACKtimeout.stop();
-        _timeout.stop();
-//        qDebug() << "check payload " << payload.toHex('x');
+        //        qDebug() << "check payload " << payload.toHex('x');
         if ( !payload.isEmpty())
-            switch ( ret )
+            switch ( TFI )
             {
             case 0x03: qDebug() << "get fimware version: ";
-                qDebug() << "Chip PN5" + QString::number(payload[0], 16);
-                qDebug() << "Firmware ver. " + QString::number(payload[1]) + '.' + QString::number(payload[2]);
-                qDebug() << "Support. " + QString::number(payload[3]);
-                payload.clear();
+                qDebug() << "Chip PN5" + QString::number(payload.at(0), 16);
+                qDebug() << "Firmware ver. " + QString::number(payload.at(1)) + '.' + QString::number(payload.at(2));
+                qDebug() << "Support. " + QString::number(payload.at(3));
+                //payload.clear();
                 break;
             case 0x05: qDebug() << "response GetGeneralStatus: Output  " << payload.toHex('x');
                 break;
@@ -331,7 +306,8 @@ private:
                 break;
             case 0x4B:
                 if (buff_last_command.length() >= 9)
-                    inListPassiveTarget_handler(buff_last_command.at(8));break;
+                    inListPassiveTarget_handler(buff_last_command.at(8));
+                break;
             case 0x61: autopoll_handler(payload.at(1)); break;
             }
     }
@@ -359,123 +335,142 @@ private:
         }
 
         qDebug() << "autopoll " << payload.toHex('x');
-        //emit toPass("9780201379624");
+        emit toPass("9780201379624");
     }
-
     void inListPassiveTarget_handler(int type)
     {
         int lenght = payload.length();
         switch (type) {
         case 0x00:
             if ( lenght >= 6 && lenght >= (payload.at(4) + 5) )
-                emit toPass("UID from NFC, 106 kbps type A: " + payload.mid(5, payload.at(4)).toHex('|'));break;
+            {
+                qDebug() << "UID from NFC, 106 kbps type A: " + payload.mid(5, payload.at(4))//.toHex('|')
+                            ;
+                emit toPass(payload.mid(5, payload.at(4)));
+            }
+            break;
         case 0x01:///fallthrough!!!!!!!!!!!
         case 0x02:
             if ( lenght >= 11 )
-                emit toPass("UID from NFC, (212 kbps or 424 kbps): " + payload.mid(3, 8).toHex('|'));break;
-        case 0x03:emit toPass("UID from NFC, 106 kbps Type B" + payload.toHex('|'));break;
+            {
+                qDebug() << "UID from NFC, (212 kbps or 424 kbps): " + payload.mid(3, 8)//.toHex('|')
+                            ;
+                emit toPass( payload.mid(3, 8));
+            }
+            break;
+        case 0x03:
+            qDebug() << "UID from NFC, 106 kbps Type B" + payload//.toHex('|')
+                        ;
+            emit toPass( payload.toHex('|'));
+            break;
         case 0x04:
             if ( lenght >= 7 )
-                emit toPass("UID from NFC: " + payload.mid(3, 4));break;
+            {
+                qDebug() << "UID from NFC: " + payload.mid(3, 4)//.toHex('|')
+                            ;
+                emit toPass(payload.mid(3, 4));
+            }
+            break;
         }
-        comm_enqueue(&_InAutoPoll);
+        writeCommand2222(&_InAutoPoll);
         qDebug() << "inListPassiveTarget_handler def: " << payload.toHex('x');
+
+        emit toPass("9780201379624");
     }
 
+    bool checkAmble()
+    {
+//        if( serialPort->bytesAvailable() < 6 )
+//            return false;
+//        readDATA = serialPort->read(6);
+//        if (checkAmble())
+//            return false;
 
-public slots:
-
-private slots:
-    void ACKtimeout_slot()
-    {
-        qDebug() << "ACKtimeout";
- //       qint64 g = serialPort.write(lost_command);
-    }
-    void Command_timeout_slot()
-    {
-        qDebug() << "Command timeout";
-        qint64 g = serialPort.write(ACK);  //reset pn532
-        writeCommand( &last_command );   //resend lost comm?
-        _timeout.start();
-    }
-    void deque_comm()
-    {
-        //qDebug() << "command_queue: " << command_queue <<" " << command_queue.lenght();
-        if (!command_queue.isEmpty())
+        if ( readDATA.at(0)==0x00&&readDATA.at(1)==0x00&&readDATA.at(2)==0xFF)
         {
-            last_command = command_queue.dequeue();
-            writeCommand( &last_command );
-            //qDebug() << "writeCommand: ";
-            _timeout.start(150);
-        }
-    }
-    void slot_readyRead()
-    {
-        readDATA += serialPort.readAll();
-        qDebug() << "readDATA: " << readDATA.toHex('x');
-        if(readDATA.length() >= 6)
-        {
-            if ( readDATA.at(0)==0x00&&
-                 readDATA.at(1)==0x00&&
-                 readDATA.at(2)==0xFF&&
-                 readDATA.at(3)==0x00&&
-                 readDATA.at(4)==0xFF&&
-                 readDATA.at(5)==0x00 )
+            if ( readDATA.at(3)==0x00&&readDATA.at(4)==0xFF&&readDATA.at(5)==0x00 )
             {
                 qDebug() << "ACK: ";
+                readDATA.clear();
                 last_command.clear();
-                ready_flag = true;
-                ACKtimeout.stop();
-                _timeout.stop();
-                return;
+                return true;
             }
-            if ( readDATA.at(0)==0x00&&
-                 readDATA.at(1)==0x00&&
-                 readDATA.at(2)==0xFF&&
-                 readDATA.at(3)==0xFF&&
-                 readDATA.at(4)==0x00&&
-                 readDATA.at(5)==0x00 )
+            if ( readDATA.at(3)==0xFF&&readDATA.at(4)==0x00&&readDATA.at(5)==0x00 )
             {
                 qDebug() << "NAK";
-                //ready_flag = true;
-                ACKtimeout.stop();
-                _timeout.stop();
-                return;
+                readDATA.clear();
+                return true;
             }
-            if ( readDATA.at(0) == 0x00&&
-                 readDATA.at(1) == 0x00&&
-                 readDATA.at(2) == 0xFF&&
-                 readDATA.at(3) == 0x01&&
-                 readDATA.at(4) == 0xFF )
+            if ( readDATA.at(3)==0x01&&readDATA.at(4) == 0xFF )
             {
                 qDebug() << "Error frame";
-                ready_flag = true;
+                readDATA.clear();
+                return true;
             }
         }
-        int new_pos = indexOf();
-        if (new_pos >= 0)
+        return false;
+    }
+
+public slots:
+    void open()
+    {
+        serialPort = new QSerialPort(serial_port_name);
+        serialPort->setBaudRate(QSerialPort::Baud115200, QSerialPort::AllDirections);
+        serialPort->setFlowControl(QSerialPort::NoFlowControl);
+        if(!serialPort->open(QIODevice::ReadWrite))
         {
-            _timeout.stop();
-            int len = readDATA.at( new_pos + 3);
-            if ( readDATA.length() < new_pos + len + 1 )
-                return;
-            qDebug() << "Info frame: ";// <<len;
-            payload.clear();
-            payload.append( readDATA.mid(new_pos + 7, len - 1)); //truncate checksum and postamble
-
-            qint64 g = serialPort.write(ACK);
-            check_payload_response_code(readDATA.at(new_pos + 6));
-            readDATA.clear();
-            ready_flag = true;
-
+            error_string = "NFC error: " + QString::number(serialPort->error());
+            fprintf(stdout, "NFC turnstile module can't open device %s / error: %s\n", serial_port_name.toStdString().c_str(), error_string.toStdString().c_str());
         }
-        emit next_comm();
+        else
+        {
+            fprintf(stdout, "NFC module open device: %s\n", serial_port_name.toStdString().c_str());
+            error_string = "no error";
+            //           connect(&serialPort, &QSerialPort::readyRead, this, &NFC::slot_readyRead);
+        }
+        fflush(stdout);
+        wakeup();
+        QThread::msleep(500);
+        get_version();
+        get_status();
+        SAMConfig();
+        //InAutoPoll();
+        inListPassiveTarget();
+    }
+
+private slots:
+//    void checkAmble()
+//    {
+
+//    }
+    void slot_readyRead()
+    {
+        if( serialPort->bytesAvailable() < 6 )
+            return;
+        readDATA = serialPort->read(6);
+        if (checkAmble())
+            return;
+
+        int message_lenght = readDATA.at( 3 )+1;
+
+        if( serialPort->bytesAvailable() < message_lenght )
+        {
+            if (!serialPort->waitForReadyRead(timeout) /*|| serialPort->bytesAvailable() < message_lenght*/)
+                return;
+        }
+        readDATA = serialPort->read(message_lenght);
+        payload.clear();
+        payload.append( readDATA.mid(1, message_lenght - 3)); //truncate all checksum, TFI and postamble
+        qDebug() << "payload frame, TFI:" << "x"+QString::number(readDATA.at( 0 ), 16) << ", payload:" << payload.toHex('x').toUpper();
+        serialPort->write(ACK);
+        processed_payload(readDATA.at( 0 ));
+        readDATA.clear();
     }
 
 signals:
-    void next_comm();
+    void Log();
     void toPass(QByteArray);
 
 };
 
-#endif // NFC_H
+#endif // NFC_COPY_H

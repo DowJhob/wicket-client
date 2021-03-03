@@ -8,24 +8,23 @@
 
 #define INTR_LENGTH		64
 
-class async: public QObject {
+class libusb_async_reader: public QObject {
     Q_OBJECT
 public:
-
     QByteArray d;
     struct libusb_device_handle *devh = nullptr;
-    async( uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81):
+    libusb_async_reader( uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81):
         VID( VID), PID( PID), EP_INTR(EP_INTR), iface ( iface), config (config), alt_config ( alt_config)
     {
         m_instance = this;
+ //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
+//        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
     }
 
 protected:
     //async();
 private:
-
-
-    static async* m_instance;
+    static libusb_async_reader* m_instance;
     uint16_t VID = 0x05E0;
     uint16_t PID = 0x1900;
     char EP_INTR;
@@ -47,8 +46,19 @@ private:
 
     static void LIBUSB_CALL callback_wrapper(struct libusb_transfer *transfer)
     {
-        async *connector = reinterpret_cast<async*>(transfer->user_data);
-        connector->cb_irq(transfer);
+        libusb_async_reader *readerInstance = reinterpret_cast<libusb_async_reader*>(transfer->user_data);
+//        connector->cb_irq(transfer);
+
+        QByteArray data = QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length );
+        if ( !data.isNull() and data.size() >= 32 and static_cast<int>(data[0]) == 34 and static_cast<int>(data[1]) == 1 )
+        {
+            readerInstance->barcode = true;
+            readerInstance->readyRead_barcode(data.mid(6, data.at(3)));
+            qDebug() << "Barcode data decode2: " << data.mid(6, data.at(3));
+        }
+        int rc = libusb_submit_transfer(readerInstance->irq_transfer);
+        if (rc != 0)
+            readerInstance->log("callback_wrapper: " + QString::fromLatin1(libusb_error_name(rc)));
     }
     void alloc_transfers(void)
     {
@@ -59,8 +69,31 @@ private:
         libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf, sizeof(irqbuf), callback_wrapper, this, 0);
         libusb_submit_transfer(irq_transfer);
     }
-
-public slots:
+    void set_param( unsigned char *_data, quint16 size, uint _timeout=300)
+    {
+        quint16 send_value = 0x200 + _data[0];
+        //qDebug() << "libusb_control_transfer error: " <<
+        int rc = libusb_control_transfer( devh, LIBUSB_RECIPIENT_INTERFACE
+                                 | LIBUSB_REQUEST_TYPE_CLASS
+                                 | LIBUSB_ENDPOINT_OUT, 9, send_value, 0, _data, size, _timeout );
+        if (rc != 0)
+            emit log("set_param: " + QString::fromLatin1(libusb_error_name(rc)));
+    }
+    void SNAPI_scaner_init( )
+    {
+        //--------Init usb--------------
+        //qDebug() << "first libusb_control_transfer error: " <<
+        libusb_control_transfer( devh, LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_OUT,
+                                 10, 0, 0, nullptr, 0, 300 ) ;
+        //--------Init usb 1------------
+        set_param( SNAPI_INIT_1, 32, 300 );
+        set_param( SNAPI_RET0, 4, 300 );
+        set_param( ENABLE_SCANNER, 2, 300);
+        //---------Init command 1------')
+        set_param(SNAPI_COMMAND_1, 32, 300);
+        set_param(SNAPI_RET0, 4, 300);
+        set_param(SNAPI_RET0, 4, 300);
+    }
     void start()
     {
         int rc;
@@ -68,6 +101,8 @@ public slots:
         while (true)
         {
             rc = libusb_handle_events_timeout(nullptr, &zero_tv);
+            if (rc != 0)
+                emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
             if (barcode)
             {
                 set_param(  SNAPI_BARCODE_REQ, 4, 100 );
@@ -77,11 +112,14 @@ public slots:
             }
         }
     }
+
+public slots:
     void init()
     {
         int r = 0;
         //libusb_reset_device(devh);
-
+        qDebug() << libusb_get_version()->describe << libusb_get_version()->major << libusb_get_version()->minor
+                 << libusb_get_version()->micro << libusb_get_version()->nano;
         if ( (r = libusb_init(nullptr)) != LIBUSB_SUCCESS )
             qDebug() << "libusb_init error: " <<  libusb_error_name( r ) ;
 
@@ -97,94 +135,18 @@ public slots:
             if((r = libusb_set_interface_alt_setting(devh, iface, alt_config)) != 0)
                 qDebug() << "NOT set ALT configuration: " << libusb_error_name( r );
             alloc_transfers();
-            emit init_completed();
+            SNAPI_scaner_init();
+            start();
+            //emit init_completed();
         }
         else
             qDebug() << "libusb_open_device_with_vid_pid error: device not open";
     }
-    void usb_init( )
-    {
-        //--------Init usb--------------
-        //qDebug() << "first libusb_control_transfer error: " <<
-        libusb_control_transfer( devh, LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_OUT,
-                                 10, 0, 0, nullptr, 0, 300 ) ;
-        //--------Init usb 1------------
-        set_param( SNAPI_INIT_1, 32, 300 );
-        set_param( SNAPI_RET0, 4, 300 );
-        set_param( ENABLE_SCANNER, 2, 300);
-        //---------Init command 1------')
-        set_param(SNAPI_COMMAND_1, 32, 300);
-        set_param(SNAPI_RET0, 4, 300);
-        set_param(SNAPI_RET0, 4, 300);
-    }
-    void set_param( unsigned char *_data, quint16 size, uint _timeout=300)
-    {
-        quint16 send_value = 0x200 + _data[0];
-        //qDebug() << "libusb_control_transfer error: " <<
-        libusb_control_transfer( devh, LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_OUT, 9, send_value, 0, _data, size, _timeout );
 
-    }
-    void cb_irq(struct libusb_transfer *transfer)
-    {
-        QByteArray data;
-        data = QByteArray::fromRawData( (char*)transfer->buffer, transfer->actual_length );
-
-        m_instance->emitSignal( data );
-    }
-    void emitSignal(QByteArray data)
-    {
-        if ( !data.isNull() and data.size() == 32 and data[0] == (char)34 and data[1] == (char)1 )
-        {
-            qDebug() << "Barcode data decode2: " << data.mid(6, data.at(3));
-            barcode = true;
-
-            //m_instance->emitSignal( data.mid(6, data.at(3)) );
-        }
-        emit readyRead_barcode(data.mid(6, data.at(3)));
-        libusb_submit_transfer(irq_transfer);
-    }
 signals:
     void readyRead_barcode(QByteArray);
-    void init_completed( );
-};
-//==========================================================================================
-class libusb_async_reader: public QObject {
-    Q_OBJECT
-public:
-    struct libusb_device_handle *devh = nullptr;
-    uchar      EP_IN = 0x81;
-    uint16_t     VID = 0x05E0;
-    uint16_t     PID = 0x1900;
-    int iface = 0;
-    int config = 1;
-    int alt_config = 0;
-    libusb_async_reader()
-    {
-        asyncc = new async( VID, PID, iface, config, alt_config);
-        connect(asyncc, SIGNAL(readyRead_barcode(QByteArray)),  this, SLOT(readyRead_inner(QByteArray)), Qt::DirectConnection );
-        connect(&thread, SIGNAL(started()), asyncc, SLOT(init()));
-        connect(asyncc, SIGNAL(init_completed()), asyncc, SLOT(usb_init()) );
-        connect(asyncc, SIGNAL(init_completed()), asyncc, SLOT(start()) );
-        asyncc->moveToThread(&thread);
-        thread.start( );
-    }
-    ~libusb_async_reader()
-    {
-        //delete interval_timer;
-    }
-
-signals:
-    void readyRead(QByteArray);
-private:
-    QThread thread;
-    async *asyncc;
-
-public slots:
-    void readyRead_inner(QByteArray data)
-    {
-        emit readyRead(data);
-    }
-
+    void init_completed();
+    void log(QString);
 };
 
 #endif // ASYNC_H

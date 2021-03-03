@@ -65,7 +65,7 @@ public:
         //exitPassed->addTransition( UncondTimeout );
         exitPassed->addTransition( Ready );
 
-        UncondTimeout->addTransition(UncondTimeoutTimer, &QTimer::timeout,               Ready);
+        UncondTimeout->addTransition(uncondDelayTimer, &QTimer::timeout,               Ready);
         UncondTimeout->addTransition(this,               &wicketFSM::set_FSM_to_onCheck, OnCheck); //Для возможности быстро чекнуть билет на выход не дожидаясь таймаута на досмотр
         Drop->addTransition(Ready);
 
@@ -89,13 +89,19 @@ public:
         connect(exitPassed,    &QState::entered,  wait_pass_timer, &QTimer::stop );
         //=================================================================================================
 //=================================================================================================
-        connect(UncondTimeout, SIGNAL(entered()), UncondTimeoutTimer, SLOT(start()) );
+        connect(UncondTimeout, SIGNAL(entered()), uncondDelayTimer, SLOT(start()) );
 
     }
     void timer_wrapper()
     {
 
     }
+public slots:
+    void set_uncondDelay_time(int uncondDelay = 6000)
+    {
+        uncondDelayTimer->setInterval(uncondDelay);
+    }
+
 signals:
     void set_FSM_to_entry();
     void set_FSM_to_exit();
@@ -109,32 +115,28 @@ private:
     {
         wait_pass_timer = new QTimer(this);
         wrong_light_timer = new QTimer(this);
-        UncondTimeoutTimer = new QTimer(this);
+        uncondDelayTimer = new QTimer(this);
         _db_Timeout_timer = new QTimer(this);
 
         _db_Timeout_timer->setSingleShot(true);
         wait_pass_timer->setSingleShot(true);
         wrong_light_timer->setSingleShot(true);
-        UncondTimeoutTimer->setSingleShot(true);
+        uncondDelayTimer->setSingleShot(true);
 
-        UncondTimeoutTimer->setInterval(UnconditionalTimeout_TIME);
+        //uncondDelayTimer->setInterval(uncondDelay);
+        set_uncondDelay_time();
         wait_pass_timer->setInterval(pass_wait_time);
         wrong_light_timer->setInterval(wrong_light_TIME);
         _db_Timeout_timer->setInterval(15000);
-
-
-
     }
-
-
 
     QTimer *wait_pass_timer;
     int pass_wait_time = 10000;
     QTimer *wrong_light_timer;
     int wrong_light_TIME = 2000;
     QTimer *_db_Timeout_timer;
-    QTimer *UncondTimeoutTimer;
-    int UnconditionalTimeout_TIME = 2000;
+    QTimer *uncondDelayTimer;
+//    int uncondDelay = 8000;
 };
 
 #endif // WICKETFSM_H

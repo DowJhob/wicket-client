@@ -17,7 +17,7 @@
 
 #include <common_types.h>
 
-//#define TEST
+//#define NFC_ON
 
 class nikiret: public QObject {
     Q_OBJECT
@@ -35,13 +35,15 @@ public:
     {
         //     serialPort.close();
     }
-    private:
+private:
     QSerialPort serialPort;
     QString serial_port_name;
     int pulse_width = 500;
     int state_polling_time = 1000;
     QByteArrayList init_list {"WAKE\r",
-                       //       "PHER_ON\r",
+#ifdef NFC_ON
+                              "PHER_ON\r",
+#endif
                               "WDT_ON\r",
                               "DV_DIS\r",
                               "LIGHT_ON\r",
@@ -66,17 +68,17 @@ public slots:
     void start()
     {
         open_port();
-//        pass_sequence_timer.setTimerType(Qt::PreciseTimer);
+        //        pass_sequence_timer.setTimerType(Qt::PreciseTimer);
         pass_sequence_timer = new QTimer(this);
         pass_sequence_timer->setInterval(pulse_width);
         pass_sequence_timer->setSingleShot(true);
         connect(pass_sequence_timer, &QTimer::timeout, this, &nikiret::slot_pass_sequnce_timer);
-//        lock_unlock_timer_sequence.setTimerType(Qt::PreciseTimer);
+        //        lock_unlock_timer_sequence.setTimerType(Qt::PreciseTimer);
         lock_unlock_timer_sequence = new QTimer(this);
         lock_unlock_timer_sequence->setInterval(pulse_width);
         lock_unlock_timer_sequence->setSingleShot(true);
         connect(lock_unlock_timer_sequence, &QTimer::timeout, this, &nikiret::slot_lock_unlock_sequnce_timer);
-//        state_polling_timer.setTimerType(Qt::PreciseTimer);
+        //        state_polling_timer.setTimerType(Qt::PreciseTimer);
         state_polling_timer = new QTimer(this);
         connect(state_polling_timer, &QTimer::timeout, this, &nikiret::slot_state_polling);
         state_polling_timer->setInterval(state_polling_time);
