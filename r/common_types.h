@@ -19,6 +19,10 @@ enum direction_state {
     dir_entry,
     dir_exit
 };
+enum color {
+    red,
+    green
+};
 enum picture {
     pict_service,
     pict_ready,

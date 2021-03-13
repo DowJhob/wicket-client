@@ -1,4 +1,4 @@
-HOST_LIST='/host-listS/host_list-GATE-2.txt'
+HOST_LIST='host-listS/host_list-GATE-2.txt'
 echo "=============================== COPY to SERVER ========================"
 pscp -p 32 -t 4 -v -h $HOST_LIST r /usr/r
 echo "==================================== SYNC ============================="

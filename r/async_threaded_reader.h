@@ -6,7 +6,7 @@
 #include <QTimer>
 #include <QDebug>
 
-#define INTR_LENGTH		64
+#define INTR_LENGTH		1024
 
 class libusb_async_reader: public QObject {
     Q_OBJECT
@@ -17,8 +17,8 @@ public:
         VID( VID), PID( PID), EP_INTR(EP_INTR), iface ( iface), config (config), alt_config ( alt_config)
     {
         m_instance = this;
- //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
-//        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
+        //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
+        //        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
     }
 
 protected:
@@ -44,21 +44,54 @@ private:
     uchar SNAPI_COMMAND_1[32]    { 0x0D, 0x40, 0x00, 0x06, 0x00, 0x06, 0x02, 0x00, 0x4E, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
     uchar SNAPI_INIT_1[32]       { 0x0D, 0x40, 0x00, 0x06, 0x00, 0x06, 0x20, 0x00, 0x04, 0xb0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+    QMap<int, QByteArray> message{};
     static void LIBUSB_CALL callback_wrapper(struct libusb_transfer *transfer)
     {
         libusb_async_reader *readerInstance = reinterpret_cast<libusb_async_reader*>(transfer->user_data);
-//        connector->cb_irq(transfer);
 
         QByteArray data = QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length );
-        if ( !data.isNull() and data.size() >= 32 and static_cast<int>(data[0]) == 34 and static_cast<int>(data[1]) == 1 )
-        {
-            readerInstance->barcode = true;
-            readerInstance->readyRead_barcode(data.mid(6, data.at(3)));
-            qDebug() << "Barcode data decode2: " << data.mid(6, data.at(3));
-        }
+        qDebug() << "Raw data: " << data.toHex(':') << " " << data.size();
+
+         readerInstance->parseSNAPImessage( data );
+
+//        if ( !data.isNull() and data.size() >= 32 and static_cast<int>(data[0]) == 34 //
+//             and static_cast<int>(data[1]) > 0 and readerInstance->message.count() < data[1] )
+//        {
+//            readerInstance->set_param(  readerInstance->SNAPI_BARCODE_REQ, 4, 100 );
+//            readerInstance->message.insert( data[2], data.mid(6, data.at(3)));
+//            if( readerInstance->message.count() == data[1] )    // Total messages
+//            {
+//                QByteArray aaa{};
+//                for(int i = 0; i < readerInstance->message.count(); i++)
+//                    aaa += readerInstance->message.value(i);
+//                readerInstance->readyRead_barcode(aaa);
+//                qDebug() << "Barcode data decode2: " << aaa;
+//                readerInstance->set_param( readerInstance->SNAPI_BEEP, 32, 100 );
+//                readerInstance->set_param( readerInstance->SNAPI_RET0, 4, 100 );
+//            }
+//        }
         int rc = libusb_submit_transfer(readerInstance->irq_transfer);
         if (rc != 0)
             readerInstance->log("callback_wrapper: " + QString::fromLatin1(libusb_error_name(rc)));
+    }
+    void parseSNAPImessage( QByteArray data )
+    {
+        if ( !data.isNull() and data.size() >= 32 and static_cast<int>(data[0]) == 34 //
+             and static_cast<int>(data[1]) > 0 and message.count() < data[1] )
+        {
+            message.insert( data[2], data.mid(6, data.at(3)));
+            if( message.count() == data[1] )    // Total messages
+            {
+                QByteArray aaa{};
+                for(int i = 0; i < message.count(); i++)
+                    aaa += message.value(i);
+                readyRead_barcode(aaa);
+                message.clear();
+                qDebug() << "Barcode data decode2: " << aaa;
+                set_param( SNAPI_BEEP, 32, 100 );
+                set_param( SNAPI_RET0, 4, 100 );
+            }
+        }
     }
     void alloc_transfers(void)
     {
@@ -74,8 +107,8 @@ private:
         quint16 send_value = 0x200 + _data[0];
         //qDebug() << "libusb_control_transfer error: " <<
         int rc = libusb_control_transfer( devh, LIBUSB_RECIPIENT_INTERFACE
-                                 | LIBUSB_REQUEST_TYPE_CLASS
-                                 | LIBUSB_ENDPOINT_OUT, 9, send_value, 0, _data, size, _timeout );
+                                          | LIBUSB_REQUEST_TYPE_CLASS
+                                          | LIBUSB_ENDPOINT_OUT, 9, send_value, 0, _data, size, _timeout );
         if (rc != 0)
             emit log("set_param: " + QString::fromLatin1(libusb_error_name(rc)));
     }
@@ -94,22 +127,17 @@ private:
         set_param(SNAPI_RET0, 4, 300);
         set_param(SNAPI_RET0, 4, 300);
     }
-    void start()
+    [[ noreturn ]] void start()
     {
         int rc;
         /* Handle Events */
         while (true)
         {
             rc = libusb_handle_events_timeout(nullptr, &zero_tv);
+
+            set_param( SNAPI_BARCODE_REQ, 4, 100 );
             if (rc != 0)
                 emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
-            if (barcode)
-            {
-                set_param(  SNAPI_BARCODE_REQ, 4, 100 );
-                barcode = false;
-                //set_param( SNAPI_BEEP, 32, 100 );
-                //set_param( SNAPI_RET0, 4, 100 );
-            }
         }
     }
 

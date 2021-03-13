@@ -41,9 +41,9 @@ private:
     int pulse_width = 500;
     int state_polling_time = 1000;
     QByteArrayList init_list {"WAKE\r",
-#ifdef NFC_ON
+                      #ifdef NFC_ON
                               "PHER_ON\r",
-#endif
+                      #endif
                               "WDT_ON\r",
                               "DV_DIS\r",
                               "LIGHT_ON\r",
@@ -63,6 +63,11 @@ private:
     QTimer *pass_sequence_timer;
     QTimer *lock_unlock_timer_sequence;
     QTimer *state_polling_timer;
+
+    QTimer *flash_timer;
+    bool greenLstate = false;
+    bool redLstate = false;
+
     char heater = 'D';
 public slots:
     void start()
@@ -82,6 +87,11 @@ public slots:
         state_polling_timer = new QTimer(this);
         connect(state_polling_timer, &QTimer::timeout, this, &nikiret::slot_state_polling);
         state_polling_timer->setInterval(state_polling_time);
+        //        flash_timer.setTimerType(Qt::PreciseTimer);
+        flash_timer = new QTimer(this);
+        connect(flash_timer, &QTimer::timeout, this, &nikiret::slot_flash);
+        flash_timer->setInterval(100);
+        //flash_timer->start();
         init();
         //set_test();
     }
@@ -117,16 +127,34 @@ public slots:
     }
     void setGREEN()
     {
+        greenLstate = true;
         send_to_crossboard("GREEN\r");
     }
     void setRED()
     {
+        redLstate = true;
         send_to_crossboard("RED\r");
     }
     void setLightOFF()
     {
+        greenLstate = false;
+        redLstate = false;
         send_to_crossboard("TL_OFF\r");
     }
+    void setFLASH(color color)
+    {
+        switch (color)
+        {
+        case green: flasher = &nikiret::setGREEN;break;
+        case red: flasher = &nikiret::setRED;break;
+        }
+    }
+    void stopFLASH()
+    {
+        flash_timer->stop();
+        setLightOFF();
+    }
+
     void alarm()
     {
         send_to_crossboard("BEEP 100\r");
@@ -182,16 +210,30 @@ private slots:
 #endif
         emit temp(cross_brd_temp);
     }
+    void slot_flash()
+    {
+        //      if (redLstate)
+        //           setLightOFF();
+        //       else
+        //           setRED();
+        if (greenLstate)
+            setLightOFF();
+        else
+            (this->*flasher)();
+    }
 private:
+    typedef void (nikiret::*MyCoolMethod)();
+    void (nikiret::*flasher)() = &nikiret::setGREEN;
+
     void send_to_crossboard(QByteArray command)
     {
-        state_polling_timer->stop();
         serialPort.write(command);
         serialPort.flush();
-        state_polling_timer->start();
     }
+
     void recieve_buff_parse()
     {
+        //qDebug() <<  buff;
         if ( buff.indexOf("HARDRST 1") >= 0 )
         {
             fprintf(stdout, "hrdrst");
