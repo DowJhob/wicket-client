@@ -28,11 +28,11 @@ public:
         //// Из любого состояния можно перейти в разблокированный турникет
         Ready                 = new QState( this );
         OnCheck               = new QState( this );
-        dbTimeout            = new QState( this );
+        dbTimeout             = new QState( this );
         Entry                 = new QState( this );
-        entryPassed             = new QState( this );
+        entryPassed           = new QState( this );
         Exit                  = new QState( this );
-        exitPassed              = new QState( this );
+        exitPassed            = new QState( this );
         Wrong                 = new QState( this );
         Drop                  = new QState( this );
         UncondTimeout         = new QState( this );
