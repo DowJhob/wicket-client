@@ -79,7 +79,7 @@ public slots:
                                                                                   wicket->setLightOFF();
                                                                                   setPictureSIG(picture::pict_ready, "");
                                                                                   emit send_to_server(message(msg_type::command, command::_wicketReady));});
-        connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
+//        connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
         connect(serverFound->Armed->OnCheck,       &QState::entered, this, [=](){setPictureSIG(picture::pict_onCheck, "");});
         connect(serverFound->Armed->dbTimeout,     &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, "Ошибка базы данных" ); wicket->setRED(); });
         connect(serverFound->Armed->Wrong,         &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, cmd_arg ); wicket->setRED();

@@ -48,28 +48,8 @@ private:
     static void LIBUSB_CALL callback_wrapper(struct libusb_transfer *transfer)
     {
         libusb_async_reader *readerInstance = reinterpret_cast<libusb_async_reader*>(transfer->user_data);
-
         QByteArray data = QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length );
-        qDebug() << "Raw data: " << data.toHex(':') << " " << data.size();
-
          readerInstance->parseSNAPImessage( data );
-
-//        if ( !data.isNull() and data.size() >= 32 and static_cast<int>(data[0]) == 34 //
-//             and static_cast<int>(data[1]) > 0 and readerInstance->message.count() < data[1] )
-//        {
-//            readerInstance->set_param(  readerInstance->SNAPI_BARCODE_REQ, 4, 100 );
-//            readerInstance->message.insert( data[2], data.mid(6, data.at(3)));
-//            if( readerInstance->message.count() == data[1] )    // Total messages
-//            {
-//                QByteArray aaa{};
-//                for(int i = 0; i < readerInstance->message.count(); i++)
-//                    aaa += readerInstance->message.value(i);
-//                readerInstance->readyRead_barcode(aaa);
-//                qDebug() << "Barcode data decode2: " << aaa;
-//                readerInstance->set_param( readerInstance->SNAPI_BEEP, 32, 100 );
-//                readerInstance->set_param( readerInstance->SNAPI_RET0, 4, 100 );
-//            }
-//        }
         int rc = libusb_submit_transfer(readerInstance->irq_transfer);
         if (rc != 0)
             readerInstance->log("callback_wrapper: " + QString::fromLatin1(libusb_error_name(rc)));
