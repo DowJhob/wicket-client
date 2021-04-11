@@ -192,7 +192,7 @@ private slots:
     void slot_readyRead()
     {
         buff += serialPort.readAll();
-
+//qDebug() << buff;
         if ( buff.at(buff.length()-1) != '\r' )
             return;
         recieve_buff_parse();

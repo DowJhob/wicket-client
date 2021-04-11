@@ -89,7 +89,7 @@ private:
         int rc = libusb_control_transfer( devh, LIBUSB_RECIPIENT_INTERFACE
                                           | LIBUSB_REQUEST_TYPE_CLASS
                                           | LIBUSB_ENDPOINT_OUT, 9, send_value, 0, _data, size, _timeout );
-        if (rc != 0)
+        if (rc < 0)
             emit log("set_param: " + QString::fromLatin1(libusb_error_name(rc)));
     }
     void SNAPI_scaner_init( )
