@@ -63,8 +63,8 @@ public slots:
 
         connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(message(msg_type::command, command::wicketArmed)); });
         connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(message(msg_type::command, command::wicketUnlocked));
-                                                                               setPictureSIG(picture::pict_access, "");
-                                                                               wicket->setGREEN();});
+            setPictureSIG(picture::pict_access, "");
+            wicket->setGREEN();});
 
         connect(serverFound->SetArmed,    &QState::entered, wicket, &nikiret::lock_unlock_sequence);
         connect(serverFound->SetUnLocked, &QState::entered, wicket, &nikiret::lock_unlock_sequence);
@@ -76,14 +76,14 @@ public slots:
         connect(wicket, &nikiret::passed,                   serverFound->Armed, &wicketFSM::set_FSM_passed);   //по сигналу прохода от турникета перейдем в состояние проход
 
         connect(serverFound->Armed->Ready,         &QState::entered, this, [=](){ ready_state_flag = true;
-                                                                                  wicket->setLightOFF();
-                                                                                  setPictureSIG(picture::pict_ready, "");
-                                                                                  emit send_to_server(message(msg_type::command, command::_wicketReady));});
+            wicket->setLightOFF();
+            setPictureSIG(picture::pict_ready, "");
+            emit send_to_server(message(msg_type::command, command::_wicketReady));});
         connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
         connect(serverFound->Armed->OnCheck,       &QState::entered, this, [=](){setPictureSIG(picture::pict_onCheck, "");});
         connect(serverFound->Armed->dbTimeout,     &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, "Ошибка базы данных" ); wicket->setRED(); });
         connect(serverFound->Armed->Wrong,         &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, cmd_arg ); wicket->setRED();
-                                                                                 qDebug() << "time to enterd WRONG state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";});
+            qDebug() << "time to enterd WRONG state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";});
         connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::_wicketEntry_slot);  //вошли в состояния прохода, открыли калитку, зажгли лампы
         connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::_wicketExit_slot);
         connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::entry_passed));} );   // Когда входим в это состояние отсылаем сообщение на сервер
@@ -103,24 +103,24 @@ public slots:
     {
         cmd_arg = msg.body.toString();
         switch (msg.comm) {
-         //     case _comm::heartbeat: ;
-              //from main to wicket
-              case command::set_test :     emit from_server_set_test();break;
-              case command::set_normal:    emit from_server_set_normal();break;
-              case command::set_iron_mode: emit from_server_set_iron_mode();break;
-              case command::set_type_out:  emit from_server_set_type_OUT();break;
-              case command::armed:         emit from_server_setArmed();break;
-              case command::unlock:        emit from_server_setUnLocked();break;
-              case command::onCheck:       emit set_onCheck();break;
-              case command::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ================================= WRONG: " << QString::number(t->nsecsElapsed()/1000000) << "ms";
-                                           t->restart();
-                                           emit from_server_to_wrong ();break;//+ description
-              case command::set_ready:     from_server_to_ready();break;
-              case command::entry_open:    qDebug()<<"time betwen send barcode and recieve open  ================================= OPEN: " << QString::number(t->nsecsElapsed()/1000000) << "ms";
-                                           t->restart();
-                                           emit from_server_to_entry();break;
-              case command::exit_open:     emit from_server_to_exit();break;
-              }
+        //     case _comm::heartbeat: ;
+        //from main to wicket
+        case command::set_test :     emit from_server_set_test();break;
+        case command::set_normal:    emit from_server_set_normal();break;
+        case command::set_iron_mode: emit from_server_set_iron_mode();break;
+        case command::set_type_out:  emit from_server_set_type_OUT();break;
+        case command::armed:         emit from_server_setArmed();break;
+        case command::unlock:        emit from_server_setUnLocked();break;
+        case command::onCheck:       emit set_onCheck();break;
+        case command::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ================================= WRONG: " << QString::number(t->nsecsElapsed()/1000000) << "ms";
+            t->restart();
+            emit from_server_to_wrong ();break;//+ description
+        case command::set_ready:     from_server_to_ready();break;
+        case command::entry_open:    qDebug()<<"time betwen send barcode and recieve open  ================================= OPEN: " << QString::number(t->nsecsElapsed()/1000000) << "ms";
+            t->restart();
+            emit from_server_to_entry();break;
+        case command::exit_open:     emit from_server_to_exit();break;
+        }
     }
     void send_barcode(QByteArray data)
     {
@@ -164,9 +164,9 @@ private slots:
         iron_mode_flag = false;
         testt->stop();
         testt_pass->stop();
-     //   if(main_direction == direction_state::dir_entry )
-            disconnect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
-     //   else
+        //   if(main_direction == direction_state::dir_entry )
+        disconnect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
+        //   else
 
         disconnect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
         disconnect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
@@ -241,8 +241,17 @@ private:
         testt = new QTimer(this);
         testt->setInterval(3000);
         //       connect(testt, &QTimer::timeout, [=](){ send_barcode("9780201379624");} );
-        connect(testt, &QTimer::timeout, [=](){ send_barcode("superticket");} );
+        connect(testt, &QTimer::timeout, [=](){
+            QByteArray b1 = "superticket";
+            QByteArray b2 = "forbidticket";
+            if (test_flag)
+                send_barcode(b1);
+            else
+                send_barcode(b2);
+            test_flag = !test_flag;
+        } );
     }
+    bool test_flag = true;
     void wicket_init()
     {
         wicket = new nikiret();
@@ -282,7 +291,7 @@ signals:
     void from_server_to_entry();
     void from_server_to_exit();
     void from_server_to_wrong();
-//    void from_server_onCheck();
+    //    void from_server_onCheck();
     void from_server_setArmed();
     void from_server_setUnLocked();
     void log(QString);
