@@ -70,7 +70,7 @@ public slots:
         connect(serverFound->SetUnLocked, &QState::entered, wicket, &nikiret::lock_unlock_sequence);
         ///--------------------------- Машина состояний проходов -----------------------------------------------
         connect(this,   &controller::from_server_to_wrong,  serverFound->Armed, &wicketFSM::set_FSM_to_wrong);  // по сигналу с сервера переходим в состояния запрещено
-        connect(this,   &controller::set_onCheck,           serverFound->Armed, &wicketFSM::set_FSM_to_onCheck);//что бы устанавливать по команде с сервера когда ридер выходной
+        connect(this,   &controller::set_onCheck,           serverFound->Armed, &wicketFSM::set_FSM_to_onCheckEntry);//что бы устанавливать по команде с сервера когда ридер выходной
         connect(this,   &controller::from_server_to_entry,  serverFound->Armed, &wicketFSM::set_FSM_to_entry);  // по сигналу с сервера переходим в состояние открыто
         connect(this,   &controller::from_server_to_exit,   serverFound->Armed, &wicketFSM::set_FSM_to_exit);
         connect(wicket, &nikiret::passed,                   serverFound->Armed, &wicketFSM::set_FSM_passed);   //по сигналу прохода от турникета перейдем в состояние проход
@@ -80,7 +80,7 @@ public slots:
             setPictureSIG(picture::pict_ready, "");
             emit send_to_server(message(msg_type::command, command::_wicketReady));});
         connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
-        connect(serverFound->Armed->OnCheck,       &QState::entered, this, [=](){setPictureSIG(picture::pict_onCheck, "");});
+        connect(serverFound->Armed->OnCheckEntry,       &QState::entered, this, [=](){setPictureSIG(picture::pict_onCheck, "");});
         connect(serverFound->Armed->dbTimeout,     &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, "Ошибка базы данных" ); wicket->setRED(); });
         connect(serverFound->Armed->Wrong,         &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, cmd_arg ); wicket->setRED();
             qDebug() << "time to enterd WRONG state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";});

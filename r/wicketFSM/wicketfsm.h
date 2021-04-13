@@ -11,7 +11,8 @@ class wicketFSM : public QState
 public:
     //// Из любого состояния можно перейти в разблокированный турникет
     QState *Ready;
-    QState *OnCheck;
+    QState *OnCheckEntry;
+    QState *OnCheckEXit;
     QState *dbTimeout;
     QState *Entry;
     QState *entryPassed;
@@ -22,12 +23,12 @@ public:
     QState *UncondTimeout;
 
 
-    wicketFSM(QState *parent):QState(parent)
+    wicketFSM(QState *parent):QState(parent) //// Из любого состояния можно перейти в разблокированный турникет
     {
         set_timer();
-        //// Из любого состояния можно перейти в разблокированный турникет
         Ready                 = new QState( this );
-        OnCheck               = new QState( this );
+        OnCheckEntry          = new QState( this );
+        OnCheckEXit           = new QState( this );
         dbTimeout             = new QState( this );
         Entry                 = new QState( this );
         entryPassed           = new QState( this );
@@ -39,57 +40,57 @@ public:
 
         setInitialState( Ready );
         //================================================================================================================================================================================
-        Ready->addTransition(this, &wicketFSM::set_FSM_to_wrong, Wrong);              // по сигналу с сервера переходим в состояния запрещено
-//        _wicketWrong->addTransition(this, &wicketFSM::from_server_to_ready, _wicketReady);              //и обратно
-        Wrong->addTransition(wrong_light_timer, &QTimer::timeout, Ready);        //по сигналу таймера тоже обратно
+        Ready->addTransition(this, &wicketFSM::set_FSM_to_wrong, Wrong); // по сигналу с сервера переходим в состояния запрещено
+        Ready->addTransition(  this,                   &wicketFSM::set_FSM_to_onCheckEntry, OnCheckEntry); //состояние на проверке
+        Ready->addTransition(  this,                   &wicketFSM::set_FSM_to_onCheckEXit, OnCheckEXit); //состояние на проверке
 
-        ///------------------------------------- собственно тут проходы ----------------------------------
-        Ready->addTransition(  this,                     &wicketFSM::set_FSM_to_onCheck, OnCheck);             //состояние на проверке
-        OnCheck->addTransition(this,                     &wicketFSM::set_FSM_to_wrong,   Wrong);             //wrong ticket
-
-        OnCheck->addTransition(_db_Timeout_timer,        &QTimer::timeout,               dbTimeout);
+        Wrong->addTransition(wrong_light_timer,        &QTimer::timeout, Ready); //по сигналу таймера тоже обратно
         dbTimeout->addTransition( Wrong);
 
-        OnCheck->addTransition(this,                     &wicketFSM::set_FSM_to_entry,   Entry);            // по сигналу с сервера переходим в состояние открыто
-        Entry->addTransition(wait_pass_timer,            &QTimer::timeout,               Drop);           //по сигналу таймера в состояние сброс прохода
-        Entry->addTransition(this,                       &wicketFSM::set_FSM_passed,     entryPassed);            //по сигналу прохода от турникета перейдем в состояние проход
+        OnCheckEntry->addTransition(this,              &wicketFSM::set_FSM_to_wrong, Wrong); //wrong ticket
+        OnCheckEntry->addTransition(this,              &wicketFSM::set_FSM_to_entry, Entry); // по сигналу с сервера переходим в состояние открыто на вход
+        OnCheckEntry->addTransition(_db_Timeout_timer, &QTimer::timeout,             dbTimeout);
+
+        OnCheckEXit->addTransition(this,               &wicketFSM::set_FSM_to_wrong, Wrong); //wrong ticket
+        OnCheckEXit->addTransition(this,               &wicketFSM::set_FSM_to_exit,  Exit); // по сигналу с сервера переходим в состояние открыто на выход
+        OnCheckEXit->addTransition(_db_Timeout_timer,  &QTimer::timeout,             dbTimeout);
+
+        Entry->addTransition(wait_pass_timer,          &QTimer::timeout,             Drop);           //по сигналу таймера в состояние сброс прохода
+        Entry->addTransition(this,                     &wicketFSM::set_FSM_passed,   entryPassed);            //по сигналу прохода от турникета перейдем в состояние проход
         entryPassed->addTransition( UncondTimeout );                                       // и сразу в задержку прохода по пути отослав данные на сервер
 
-        OnCheck->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit);
-
-//Ready->addTransition(this,                     &wicketFSM::set_FSM_to_exit,    Exit); //В случае когда мы определены как двойной ридер нужно разрешить прямые переходы от связанного ридера
-//Entry->addTransition(this,                     &wicketFSM::set_FSM_to_,    Ready);//В случае когда мы определены как выходной, по команде с сервера потушить лампы
-
-        Exit->addTransition(wait_pass_timer,             &QTimer::timeout,               Drop);
-        Exit->addTransition(this,                        &wicketFSM::set_FSM_passed,     exitPassed);
-        //exitPassed->addTransition( UncondTimeout );
+        Exit->addTransition(wait_pass_timer,           &QTimer::timeout,               Drop);
+        Exit->addTransition(this,                      &wicketFSM::set_FSM_passed,     exitPassed);
         exitPassed->addTransition( Ready );
 
-        UncondTimeout->addTransition(uncondDelayTimer, &QTimer::timeout,               Ready);
-        UncondTimeout->addTransition(this,               &wicketFSM::set_FSM_to_onCheck, OnCheck); //Для возможности быстро чекнуть билет на выход не дожидаясь таймаута на досмотр
+        UncondTimeout->addTransition(uncondDelayTimer, &QTimer::timeout,                   Ready);
+        UncondTimeout->addTransition(this,             &wicketFSM::set_FSM_to_onCheckEXit, OnCheckEXit); //Для возможности быстро чекнуть билет на выход не дожидаясь таймаута на досмотр
         Drop->addTransition(Ready);
 
         //=================================================================================================
         connect(Ready,         &QState::entered, wrong_light_timer, &QTimer::stop );
         connect(Ready,         &QState::entered, wait_pass_timer,   &QTimer::stop );
         //=================================================================================================
-        //connect(_wicketReady,         &QState::exited,  [=](){on_check = true;});
         //=================================================================================================
-        connect(OnCheck,       SIGNAL(entered()), _db_Timeout_timer, SLOT(start()));
-        connect(OnCheck,       &QState::exited,   _db_Timeout_timer, &QTimer::stop );
+        connect(OnCheckEntry,       SIGNAL(entered()), _db_Timeout_timer, SLOT(start()));
+        connect(OnCheckEntry,       &QState::exited,   _db_Timeout_timer, &QTimer::stop );
+        //=======                                                                   =======================
+        connect(OnCheckEXit,       SIGNAL(entered()), _db_Timeout_timer, SLOT(start()));
+        connect(OnCheckEXit,       &QState::exited,   _db_Timeout_timer, &QTimer::stop );
         //=================================================================================================
         //=================================================================================================
         connect(Wrong,         SIGNAL(entered()), wrong_light_timer, SLOT(start()) );
         connect(Wrong,       &QState::exited,   _db_Timeout_timer, &QTimer::stop );
         //=================================================================================================
         connect(Entry,         SIGNAL(entered()), wait_pass_timer, SLOT(start()) );  //вошли в состояния прохода, открыли калитку, зажгли лампы
-        connect(entryPassed,   &QState::entered,  wait_pass_timer, &QTimer::stop );
-        //=================================================================================================
+        connect(Entry,       &QState::exited,  wait_pass_timer, &QTimer::stop );
+        //==============                                              =====================================
         connect(Exit,          SIGNAL(entered()), wait_pass_timer, SLOT(start()) );
-        connect(exitPassed,    &QState::entered,  wait_pass_timer, &QTimer::stop );
+        connect(Exit,        &QState::exited,  wait_pass_timer, &QTimer::stop );
         //=================================================================================================
-//=================================================================================================
+        //=================================================================================================
         connect(UncondTimeout, SIGNAL(entered()), uncondDelayTimer, SLOT(start()) );
+        connect(UncondTimeout, &QState::exited,   uncondDelayTimer, &QTimer::stop );
 
     }
     void timer_wrapper()
@@ -108,7 +109,8 @@ signals:
     void set_FSM_passed();
     void set_FSM_to_wrong();
 
-    void set_FSM_to_onCheck();
+    void set_FSM_to_onCheckEntry();
+    void set_FSM_to_onCheckEXit();
 
 private:
     void set_timer()
