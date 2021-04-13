@@ -16,7 +16,21 @@ enum class msg_type {
     parameter
 };
 
-enum class command {
+enum class parameter {
+    wicketArmed,
+    wicketUnlocked,
+    _wicketReady,
+    entry_passed,
+    exit_passed,
+    pass_dropped,
+    iron_bc, //+barcode
+    barcode, //+barcode
+    temp,
+    wicket_state_machine_not_ready,
+    remote_barcode
+};
+
+    enum class command {
     heartbeat,
     //from main to wicket
     set_test,
@@ -41,7 +55,11 @@ enum class command {
     iron_bc, //+barcode
     barcode, //+barcode
     temp,
-    wicket_state_machine_not_ready
+    wicket_state_machine_not_ready,
+    remote_barcode,
+    entry_barcode,
+    exit_barcode,
+    wrong_remote
 
 };
 /*!

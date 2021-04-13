@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     int alt_config = 0;
     QThread thread;
     libusb_async_reader *asyncc = new libusb_async_reader( VID, PID, iface, config, alt_config);
-    QObject::connect(asyncc, &libusb_async_reader::readyRead_barcode,  &_controller, &controller::send_barcode);
+    QObject::connect(asyncc, &libusb_async_reader::readyRead_barcode,  &_controller, &controller::local_barcode);
     QObject::connect(asyncc, &libusb_async_reader::log,  &network_client, &network::logger);
     QObject::connect(&thread, &QThread::started, asyncc, &libusb_async_reader::init);
     asyncc->moveToThread(&thread);

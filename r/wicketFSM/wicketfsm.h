@@ -55,8 +55,8 @@ public:
         OnCheckEXit->addTransition(this,               &wicketFSM::set_FSM_to_exit,  Exit); // по сигналу с сервера переходим в состояние открыто на выход
         OnCheckEXit->addTransition(_db_Timeout_timer,  &QTimer::timeout,             dbTimeout);
 
-        Entry->addTransition(wait_pass_timer,          &QTimer::timeout,             Drop);           //по сигналу таймера в состояние сброс прохода
-        Entry->addTransition(this,                     &wicketFSM::set_FSM_passed,   entryPassed);            //по сигналу прохода от турникета перейдем в состояние проход
+        Entry->addTransition(wait_pass_timer,          &QTimer::timeout,             Drop); //по сигналу таймера в состояние сброс прохода
+        Entry->addTransition(this,                     &wicketFSM::set_FSM_passed,   entryPassed); //по сигналу прохода от турникета перейдем в состояние проход
         entryPassed->addTransition( UncondTimeout );                                       // и сразу в задержку прохода по пути отослав данные на сервер
 
         Exit->addTransition(wait_pass_timer,           &QTimer::timeout,               Drop);
@@ -132,12 +132,14 @@ private:
         _db_Timeout_timer->setInterval(15000);
     }
 
+    QTimer *wait_remote_timer;
     QTimer *wait_pass_timer;
-    int pass_wait_time = 10000;
     QTimer *wrong_light_timer;
-    int wrong_light_TIME = 2000;
     QTimer *_db_Timeout_timer;
     QTimer *uncondDelayTimer;
+    int wait_remote_time = 1000;
+    int pass_wait_time = 10000;
+    int wrong_light_TIME = 2000;
 //    int uncondDelay = 8000;
 };
 

@@ -70,22 +70,25 @@ public slots:
         connect(serverFound->SetUnLocked, &QState::entered, wicket, &nikiret::lock_unlock_sequence);
         ///--------------------------- Машина состояний проходов -----------------------------------------------
         connect(this,   &controller::from_server_to_wrong,  serverFound->Armed, &wicketFSM::set_FSM_to_wrong);  // по сигналу с сервера переходим в состояния запрещено
-        connect(this,   &controller::set_onCheck,           serverFound->Armed, &wicketFSM::set_FSM_to_onCheckEntry);//что бы устанавливать по команде с сервера когда ридер выходной
         connect(this,   &controller::from_server_to_entry,  serverFound->Armed, &wicketFSM::set_FSM_to_entry);  // по сигналу с сервера переходим в состояние открыто
         connect(this,   &controller::from_server_to_exit,   serverFound->Armed, &wicketFSM::set_FSM_to_exit);
         connect(wicket, &nikiret::passed,                   serverFound->Armed, &wicketFSM::set_FSM_passed);   //по сигналу прохода от турникета перейдем в состояние проход
 
-        connect(serverFound->Armed->Ready,         &QState::entered, this, [=](){ ready_state_flag = true;
-            wicket->setLightOFF();
-            setPictureSIG(picture::pict_ready, "");
-            emit send_to_server(message(msg_type::command, command::_wicketReady));});
+        connect(this,   &controller::set_onCheckEntry,      serverFound->Armed, &wicketFSM::set_FSM_to_onCheckEntry);
+        connect(this,   &controller::set_onCheckEXit,       serverFound->Armed, &wicketFSM::set_FSM_to_onCheckEXit);
+
+        //        connect(this,   &controller::from_server_onCheckEntry, serverFound->Armed, &wicketFSM::set_FSM_to_onCheckEntry);
+        //       connect(this,   &controller::from_server_onCheckEXit, serverFound->Armed, &wicketFSM::set_FSM_to_onCheckEXit);
+
+        //============= processing ===================================
+        connect(serverFound->Armed->Ready,         &QState::entered, this, &controller::processing_Armed);
         connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
-        connect(serverFound->Armed->OnCheckEntry,       &QState::entered, this, [=](){setPictureSIG(picture::pict_onCheck, "");});
+        connect(serverFound->Armed->OnCheckEntry,  &QState::entered, this, &controller::processing_onCheckEntry);
+        connect(serverFound->Armed->OnCheckEXit,   &QState::entered, this, &controller::processing_onCheckExit);
         connect(serverFound->Armed->dbTimeout,     &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, "Ошибка базы данных" ); wicket->setRED(); });
-        connect(serverFound->Armed->Wrong,         &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, cmd_arg ); wicket->setRED();
-            qDebug() << "time to enterd WRONG state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";});
-        connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::_wicketEntry_slot);  //вошли в состояния прохода, открыли калитку, зажгли лампы
-        connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::_wicketExit_slot);
+        connect(serverFound->Armed->Wrong,         &QState::entered, this, [=](){setPictureSIG(picture::pict_denied, cmd_arg ); wicket->setRED();});
+        connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::processing_wicketEntry_slot);  //вошли в состояния прохода, открыли калитку, зажгли лампы
+        connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::processing_wicketExit_slot);
         connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::entry_passed));} );   // Когда входим в это состояние отсылаем сообщение на сервер
         connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::exit_passed));} );
         connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ emit send_to_server(message(msg_type::command, command::pass_dropped));} );
@@ -105,42 +108,110 @@ public slots:
         switch (msg.comm) {
         //     case _comm::heartbeat: ;
         //from main to wicket
-        case command::set_test :     emit from_server_set_test();break;
-        case command::set_normal:    emit from_server_set_normal();break;
-        case command::set_iron_mode: emit from_server_set_iron_mode();break;
-        case command::set_type_out:  emit from_server_set_type_OUT();break;
-        case command::armed:         emit from_server_setArmed();break;
-        case command::unlock:        emit from_server_setUnLocked();break;
-        case command::onCheck:       emit set_onCheck();break;
-        case command::wrong:         qDebug()<<"time betwen send barcode and recieve wrong ================================= WRONG: " << QString::number(t->nsecsElapsed()/1000000) << "ms";
-            t->restart();
-            emit from_server_to_wrong ();break;//+ description
-        case command::set_ready:     from_server_to_ready();break;
-        case command::entry_open:    qDebug()<<"time betwen send barcode and recieve open  ================================= OPEN: " << QString::number(t->nsecsElapsed()/1000000) << "ms";
-            t->restart();
-            emit from_server_to_entry();break;
-        case command::exit_open:     emit from_server_to_exit();break;
+        case command::set_test :      emit from_server_set_test();       break;
+        case command::set_normal:     emit from_server_set_normal();     break;
+        case command::set_iron_mode:  emit from_server_set_iron_mode();  break;
+        case command::set_type_out:   emit from_server_set_type_OUT();   break;
+        case command::armed:          emit from_server_setArmed();       break;
+        case command::unlock:         emit from_server_setUnLocked();    break;
+            //        case command::onCheck:        (this->*remote_onCheck_handler)(); break;
+        case command::set_ready:      emit from_server_to_ready();       break;
+        case command::wrong:          emit from_server_to_wrong ();      break;
+        case command::entry_open:     emit from_server_to_entry();       break;
+        case command::exit_open:      emit from_server_to_exit();        break;
+
+        case command::remote_barcode: remote_barcode(cmd_arg);           break;
+        case command::wrong_remote:   emit from_server_to_wrong ();      break;
+        default: break;
         }
     }
-    void send_barcode(QByteArray data)
+    void remote_barcode(QString bc)
     {
+        //if ( machine->configuration().contains(serverFound->Armed->Ready))
+        if ( ready_state_flag )
+        {
+            (this->*remote_onCheck_handler)();
+            //send_to_server(message(msg_type::command, command::exit_barcode, bc ));
+        }
+        else
+            send_to_server(message(msg_type::command, command::wrong_remote ));
+    }
+    void local_barcode(QByteArray data)
+    {
+        cmd_arg = data;
         t->start();
         if ( ready_state_flag )
         {
-            emit set_onCheck();
+            (this->*local_onCheck_handler)(); //emit  predefined signal set_onCheckEntry or set_onCheckEXit;
             if (!test_state_flag)
                 wicket->alarm();
-            if(iron_mode_flag)
-            {
-                (this->*handler_opener)();   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
-                emit send_to_server(message(msg_type::command, command::iron_bc, data ));
-            }
-            else
-                emit send_to_server(message(msg_type::command, command::barcode, data ));
+            //if(iron_mode_flag)
+            //{
+            //    (this->*handler_opener)();   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
+            //    emit send_to_server(message(msg_type::command, command::iron_bc, data ));
+            //}
+            //else
+            //    emit send_to_server(message(msg_type::command, command::barcode, data ));
         }
     }
 
 private slots:
+    void processing_Armed()
+    {
+        ready_state_flag = true;
+        wicket->setLightOFF();
+        setPictureSIG(picture::pict_ready, "");
+        emit send_to_server(message(msg_type::command, command::_wicketReady));
+    }
+    void processing_onCheckEntry()
+    {
+        //(this->*handler_opener)();
+        //emit send_to_server(message(msg_type::command, command::iron_bc, "" ));
+        if(main_direction == dir_entry)
+            emit send_to_server(message(msg_type::command, command::entry_barcode, cmd_arg ));
+        else if(main_direction == dir_exit)
+        {
+            //nothing to do
+        }
+        setPictureSIG(picture::pict_onCheck, "");
+    }
+    void processing_onCheckExit()
+    {
+        if(main_direction == dir_entry)
+            emit send_to_server(message(msg_type::command, command::exit_barcode, cmd_arg ));
+        else if(main_direction == dir_exit)
+            emit send_to_server(message(msg_type::command, command::remote_barcode, cmd_arg ));
+        setPictureSIG(picture::pict_onCheck, "");
+    }
+    void processing_wicketEntry_slot()
+    {
+        if(main_direction == dir_entry)
+        {
+            wicket->setGREEN();
+            setPictureSIG(picture::pict_access, "");
+        }
+        else if(main_direction == dir_exit)
+        {
+            wicket->setRED();
+            setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
+        }
+        wicket->set_turnstile_to_pass(direction_state::dir_entry);
+    }
+    void processing_wicketExit_slot()
+    {
+        if(main_direction == dir_entry)
+        {
+            wicket->setRED();
+            setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
+        }
+        else if(main_direction == dir_exit)
+        {
+            wicket->setGREEN();
+            //qDebug() << "time to enterd ENTRY state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";
+            setPictureSIG(picture::pict_access, "");
+        }
+        wicket->set_turnstile_to_pass(direction_state::dir_exit);
+    }
     //=================================== TEST MODE ====================
     void from_server_set_test()
     {
@@ -183,22 +254,9 @@ private slots:
         iron_mode_flag = true;
     }
     //======================================================================
-    void _wicketEntry_slot()
-    {
-        wicket->setGREEN();
-        qDebug() << "time to enterd ENTRY state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";
-        setPictureSIG(picture::pict_access, "");
-        wicket->set_turnstile_to_pass(direction_state::dir_entry);
-    }
-    void _wicketExit_slot()
-    {
-        wicket->setRED();
-        setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
-        qDebug() << "time to enterd EXIT entry state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";
-        wicket->set_turnstile_to_pass(direction_state::dir_exit);
-    }
 
 private:
+
     //=================================== TEST ====================
     bool test_state_flag = false;
     QTimer *testt;
@@ -214,6 +272,7 @@ private:
     bool ready_state_flag = true;
     bool iron_mode_flag = false;
     typedef void (controller::*MyCoolMethod)();
+    typedef void (controller::*onCheckType)();
     struct server_cmd{
         QString cmd_name;
         MyCoolMethod cmd_ptr;
@@ -221,12 +280,17 @@ private:
 
     QString cmd_arg{};
     void (controller::*handler_opener)() = &controller::from_server_to_entry;
+    void (controller::*local_onCheck_handler)() = &controller::set_onCheckEntry; //дергается считывателем  шк
+    void (controller::*remote_onCheck_handler)() = &controller::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
     void from_server_set_type_OUT()                          //Переключаем в режим на ВЫХОД
     {
         if ( main_direction != direction_state::dir_exit )
         {
             main_direction = direction_state::dir_exit;
             handler_opener = &controller::from_server_to_exit;   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
+
+            local_onCheck_handler = &controller::set_onCheckEXit;
+            remote_onCheck_handler = &controller::set_onCheckEntry;
             //==================== отключим кросборду от автомата =================================
             serverFound->set_type_OUT();
         }
@@ -245,9 +309,9 @@ private:
             QByteArray b1 = "superticket";
             QByteArray b2 = "forbidticket";
             if (test_flag)
-                send_barcode(b1);
+                local_barcode(b1);
             else
-                send_barcode(b2);
+                local_barcode(b2);
             test_flag = !test_flag;
         } );
     }
@@ -283,18 +347,20 @@ signals:
     void send_to_server(message);
 
     void setPictureSIG(int, QString);
-    void set_onCheck();
+
+    void set_onCheckEntry(); //прокладка для трансляции в wicketFSM
+    void set_onCheckEXit(); //прокладка для трансляции в wicketFSM
+
+    void from_server_to_ready(); //прокладка для трансляции в wicketFSM
+    void from_server_to_entry(); //прокладка для трансляции в wicketFSM
+    void from_server_to_exit(); //прокладка для трансляции в wicketFSM
+    void from_server_to_wrong(); //прокладка для трансляции в wicketFSM
+    //    void from_server_onCheck();
+    void from_server_setArmed(); //прокладка для трансляции в wicket_locker
+    void from_server_setUnLocked(); //прокладка для трансляции в wicket_locker
+    void log(QString);
 
     void exit(int);
-
-    void from_server_to_ready();
-    void from_server_to_entry();
-    void from_server_to_exit();
-    void from_server_to_wrong();
-    //    void from_server_onCheck();
-    void from_server_setArmed();
-    void from_server_setUnLocked();
-    void log(QString);
 
 };
 
