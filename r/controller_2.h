@@ -132,7 +132,11 @@ public slots:
             switch (msg.state) {
             //========== синхронизация ведущего - подчиненного ==============
             case MachineState::getRemoteBarcode : remote_barcode(cmd_arg);     break; // прокси команда от подчиненного
-            case MachineState::onWrongRemote    : emit from_server_to_wrong(); break; // не получилось чекнуть билет на выход
+            case MachineState::onWrongRemote    :
+                if(main_direction == dir_exit) // если это главный считыватель то ему пофигу что подчиненный не отработал статус на проверке
+                {
+                    emit from_server_to_wrong(); // не получилось чекнуть билет на выход
+                }break;
             //========== остальные просто исполняем ==============
             case MachineState::onEntry    : emit from_server_to_entry(); break; // тут зажгутся лампы у ведомого
             case MachineState::onExit    : emit from_server_to_exit(); break;
