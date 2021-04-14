@@ -10,56 +10,49 @@
 #include <QFile>
 #include <QString>
 
+enum class MachineState {
+undef,
+    onArmed,
+    onUnlocked,
 
-enum class msg_type {
-    command,
-    parameter
+    getRemoteBarcode,
+    onWrongRemote,
+
+    onReady,
+    onWrong,
+    onCheckEntry,
+    onCheckExit,
+    onEntry,
+    onExit,
+    onEtryPassed,
+    onExitPassed,
+    onPassDropped,
+    onUncodTimeout,
+    on_dbTimeout,
+
+    onStateMachineNotReady,
 };
-
-enum class parameter {
-    wicketArmed,
-    wicketUnlocked,
-    _wicketReady,
-    entry_passed,
-    exit_passed,
-    pass_dropped,
-    iron_bc, //+barcode
-    barcode, //+barcode
-    temp,
-    wicket_state_machine_not_ready,
-    remote_barcode
-};
-
-    enum class command {
+enum class command {
+    undef,
     heartbeat,
     //from main to wicket
     set_test,
     set_normal,
     set_iron_mode,
     set_type_out,
-    armed,
-    unlock,
-    onCheck,
-    wrong,  //+ description
-    set_ready,
-    entry_open,
-    exit_open,
+    set_Armed,
+    set_Unlock,
+
+    set_Wrong,  //+ description
+    set_Ready,
+    set_EntryOpen,
+    set_ExitOpen,
     //from wicket to main
-    _register,
-    wicketArmed,
-    wicketUnlocked,
-    _wicketReady,
-    entry_passed,
-    exit_passed,
-    pass_dropped,
-    iron_bc, //+barcode
-    barcode, //+barcode
-    temp,
-    wicket_state_machine_not_ready,
-    remote_barcode,
-    entry_barcode,
-    exit_barcode,
-    wrong_remote
+    get_Register,
+
+    getIronBC, //+barcode
+    getBarcode, //+barcode
+    getTemp
 
 };
 /*!
@@ -67,34 +60,55 @@ enum class parameter {
   *\param gdfg
 */
 
-typedef struct _command{
-    msg_type type;
-    command comm;
+typedef struct _message{
+    MachineState state;
+    command cmd;
     QVariant body;
-    _command(msg_type type = msg_type::command, command comm = command::heartbeat, QVariant body = "heartbeat"):type(type), comm(comm), body(body)
+    _message( MachineState state = MachineState::undef, command comm = command::heartbeat, QVariant body = "heartbeat")
+        : state(state), cmd(comm), body(body)
+    {
+
+    }/*
+    _message( command comm = command::heartbeat, QVariant body = "heartbeat"):
+        state(MachineState::undef), cmd(comm), body(body)
     {
 
     }
+    _message( MachineState state = MachineState::undef, QVariant body = "heartbeat"):
+        state(state), cmd(command::heartbeat), body(body)
+    {
+
+    }
+    _message( MachineState state = MachineState::undef):
+        state(state), cmd(command::heartbeat), body("")
+    {
+
+    }
+    _message(): state(MachineState::undef), cmd(command::heartbeat), body("")
+    {
+
+    }*/
 }message;
 
-inline QDataStream &operator <<(QDataStream &stream,const  message &_command) // сериализуем;
+inline QDataStream &operator <<(QDataStream &stream,const  message &msg) // сериализуем;
 {
-    stream << static_cast<int>(_command.type);
-    stream << static_cast<int>(_command.comm);
-    stream << _command.body;
+    stream << static_cast<int>(msg.state);
+    stream << static_cast<int>(msg.cmd);
+    stream << msg.body;
     return stream;
 }
 
-inline QDataStream &operator >>(QDataStream &stream,  message &_command) // десериализуем;
+inline QDataStream &operator >>(QDataStream &stream,  message &msg) // десериализуем;
 {
     int i;
     stream >> i;
-    _command.type = static_cast<msg_type>(i);
+    msg.state = static_cast<MachineState>(i);
     stream >> i;
-    _command.comm = static_cast<command>(i);
-    stream >> _command.body;
+    msg.cmd = static_cast<command>(i);
+    stream >> msg.body;
     return stream;
 }
+
 
 
 #endif // COMMAND_H

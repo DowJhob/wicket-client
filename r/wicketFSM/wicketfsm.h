@@ -57,10 +57,12 @@ public:
 
         Entry->addTransition(wait_pass_timer,          &QTimer::timeout,             Drop); //по сигналу таймера в состояние сброс прохода
         Entry->addTransition(this,                     &wicketFSM::set_FSM_passed,   entryPassed); //по сигналу прохода от турникета перейдем в состояние проход
+        Entry->addTransition(this,                     &wicketFSM::set_FSM_EntryPassed,   entryPassed);
         entryPassed->addTransition( UncondTimeout );                                       // и сразу в задержку прохода по пути отослав данные на сервер
 
         Exit->addTransition(wait_pass_timer,           &QTimer::timeout,               Drop);
         Exit->addTransition(this,                      &wicketFSM::set_FSM_passed,     exitPassed);
+        Exit->addTransition(this,                      &wicketFSM::set_FSM_ExitPassed,     exitPassed);
         exitPassed->addTransition( Ready );
 
         UncondTimeout->addTransition(uncondDelayTimer, &QTimer::timeout,                   Ready);
@@ -107,6 +109,10 @@ signals:
     void set_FSM_to_entry();
     void set_FSM_to_exit();
     void set_FSM_passed();
+
+    void set_FSM_EntryPassed();
+    void set_FSM_ExitPassed();
+
     void set_FSM_to_wrong();
 
     void set_FSM_to_onCheckEntry();

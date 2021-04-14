@@ -31,7 +31,8 @@ public:
     quint16 file_transfer_port = 27008;
     bool iron_mode = false;
     message msg;
-    network(int reconnect_interval = 2000, int timeout_interval = 20000): reconnect_interval(reconnect_interval), timeout_interval(timeout_interval)
+    network(int reconnect_interval = 2000, int timeout_interval = 20000):
+        reconnect_interval(reconnect_interval), timeout_interval(timeout_interval)
     {
 
     }
@@ -74,7 +75,7 @@ public slots:
             localIP = tcpSocket->localAddress().toString();
             network_status = state::ready;
             emit log("TCP connected:\n");
-            SendToServer(message(msg_type::command, command::_register, QVariant(MACAddress)));
+            SendToServer(message( MachineState::undef, command::get_Register, QVariant(MACAddress)));
             emit network_ready();});
         connect(TCPconnected, &QState::exited, this, [=](){ network_status = state::disconnected;
             emit log("TCP disconnected:\n");});
@@ -82,6 +83,7 @@ public slots:
         //========================================= timers setup ========================================
         machine->start();
     }
+
     void SendToServer( message in)
     {
         if ( tcpSocket->state() != QAbstractSocket::ConnectedState )
@@ -117,7 +119,7 @@ public slots:
     }
     void logger(QString log)
     {
-        SendToServer(message(msg_type::parameter, command::heartbeat, log));
+        SendToServer(message( MachineState::undef, command::heartbeat, log));
     }
 
 private slots:
