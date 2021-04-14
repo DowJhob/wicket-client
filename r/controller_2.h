@@ -49,7 +49,7 @@ public slots:
         serverSearch->addTransition(this, SIGNAL(ext_provided_network_readySIG()), serverFound);//// Из любого состояния можно перейти в проебана сеть
         serverFound->addTransition(this, SIGNAL(ext_provided_server_searchSIG()), serverSearch);//// Из любого состояния можно перейти в проебана сеть
 
-        connect(serverSearch, &QState::entered, this, [=](){setPictureSIG(picture::pict_service, "");}); // тут покажем картинку что идет поиск (или просто включим мигание ИП
+        connect(serverSearch, &QState::entered, this, &controller::processing_serverSearch); // тут покажем картинку что идет поиск (или просто включим мигание ИП
         //   connect(_wicketLocker_serverFound, &QState::entered, this, &controller::set_status_READY);   //вызовем слот  для показа картинок по сути
 
         machine->setInitialState( serverSearch );
@@ -61,10 +61,8 @@ public slots:
         connect(this,   &controller::from_server_setUnLocked, serverFound, &wicketLocker::from_server_setUnLocked); // тут подаем кросборде сигнал на разблокирование турникета
         connect(this,   &controller::from_server_to_ready,    serverFound, &wicketLocker::from_server_setArmed);   //безусловная установка родительское состояние что бы из любого состояния получить рэди
 
-        connect(serverFound->Armed,    &QState::entered,           this, [=](){ emit send_to_server(message(MachineState::onArmed)); });
-        connect(serverFound->UnLocked, &QState::entered,          this, [=](){ emit send_to_server(message(MachineState::onUnlocked));
-            setPictureSIG(picture::pict_access, "");
-            wicket->setGREEN();});
+        connect(serverFound->Armed,    &QState::entered,           this, &controller::processing_Armed_);
+        connect(serverFound->UnLocked, &QState::entered,          this, &controller::processing_UnLocked);
 
         connect(serverFound->SetArmed,    &QState::entered, wicket, &nikiret::lock_unlock_sequence);
         connect(serverFound->SetUnLocked, &QState::entered, wicket, &nikiret::lock_unlock_sequence);
@@ -84,24 +82,24 @@ public slots:
         //       connect(this,   &controller::from_server_onCheckEXit, serverFound->Armed, &wicketFSM::set_FSM_to_onCheckEXit);
 
         //============= processing ===================================
-        connect(serverFound->Armed->Ready,         &QState::entered, this, &controller::processing_Armed);
-        connect(serverFound->Armed->Ready,         &QState::exited,  this, [=](){ready_state_flag = false;});
+        connect(serverFound->Armed->Ready,         &QState::entered, this, &controller::processing_Ready);
+        connect(serverFound->Armed->Ready,         &QState::exited,  this, &controller::processing_exReady);
         connect(serverFound->Armed->OnCheckEntry,  &QState::entered, this, &controller::processing_onCheckEntry);
         connect(serverFound->Armed->OnCheckEXit,   &QState::entered, this, &controller::processing_onCheckExit);
         connect(serverFound->Armed->dbTimeout,     &QState::entered, this, &controller::processing_dbTimeout);
         connect(serverFound->Armed->Wrong,         &QState::entered, this, &controller::processing_Wrong);
-        connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::processing_wicketEntry_slot);  //вошли в состояния прохода, открыли калитку, зажгли лампы
-        connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::processing_wicketExit_slot);
-        connect(serverFound->Armed->entryPassed,   &QState::entered, this, [=](){ send_state2(message(MachineState::onEtryPassed, command::undef));} );   // Когда входим в это состояние отсылаем сообщение на сервер
-        connect(serverFound->Armed->exitPassed,    &QState::entered, this, [=](){ send_state2(message(MachineState::onExitPassed, command::undef));} );
-        connect(serverFound->Armed->Drop,          &QState::entered, this, [=](){ send_state2(message(MachineState::onPassDropped, command::undef));} );
+        connect(serverFound->Armed->Entry,         &QState::entered, this, &controller::processing_Entry);  //вошли в состояния прохода, открыли калитку, зажгли лампы
+        connect(serverFound->Armed->Exit,          &QState::entered, this, &controller::processing_Exit);
+        connect(serverFound->Armed->entryPassed,   &QState::entered, this, &controller::processing_EntryPassed);   // Когда входим в это состояние отсылаем сообщение на сервер
+        connect(serverFound->Armed->exitPassed,    &QState::entered, this, &controller::processing_ExitPassed);
+        connect(serverFound->Armed->Drop,          &QState::entered, this, &controller::processing_Drop);
 
         connect(serverFound->Armed->UncondTimeout, &QState::entered, this, &controller::processing_UncondTimeout);
         ///-----------------------------------------------------
         //==================================================================================================================
         _updater.setPort( FILE_TRANSFER_PORT );
         _updater.setFilename( QCoreApplication::applicationFilePath() );
-        connect(&_updater, &updater::ready, [ this ](){ emit exit(42); } );
+        connect(&_updater, &updater::ready, [ & ](){ emit exit(42); } );
         //==================================================================================================================
         machine->start();
     }
@@ -113,6 +111,13 @@ public slots:
             switch (msg.cmd) {
             //     case _comm::heartbeat: ;
             //  безусловные команды
+            case command::set_test_ticket_onEntry :        emit from_server_set_test();      break;
+            case command::set_test_ticket_onExit :        emit from_server_set_test();      break;
+            case command::set_test_ticket_onPassEntry    :   emit from_server_set_test();      break;
+            case command::set_test_ticket_onPassExit   :    emit from_server_set_test();      break;
+
+
+
             case command::set_test :        emit from_server_set_test();      break;
             case command::set_normal:       emit from_server_set_normal();    break;
             case command::set_iron_mode:    emit from_server_set_iron_mode(); break;
@@ -137,7 +142,7 @@ public slots:
                 {
                     emit from_server_to_wrong(); // не получилось чекнуть билет на выход
                 }break;
-            //========== остальные просто исполняем ==============
+                //========== остальные просто исполняем ==============
             case MachineState::onEntry    : emit from_server_to_entry(); break; // тут зажгутся лампы у ведомого
             case MachineState::onExit    : emit from_server_to_exit(); break;
             case MachineState::onEtryPassed    : emit from_server_to_entryPassed(); break;
@@ -147,14 +152,13 @@ public slots:
     }
     void remote_barcode(QString bc)
     {
-        //if ( machine->configuration().contains(serverFound->Armed->Ready))
         if ( ready_state_flag )
         {
             (this->*remote_onCheck_handler)();
             //send_to_server(message(msg_type::command, command::exit_barcode, bc ));
         }
         else
-            send_to_server(message(MachineState::onWrongRemote, command::undef ));
+            send_to_server(message(MachineState::onWrongRemote, command::undef, "Не готов" ));
     }
     void local_barcode(QByteArray data)
     {
@@ -181,7 +185,23 @@ private slots:
         if(main_direction == dir_entry)
             emit send_to_server(msg);
     }
-    //============= processing ===================================
+    //============= обработка поиска сервера ===================================
+    void processing_serverSearch()
+    {
+        setPictureSIG(picture::pict_service, "");
+    }
+    //============= обработка сброса взвода турникета ===================================
+    void processing_Armed_()
+    {
+        emit send_to_server(message(MachineState::onArmed));
+    }
+    void processing_UnLocked()
+    {
+        emit send_to_server(message(MachineState::onUnlocked));
+                    setPictureSIG(picture::pict_access, "");
+                    wicket->setGREEN();
+    }
+    //============= обработка проходов ===================================
     void processing_UncondTimeout()
     {
         setPictureSIG(picture::pict_timeout, "");
@@ -199,12 +219,16 @@ private slots:
         wicket->setRED();
         send_state2(message(MachineState::onWrong, command::undef));
     }
-    void processing_Armed()
+    void processing_Ready()
     {
         ready_state_flag = true;
         wicket->setLightOFF();
         setPictureSIG(picture::pict_ready, "");
         send_state2(message(MachineState::onReady, command::undef));
+    }
+    void processing_exReady()
+    {
+        ready_state_flag = false;
     }
     void processing_onCheckEntry()
     {
@@ -218,7 +242,7 @@ private slots:
         setPictureSIG(picture::pict_onCheck, "");
         send_state2(message(MachineState::onCheckExit, command::undef, cmd_arg ));
     }
-    void processing_wicketEntry_slot()
+    void processing_Entry()
     {
         if(main_direction == dir_entry)
         {
@@ -233,7 +257,7 @@ private slots:
         wicket->set_turnstile_to_pass(direction_state::dir_entry);
         send_state2(message(MachineState::onEntry, command::undef));
     }
-    void processing_wicketExit_slot()
+    void processing_Exit()
     {
         if(main_direction == dir_entry)
         {
@@ -248,6 +272,18 @@ private slots:
         }
         wicket->set_turnstile_to_pass(direction_state::dir_exit);
         send_state2(message(MachineState::onExit, command::undef));
+    }
+    void processing_EntryPassed()
+    {
+        send_state2(message(MachineState::onEtryPassed, command::undef));
+    }
+    void processing_ExitPassed()
+    {
+        send_state2(message(MachineState::onExitPassed, command::undef));
+    }
+    void processing_Drop()
+    {
+        send_state2(message(MachineState::onPassDropped, command::undef));
     }
     //=================================== TEST MODE ====================
     void from_server_set_test()

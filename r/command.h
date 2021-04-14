@@ -52,8 +52,11 @@ enum class command {
 
     getIronBC, //+barcode
     getBarcode, //+barcode
-    getTemp
-
+    getTemp,
+    set_test_ticket_onEntry,
+    set_test_ticket_onExit,
+    set_test_ticket_onPassEntry,
+    set_test_ticket_onPassExit
 };
 /*!
   *\brief gg::ggg

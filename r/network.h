@@ -47,8 +47,8 @@ public slots:
         tcpSocket = new QTcpSocket(this);
 
         //for test
-        connect(tcpSocket, &QTcpSocket::disconnected, this, [=](){emit log("socket disconnect sig");});
-        connect(reconnect_timeout_timer, &QTimer::timeout, this, [=](){emit log("reconnect_timer timeout sig");});
+        connect(tcpSocket, &QTcpSocket::disconnected, this, [&](){emit log("socket disconnect sig");});
+        connect(reconnect_timeout_timer, &QTimer::timeout, this, [&](){emit log("reconnect_timer timeout sig");});
         //================================
         in.setDevice(tcpSocket);
         in.setVersion(QDataStream::Qt_5_12);
@@ -70,14 +70,14 @@ public slots:
         connect(serverSearch,       &QState::entered, this, &network::server_search);
         connect(startTCPconnection, &QState::entered, this, &network::reconnect);
 
-        connect(TCPconnected, &QState::entered, this, [=](){ reconnect_timeout_timer->setInterval(timeout_interval);
+        connect(TCPconnected, &QState::entered, this, [&](){ reconnect_timeout_timer->setInterval(timeout_interval);
             reconnect_timeout_timer->start();
             localIP = tcpSocket->localAddress().toString();
             network_status = state::ready;
             emit log("TCP connected:\n");
             SendToServer(message( MachineState::undef, command::get_Register, QVariant(MACAddress)));
             emit network_ready();});
-        connect(TCPconnected, &QState::exited, this, [=](){ network_status = state::disconnected;
+        connect(TCPconnected, &QState::exited, this, [&](){ network_status = state::disconnected;
             emit log("TCP disconnected:\n");});
         sockets_init();
         //========================================= timers setup ========================================
