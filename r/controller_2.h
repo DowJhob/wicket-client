@@ -132,7 +132,7 @@ public slots:
 
             default: break;
             }
-        // проксированные команды
+        // проксированные статусы
         if (msg.state != MachineState::undef)
             switch (msg.state) {
             //========== синхронизация ведущего - подчиненного ==============
@@ -143,6 +143,7 @@ public slots:
                     emit from_server_to_wrong(); // не получилось чекнуть билет на выход
                 }break;
                 //========== остальные просто исполняем ==============
+            case MachineState::onWrong    : emit from_server_to_wrong(); break;
             case MachineState::onEntry    : emit from_server_to_entry(); break; // тут зажгутся лампы у ведомого
             case MachineState::onExit    : emit from_server_to_exit(); break;
             case MachineState::onEtryPassed    : emit from_server_to_entryPassed(); break;
@@ -158,7 +159,7 @@ public slots:
             //send_to_server(message(msg_type::command, command::exit_barcode, bc ));
         }
         else
-            send_to_server(message(MachineState::onWrongRemote, command::undef, "Не готов" ));
+            send_to_server(message(MachineState::onWrongRemote, command::undef, "Ведущий считыватель\nне готов" ));
     }
     void local_barcode(QByteArray data)
     {
