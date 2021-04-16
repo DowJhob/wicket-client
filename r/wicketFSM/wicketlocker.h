@@ -26,12 +26,12 @@ public:
 
         //это для безусловного сброса машины  по сигналу с сервера (что бы гасить лампы)
         Armed->addTransition( this, &wicketLocker::from_server_setArmed, Armed );
-//=========== Это для принудительной установки состояния если турникет вернет такой сигнал ============================
-//======================== например при старте в разблокированном состоянии ===========================================
-//============= сохраним для возможности удалить в случае если это ВЫХОДНОЙ считыватель ===============================
+        //=========== Это для принудительной установки состояния если турникет вернет такой сигнал ============================
+        //======================== например при старте в разблокированном состоянии ===========================================
+        //============= сохраним для возможности удалить в случае если это ВЫХОДНОЙ считыватель ===============================
         ArmedToUnLockedTransition = Armed->addTransition( this, &wicketLocker::from_crsbrd_unlock, UnLocked );
         UnLockedToArmedTransition = UnLocked->addTransition( this, &wicketLocker::from_crsbrd_armed, Armed );
-///================================================================================
+        ///================================================================================
         // тут пошел нормальный цикл состояний// через сеттеры
         SetUnLockedToUnLockedTransition =        //сохраним для возможности удалить в случае если это ВЫХОДНОЙ считыватель
                 SetUnLocked->addTransition( this, &wicketLocker::from_crsbrd_unlock, UnLocked);    // тут ждем когда разблокируется по сигналу с кросборды
@@ -45,19 +45,21 @@ public:
 
         setInitialState( Armed );
     }
-    void set_type_OUT()                          //Переключаем в режим на ВЫХОД
+    void set_type_Slave()                          //Переключаем в режим на ВЫХОД
     {
 
- //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
-            //==================== отключим кросборду от автомата =================================
-            Armed->removeTransition( ArmedToUnLockedTransition );
-            UnLocked->removeTransition( UnLockedToArmedTransition );
+        //======= И отключим состояние досмотр охраной =======
+        Armed->set_type_Slave();
 
-            SetUnLocked->removeTransition( SetUnLockedToUnLockedTransition);
-            SetArmed->removeTransition( SetArmedToArmedTransition );
+        //==================== отключим кросборду от автомата =================================
+        Armed->removeTransition( ArmedToUnLockedTransition );
+        UnLocked->removeTransition( UnLockedToArmedTransition );
 
-            SetUnLocked->addTransition( UnLocked ); //делаем их безусловными что бы серверные сигналы не переключать
-            SetArmed->addTransition( Armed );
+        SetUnLocked->removeTransition( SetUnLockedToUnLockedTransition);
+        SetArmed->removeTransition( SetArmedToArmedTransition );
+
+        SetUnLocked->addTransition( UnLocked ); //делаем их безусловными что бы серверные сигналы не переключать
+        SetArmed->addTransition( Armed );
 
         emit from_crsbrd_armed(); // гарантированно взводим
     }
@@ -68,7 +70,7 @@ signals:
     void from_server_setUnLocked();
     void from_server_setArmed();
 
- //   void in_uncond();
+    //   void in_uncond();
 
 private:
     QSignalTransition *ArmedToUnLockedTransition;
@@ -76,6 +78,6 @@ private:
 
     QSignalTransition *SetUnLockedToUnLockedTransition;
     QSignalTransition *SetArmedToArmedTransition;
-    };
+};
 
 #endif // WICKETLOCKER_H

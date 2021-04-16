@@ -58,7 +58,7 @@ public:
         Entry->addTransition(wait_pass_timer,          &QTimer::timeout,             Drop); //по сигналу таймера в состояние сброс прохода
         Entry->addTransition(this,                     &wicketFSM::set_FSM_passed,   entryPassed); //по сигналу прохода от турникета перейдем в состояние проход
         Entry->addTransition(this,                     &wicketFSM::set_FSM_EntryPassed,   entryPassed);
-        entryPassed->addTransition( UncondTimeout );                                       // и сразу в задержку прохода по пути отослав данные на сервер
+        entryPassed->addTransition( UncondTimeout );           // и сразу в задержку прохода по пути отослав данные на сервер
 
         Exit->addTransition(wait_pass_timer,           &QTimer::timeout,               Drop);
         Exit->addTransition(this,                      &wicketFSM::set_FSM_passed,     exitPassed);
@@ -95,9 +95,13 @@ public:
         connect(UncondTimeout, &QState::exited,   uncondDelayTimer, &QTimer::stop );
 
     }
-    void timer_wrapper()
+    void set_type_Slave()
     {
-
+        unCondPassToReady = UncondTimeout->addTransition(Ready); // Не дожидаясь таймера сразу в Ready
+    }
+    void set_type_Main()
+    {
+        UncondTimeout->removeTransition(unCondPassToReady);
     }
 public slots:
     void set_uncondDelay_time(int uncondDelay = 6000)
@@ -119,6 +123,10 @@ signals:
     void set_FSM_to_onCheckEXit();
 
 private:
+
+
+    QAbstractTransition *unCondPassToReady = nullptr;
+
     void set_timer()
     {
         wait_pass_timer = new QTimer(this);

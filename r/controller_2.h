@@ -102,6 +102,8 @@ public slots:
         connect(&_updater, &updater::ready, [ & ](){ emit exit(42); } );
         //==================================================================================================================
         machine->start();
+
+        //serverFound->Armed->set_type_OUT();   // для теста!!!!
     }
     void new_cmd_parse(message msg)
     {
@@ -121,7 +123,7 @@ public slots:
             case command::set_test :        emit from_server_set_test();      break;
             case command::set_normal:       emit from_server_set_normal();    break;
             case command::set_iron_mode:    emit from_server_set_iron_mode(); break;
-            case command::set_type_out:     emit from_server_set_type_OUT();  break;
+            case command::set_type_out:     emit from_server_set_type_Main();  break;
             case command::set_Armed:            emit from_server_setArmed();      break;
             case command::set_Unlock:           emit from_server_setUnLocked();   break;
 
@@ -199,15 +201,10 @@ private slots:
     void processing_UnLocked()
     {
         emit send_to_server(message(MachineState::onUnlocked));
-                    setPictureSIG(picture::pict_access, "");
-                    wicket->setGREEN();
+        setPictureSIG(picture::pict_access, "");
+        wicket->setGREEN();
     }
     //============= обработка проходов ===================================
-    void processing_UncondTimeout()
-    {
-        setPictureSIG(picture::pict_timeout, "");
-        send_state2(message(MachineState::onUncodTimeout, command::undef));
-    }
     void processing_dbTimeout()
     {
         setPictureSIG(picture::pict_denied, "Ошибка базы данных" );
@@ -249,13 +246,13 @@ private slots:
         {
             wicket->setGREEN();
             setPictureSIG(picture::pict_access, "");
+            wicket->set_turnstile_to_pass(direction_state::dir_entry);
         }
         else if(main_direction == dir_exit)
         {
             wicket->setRED();
             setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
         }
-        wicket->set_turnstile_to_pass(direction_state::dir_entry);
         send_state2(message(MachineState::onEntry, command::undef));
     }
     void processing_Exit()
@@ -281,6 +278,12 @@ private slots:
     void processing_ExitPassed()
     {
         send_state2(message(MachineState::onExitPassed, command::undef));
+    }
+    void processing_UncondTimeout()
+    {
+        setPictureSIG(picture::pict_timeout, "");
+        wicket->setRED();
+        send_state2(message(MachineState::onUncodTimeout, command::undef));
     }
     void processing_Drop()
     {
@@ -356,7 +359,7 @@ private:
     void (controller::*handler_opener)() = &controller::from_server_to_entry;
     void (controller::*local_onCheck_handler)() = &controller::set_onCheckEntry; //дергается считывателем  шк
     void (controller::*remote_onCheck_handler)() = &controller::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
-    void from_server_set_type_OUT()                          //Переключаем в режим на ВЫХОД
+    void from_server_set_type_Main()                          //Переключаем в режим на ВЫХОД
     {
         if ( main_direction != direction_state::dir_exit )
         {
@@ -366,7 +369,9 @@ private:
             local_onCheck_handler = &controller::set_onCheckEXit;
             remote_onCheck_handler = &controller::set_onCheckEntry;
             //==================== отключим кросборду от автомата =================================
-            serverFound->set_type_OUT();
+            //======= И отключим состояние досмотр охраной =======
+            serverFound->set_type_Slave();
+            emit log(" set out " + cmd_arg);
         }
     }
     void set_timer()
