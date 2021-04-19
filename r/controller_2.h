@@ -23,8 +23,6 @@ class controller: public QObject
 {
     Q_OBJECT
 public:
-    QString ticket_status_description;
-    QString value_cmd;
     _reader_type reader_type = _reader_type::_main;
     controller()
     { }
