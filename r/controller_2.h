@@ -25,7 +25,7 @@ class controller: public QObject
 public:
     QString ticket_status_description;
     QString value_cmd;
-    int reader_type = reader_type::_main;
+    _reader_type reader_type = _reader_type::_main;
     controller()
     { }
     wicketLocker *serverFound;
@@ -135,7 +135,7 @@ public slots:
             //========== синхронизация ведущего - подчиненного ==============
             case MachineState::getRemoteBarcode : remote_barcode(cmd_arg);     break; // прокси команда от подчиненного
             case MachineState::onWrongRemote    :
-                if(reader_type == slave) // если это главный считыватель то ему пофигу что подчиненный не отработал статус на проверке
+                if(reader_type == _reader_type::slave) // если это главный считыватель то ему пофигу что подчиненный не отработал статус на проверке
                 {
                     emit from_server_to_wrong(); // не получилось чекнуть билет на выход
                 }break;
@@ -180,7 +180,7 @@ public slots:
 private slots:
     void send_state2(message msg)
     {
-        if(reader_type == _main)
+        if(reader_type == _reader_type::_main)
             emit send_to_server(msg);
     }
     //============= обработка поиска сервера ===================================
@@ -236,7 +236,7 @@ private slots:
     }
     void processing_onCheckExit()
     {
-        if(reader_type == slave)
+        if(reader_type == _reader_type::slave)
             emit send_to_server(message(MachineState::getRemoteBarcode, command::undef, cmd_arg ));
         setPictureSIG(picture::pict_onCheck, "");
         send_state2(message(MachineState::onCheckExit, command::undef, cmd_arg ));
@@ -244,13 +244,13 @@ private slots:
     }
     void processing_Entry()
     {
-        if(reader_type == _main)
+        if(reader_type == _reader_type::_main)
         {
             wicket->setGREEN();
             setPictureSIG(picture::pict_access, "");
-            wicket->set_turnstile_to_pass(reader_type::_main);
+            wicket->set_turnstile_to_pass(dir_type::entry);
         }
-        else if(reader_type == slave)
+        else if(reader_type == _reader_type::slave)
         {
             wicket->setRED();
             setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
@@ -260,18 +260,18 @@ private slots:
     }
     void processing_Exit()
     {
-        if(reader_type == _main)
+        if(reader_type == _reader_type::_main)
         {
             wicket->setRED();
             setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
         }
-        else if(reader_type == slave)
+        else if(reader_type == _reader_type::slave)
         {
             wicket->setGREEN();
             //qDebug() << "time to enterd ENTRY state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";
             setPictureSIG(picture::pict_access, "");
         }
-        wicket->set_turnstile_to_pass(reader_type::slave);
+        wicket->set_turnstile_to_pass(dir_type::exit_);
         send_state2(message(MachineState::onExit, command::undef));
         qDebug() << "Exit";
     }
@@ -310,7 +310,7 @@ private slots:
         test_state_flag = true;
         testt->start(3000);
 
-        if(reader_type == reader_type::_main )
+        if(reader_type == _reader_type::_main )
         {
             connect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
             connect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
@@ -371,9 +371,9 @@ private:
     void (controller::*remote_onCheck_handler)() = &controller::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
     void set_type_Slave()                          //Переключаем в режим ПОДЧИНЕННЫЙ
     {
-        if ( reader_type != reader_type::slave )
+        if ( reader_type != _reader_type::slave )
         {
-            reader_type = reader_type::slave;
+            reader_type = _reader_type::slave;
             revert_onCheckHandler(); // Перевернем подключение сигналов считывателей
             //local_onCheck_handler = &controller::set_onCheckEXit;
             //remote_onCheck_handler = &controller::set_onCheckEntry;

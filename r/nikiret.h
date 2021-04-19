@@ -25,7 +25,7 @@ public:
     QString output_str;
     int state = state::undefined;
     int pred_state = state::undefined;
-    int _direction;
+    dir_type _direction;
     bool stop_polling = false;
     QString cross_brd_temp;
     QString error_string;
@@ -159,12 +159,12 @@ public slots:
     {
         send_to_crossboard("BEEP 100\r");
     }
-    void set_turnstile_to_pass(int direction)
+    void set_turnstile_to_pass(dir_type direction)
     {
         _direction = direction;
-        if (direction == reader_type::_main )
+        if (direction == dir_type::entry )
             send_to_crossboard("PIN1_ON\r");
-        if (direction == reader_type::slave)
+        if (direction == dir_type::exit_ )
             send_to_crossboard("PIN2_ON\r");
         pass_sequence_timer->start();
     }
@@ -180,9 +180,9 @@ public slots:
 private slots:
     void slot_pass_sequnce_timer()
     {
-        if (_direction == reader_type::_main )
+        if (_direction == dir_type::entry )
             send_to_crossboard("PIN1_OFF\r");
-        if (_direction == reader_type::slave)
+        if (_direction == dir_type::exit_)
             send_to_crossboard("PIN2_OFF\r");
     }
     void slot_lock_unlock_sequnce_timer()
