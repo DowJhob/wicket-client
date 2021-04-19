@@ -25,7 +25,7 @@ class controller: public QObject
 public:
     QString ticket_status_description;
     QString value_cmd;
-    int main_direction = direction_state::dir_entry;
+    int reader_type = reader_type::_main;
     controller()
     { }
     wicketLocker *serverFound;
@@ -118,14 +118,14 @@ public slots:
             case command::set_test                    : emit from_server_set_test();      break;
             case command::set_normal                  : emit from_server_set_normal();    break;
             case command::set_iron_mode               : emit from_server_set_iron_mode(); break;
-            case command::set_type_out                : emit from_server_set_type_Main(); break;
+            case command::set_type_out                : emit set_type_Slave(); break;
             case command::set_Armed                   : emit from_server_setArmed();      break;
             case command::set_Unlock                  : emit from_server_setUnLocked();   break;
 
             case command::set_Ready                   : emit from_server_to_ready();      break;
             case command::set_Wrong                   : emit from_server_to_wrong ();     break;
-            case command::set_EntryOpen               : emit from_server_to_entry();      break;
-            case command::set_ExitOpen                : emit from_server_to_exit();       break;
+            case command::set_EntryOpen               : (this->*entry_opener_handler)();  break;
+            case command::set_ExitOpen                : (this->*exit_opener_handler)();   break;
 
             default: break;
             }
@@ -135,7 +135,7 @@ public slots:
             //========== синхронизация ведущего - подчиненного ==============
             case MachineState::getRemoteBarcode : remote_barcode(cmd_arg);     break; // прокси команда от подчиненного
             case MachineState::onWrongRemote    :
-                if(main_direction == dir_exit) // если это главный считыватель то ему пофигу что подчиненный не отработал статус на проверке
+                if(reader_type == slave) // если это главный считыватель то ему пофигу что подчиненный не отработал статус на проверке
                 {
                     emit from_server_to_wrong(); // не получилось чекнуть билет на выход
                 }break;
@@ -153,7 +153,6 @@ public slots:
         if ( ready_state_flag || uncond_state_flag )
         {
             (this->*remote_onCheck_handler)();
-            //send_to_server(message(msg_type::command, command::exit_barcode, bc ));
         }
         else
             send_to_server(message(MachineState::onWrongRemote, command::undef, "Ведущий считыватель\nне готов" ));
@@ -165,6 +164,7 @@ public slots:
         if ( ready_state_flag )
         {
             (this->*local_onCheck_handler)(); //emit  predefined signal set_onCheckEntry or set_onCheckEXit;
+
             if (!test_state_flag)
                 wicket->alarm();
             //if(iron_mode_flag)
@@ -180,7 +180,7 @@ public slots:
 private slots:
     void send_state2(message msg)
     {
-        if(main_direction == dir_entry)
+        if(reader_type == _main)
             emit send_to_server(msg);
     }
     //============= обработка поиска сервера ===================================
@@ -236,7 +236,7 @@ private slots:
     }
     void processing_onCheckExit()
     {
-        if(main_direction == dir_exit)
+        if(reader_type == slave)
             emit send_to_server(message(MachineState::getRemoteBarcode, command::undef, cmd_arg ));
         setPictureSIG(picture::pict_onCheck, "");
         send_state2(message(MachineState::onCheckExit, command::undef, cmd_arg ));
@@ -244,13 +244,13 @@ private slots:
     }
     void processing_Entry()
     {
-        if(main_direction == dir_entry)
+        if(reader_type == _main)
         {
             wicket->setGREEN();
             setPictureSIG(picture::pict_access, "");
-            wicket->set_turnstile_to_pass(direction_state::dir_entry);
+            wicket->set_turnstile_to_pass(reader_type::_main);
         }
-        else if(main_direction == dir_exit)
+        else if(reader_type == slave)
         {
             wicket->setRED();
             setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
@@ -260,18 +260,18 @@ private slots:
     }
     void processing_Exit()
     {
-        if(main_direction == dir_entry)
+        if(reader_type == _main)
         {
             wicket->setRED();
             setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
         }
-        else if(main_direction == dir_exit)
+        else if(reader_type == slave)
         {
             wicket->setGREEN();
             //qDebug() << "time to enterd ENTRY state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";
             setPictureSIG(picture::pict_access, "");
         }
-        wicket->set_turnstile_to_pass(direction_state::dir_exit);
+        wicket->set_turnstile_to_pass(reader_type::slave);
         send_state2(message(MachineState::onExit, command::undef));
         qDebug() << "Exit";
     }
@@ -310,7 +310,7 @@ private slots:
         test_state_flag = true;
         testt->start(3000);
 
-        if(main_direction == direction_state::dir_entry )
+        if(reader_type == reader_type::_main )
         {
             connect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
             connect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
@@ -362,25 +362,41 @@ private:
     bool ready_state_flag = false;     //  поскольку нет простого способа узнать в каком состоянии машина
     bool uncond_state_flag = false;    // сохраним пару состояний во флагах
     bool iron_mode_flag = false;
+    bool test_flag = true;
 
     QString cmd_arg{};
-    void (controller::*handler_opener)() = &controller::from_server_to_entry;
+    void (controller::*entry_opener_handler)() = &controller::from_server_to_entry;
+    void (controller::*exit_opener_handler)() = &controller::from_server_to_exit;
     void (controller::*local_onCheck_handler)() = &controller::set_onCheckEntry; //дергается считывателем  шк
     void (controller::*remote_onCheck_handler)() = &controller::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
-    void from_server_set_type_Main()                          //Переключаем в режим на ВЫХОД
+    void set_type_Slave()                          //Переключаем в режим ПОДЧИНЕННЫЙ
     {
-        if ( main_direction != direction_state::dir_exit )
+        if ( reader_type != reader_type::slave )
         {
-            main_direction = direction_state::dir_exit;
-            handler_opener = &controller::from_server_to_exit;   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
-
-            local_onCheck_handler = &controller::set_onCheckEXit;
-            remote_onCheck_handler = &controller::set_onCheckEntry;
+            reader_type = reader_type::slave;
+            revert_onCheckHandler(); // Перевернем подключение сигналов считывателей
+            //local_onCheck_handler = &controller::set_onCheckEXit;
+            //remote_onCheck_handler = &controller::set_onCheckEntry;
             //==================== отключим кросборду от автомата =================================
             //======= И отключим состояние досмотр охраной =======
             serverFound->set_type_Slave();
-            emit log(" set out " + cmd_arg);
+            //emit log(" set out " + cmd_arg);
         }
+    }
+    void revert_onCheckHandler()
+    {
+        void (controller::*var)() = local_onCheck_handler;
+        local_onCheck_handler = remote_onCheck_handler;
+        remote_onCheck_handler = var;
+    }
+    void set_reverse()   // Изменим направления Вход-выход турникета
+    {
+        // Перевернем открыватели
+        void (controller::*var)() = entry_opener_handler;
+        entry_opener_handler = exit_opener_handler;
+        exit_opener_handler = var;
+        //                             и также
+        revert_onCheckHandler(); // Перевернем подключение сигналов считывателей
     }
     void set_timer()
     {
@@ -402,7 +418,6 @@ private:
             test_flag = !test_flag;
         } );
     }
-    bool test_flag = true;
     void wicket_init()
     {
         wicket = new nikiret();
@@ -444,7 +459,7 @@ signals:
     void from_server_to_entryPassed(); //прокладка для трансляции в wicketFSM
     void from_server_to_exitPassed(); //прокладка для трансляции в wicketFSM
     void from_server_to_wrong(); //прокладка для трансляции в wicketFSM
-    //    void from_server_onCheck();
+
     void from_server_setArmed(); //прокладка для трансляции в wicket_locker
     void from_server_setUnLocked(); //прокладка для трансляции в wicket_locker
     void log(QString);

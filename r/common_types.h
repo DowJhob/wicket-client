@@ -15,9 +15,9 @@ enum state {
     disconnected,
     error
 };
-enum direction_state {
-    dir_entry,
-    dir_exit
+enum reader_type {
+    _main,
+    slave
 };
 enum color {
     red,

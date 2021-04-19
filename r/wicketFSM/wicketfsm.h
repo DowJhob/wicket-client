@@ -100,16 +100,16 @@ public:
     }
     void set_type_Slave()
     {
-        UncondTimeout->removeTransition(unCondToCheckExit);
-        UncondTimeout->removeTransition(unCondToReady);
+      //  UncondTimeout->removeTransition(unCondToCheckExit);
+      //  UncondTimeout->removeTransition(unCondToReady);
         unCondToReadySlaveType = UncondTimeout->addTransition(Ready); // Не дожидаясь таймера сразу в Ready
         //qDebug() << unCondToReadySlaveType << UncondTimeout->transitions();
     }
     void set_type_Main()
     {
         UncondTimeout->removeTransition(unCondToReadySlaveType);// Удаляю безусловный переход
-        unCondToReady->setTargetState(UncondTimeout);           // Возвращаю условные переходы
-        unCondToCheckExit->setTargetState(UncondTimeout);
+   //     unCondToReady->setTargetState(UncondTimeout);           // Возвращаю условные переходы
+    //    unCondToCheckExit->setTargetState(UncondTimeout);
     }
 public slots:
     void set_uncondDelay_time(int uncondDelay = 6000)

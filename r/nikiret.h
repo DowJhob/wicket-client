@@ -162,9 +162,9 @@ public slots:
     void set_turnstile_to_pass(int direction)
     {
         _direction = direction;
-        if (direction == direction_state::dir_entry )
+        if (direction == reader_type::_main )
             send_to_crossboard("PIN1_ON\r");
-        if (direction == direction_state::dir_exit)
+        if (direction == reader_type::slave)
             send_to_crossboard("PIN2_ON\r");
         pass_sequence_timer->start();
     }
@@ -180,9 +180,9 @@ public slots:
 private slots:
     void slot_pass_sequnce_timer()
     {
-        if (_direction == direction_state::dir_entry )
+        if (_direction == reader_type::_main )
             send_to_crossboard("PIN1_OFF\r");
-        if (_direction == direction_state::dir_exit)
+        if (_direction == reader_type::slave)
             send_to_crossboard("PIN2_OFF\r");
     }
     void slot_lock_unlock_sequnce_timer()

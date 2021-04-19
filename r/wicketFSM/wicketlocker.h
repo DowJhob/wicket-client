@@ -26,14 +26,14 @@ public:
 
         //это для безусловного сброса машины  по сигналу с сервера (что бы гасить лампы)
         Armed->addTransition( this, &wicketLocker::from_server_setArmed, Armed );
-        //=========== Это для принудительной установки состояния если турникет вернет такой сигнал ============================
-        //======================== например при старте в разблокированном состоянии ===========================================
-        //============= сохраним для возможности удалить в случае если это ВЫХОДНОЙ считыватель ===============================
+        //==   Это для принудительной установки состояния если турникет вернет такой сигнал =============
+        //== например при старте в разблокированном состоянии ===========================================
+        //== и сохраним для возможности удалить в случае если это ПОДЧИНЕННЫЙ считыватель ===============
         ArmedToUnLockedTransition = Armed->addTransition( this, &wicketLocker::from_crsbrd_unlock, UnLocked );
         UnLockedToArmedTransition = UnLocked->addTransition( this, &wicketLocker::from_crsbrd_armed, Armed );
         ///================================================================================
         // тут пошел нормальный цикл состояний// через сеттеры
-        SetUnLockedToUnLockedTransition =        //сохраним для возможности удалить в случае если это ВЫХОДНОЙ считыватель
+        SetUnLockedToUnLockedTransition =        //сохраним для возможности удалить в случае если это ПОДЧИНЕННЫЙ считыватель
                 SetUnLocked->addTransition( this, &wicketLocker::from_crsbrd_unlock, UnLocked);    // тут ждем когда разблокируется по сигналу с кросборды
 
         UnLocked->addTransition(this, &wicketLocker::from_server_setArmed, SetArmed);    // тут подаем кросборде сигнал на взведение турникета
@@ -69,8 +69,6 @@ signals:
     void from_crsbrd_armed();
     void from_server_setUnLocked();
     void from_server_setArmed();
-
-    //   void in_uncond();
 
 private:
     QSignalTransition *ArmedToUnLockedTransition;
