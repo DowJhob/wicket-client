@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
     QObject::connect(&net_thread,        &QThread::started, &network_client, &network::start);
     network_client.moveToThread(&net_thread);
     QObject::connect( &network_client, &network::log,                              &lcd_display, &picture2::log);
-    QObject::connect( &network_client, &network::network_ready,                    &_controller, &controller::ext_provided_network_ready);
-    QObject::connect( &network_client, &network::enter_STATE_server_search_signal, &_controller, &controller::ext_provided_server_search);
+    QObject::connect( &network_client, &network::network_ready,                    &_controller, &controller::ext_provided_network_readySIG);
+    QObject::connect( &network_client, &network::enter_STATE_server_search_signal, &_controller, &controller::ext_provided_server_searchSIG);
     QObject::connect( &network_client, &network::readyRead,                        &_controller, &controller::new_cmd_parse);
     net_thread.start(QThread::TimeCriticalPriority);
 

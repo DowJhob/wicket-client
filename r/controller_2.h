@@ -31,10 +31,6 @@ public:
     wicketLocker *serverFound;
     QElapsedTimer *t;
 public slots:
-    void ext_provided_network_ready()
-    {emit ext_provided_network_readySIG();}
-    void ext_provided_server_search()
-    {emit ext_provided_server_searchSIG();}
     void start()
     {
         t = new QElapsedTimer;
@@ -95,6 +91,7 @@ public slots:
         connect(serverFound->Armed->Drop,          &QState::entered, this, &controller::processing_Drop);
 
         connect(serverFound->Armed->UncondTimeout, &QState::entered, this, &controller::processing_UncondTimeout);
+        connect(serverFound->Armed->UncondTimeout, &QState::exited,  this, &controller::processing_exUncondTimeout);
         ///-----------------------------------------------------
         //==================================================================================================================
         _updater.setPort( FILE_TRANSFER_PORT );
@@ -113,24 +110,22 @@ public slots:
             switch (msg.cmd) {
             //     case _comm::heartbeat: ;
             //  безусловные команды
-            case command::set_test_ticket_onEntry :        emit from_server_set_test();      break;
-            case command::set_test_ticket_onExit :        emit from_server_set_test();      break;
-            case command::set_test_ticket_onPassEntry    :   emit from_server_set_test();      break;
-            case command::set_test_ticket_onPassExit   :    emit from_server_set_test();      break;
+            case command::set_test_ticket_onEntry     : emit from_server_set_test();      break;
+            case command::set_test_ticket_onExit      : emit from_server_set_test();      break;
+            case command::set_test_ticket_onPassEntry : emit from_server_set_test();      break;
+            case command::set_test_ticket_onPassExit  : emit from_server_set_test();      break;
 
+            case command::set_test                    : emit from_server_set_test();      break;
+            case command::set_normal                  : emit from_server_set_normal();    break;
+            case command::set_iron_mode               : emit from_server_set_iron_mode(); break;
+            case command::set_type_out                : emit from_server_set_type_Main(); break;
+            case command::set_Armed                   : emit from_server_setArmed();      break;
+            case command::set_Unlock                  : emit from_server_setUnLocked();   break;
 
-
-            case command::set_test :        emit from_server_set_test();      break;
-            case command::set_normal:       emit from_server_set_normal();    break;
-            case command::set_iron_mode:    emit from_server_set_iron_mode(); break;
-            case command::set_type_out:     emit from_server_set_type_Main();  break;
-            case command::set_Armed:            emit from_server_setArmed();      break;
-            case command::set_Unlock:           emit from_server_setUnLocked();   break;
-
-            case command::set_Ready:        emit from_server_to_ready();      break;
-            case command::set_Wrong:            emit from_server_to_wrong ();     break;
-            case command::set_EntryOpen:       emit from_server_to_entry();      break;
-            case command::set_ExitOpen:        emit from_server_to_exit();       break;
+            case command::set_Ready                   : emit from_server_to_ready();      break;
+            case command::set_Wrong                   : emit from_server_to_wrong ();     break;
+            case command::set_EntryOpen               : emit from_server_to_entry();      break;
+            case command::set_ExitOpen                : emit from_server_to_exit();       break;
 
             default: break;
             }
@@ -145,17 +140,17 @@ public slots:
                     emit from_server_to_wrong(); // не получилось чекнуть билет на выход
                 }break;
                 //========== остальные просто исполняем ==============
-            case MachineState::onWrong    : emit from_server_to_wrong(); break;
-            case MachineState::onEntry    : emit from_server_to_entry(); break; // тут зажгутся лампы у ведомого
-            case MachineState::onExit    : emit from_server_to_exit(); break;
-            case MachineState::onEtryPassed    : emit from_server_to_entryPassed(); break;
-            case MachineState::onExitPassed    : emit from_server_to_exitPassed(); break;
-            default                         :  break;
+            case MachineState::onWrong                : emit from_server_to_wrong();       break;
+            case MachineState::onEntry                : emit from_server_to_entry();       break; // тут зажгутся лампы у ведомого
+            case MachineState::onExit                 : emit from_server_to_exit();        break;
+            case MachineState::onEtryPassed           : emit from_server_to_entryPassed(); break;
+            case MachineState::onExitPassed           : emit from_server_to_exitPassed();  break;
+            default                                   :                                    break;
             }
     }
     void remote_barcode(QString bc)
     {
-        if ( ready_state_flag )
+        if ( ready_state_flag || uncond_state_flag )
         {
             (this->*remote_onCheck_handler)();
             //send_to_server(message(msg_type::command, command::exit_barcode, bc ));
@@ -197,12 +192,14 @@ private slots:
     void processing_Armed_()
     {
         emit send_to_server(message(MachineState::onArmed));
+        qDebug() << "Armed";
     }
     void processing_UnLocked()
     {
         emit send_to_server(message(MachineState::onUnlocked));
         setPictureSIG(picture::pict_access, "");
         wicket->setGREEN();
+        qDebug() << "Unlocked";
     }
     //============= обработка проходов ===================================
     void processing_dbTimeout()
@@ -210,12 +207,14 @@ private slots:
         setPictureSIG(picture::pict_denied, "Ошибка базы данных" );
         wicket->setRED();
         send_state2(message(MachineState::on_dbTimeout, command::undef));
+        qDebug() << "dbTimeout";
     }
     void processing_Wrong()
     {
         setPictureSIG(picture::pict_denied, cmd_arg );
         wicket->setRED();
         send_state2(message(MachineState::onWrong, command::undef));
+        qDebug() << "Wrong";
     }
     void processing_Ready()
     {
@@ -223,6 +222,7 @@ private slots:
         wicket->setLightOFF();
         setPictureSIG(picture::pict_ready, "");
         send_state2(message(MachineState::onReady, command::undef));
+        qDebug() << "Ready";
     }
     void processing_exReady()
     {
@@ -232,6 +232,7 @@ private slots:
     {
         emit send_state2(message(MachineState::onCheckEntry, command::undef, cmd_arg ));
         setPictureSIG(picture::pict_onCheck, "");
+        qDebug() << "onCheckEntry";
     }
     void processing_onCheckExit()
     {
@@ -239,6 +240,7 @@ private slots:
             emit send_to_server(message(MachineState::getRemoteBarcode, command::undef, cmd_arg ));
         setPictureSIG(picture::pict_onCheck, "");
         send_state2(message(MachineState::onCheckExit, command::undef, cmd_arg ));
+        qDebug() << "onCheckExit";
     }
     void processing_Entry()
     {
@@ -254,6 +256,7 @@ private slots:
             setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
         }
         send_state2(message(MachineState::onEntry, command::undef));
+        qDebug() << "Entry";
     }
     void processing_Exit()
     {
@@ -270,24 +273,34 @@ private slots:
         }
         wicket->set_turnstile_to_pass(direction_state::dir_exit);
         send_state2(message(MachineState::onExit, command::undef));
+        qDebug() << "Exit";
     }
     void processing_EntryPassed()
     {
         send_state2(message(MachineState::onEtryPassed, command::undef));
+        qDebug() << "EntryPassed";
     }
     void processing_ExitPassed()
     {
         send_state2(message(MachineState::onExitPassed, command::undef));
+        qDebug() << "ExitPassed";
     }
     void processing_UncondTimeout()
     {
+        uncond_state_flag = true;
         setPictureSIG(picture::pict_timeout, "");
         wicket->setRED();
         send_state2(message(MachineState::onUncodTimeout, command::undef));
+        qDebug() << "UncondTimeout";
+    }
+    void processing_exUncondTimeout()
+    {
+        uncond_state_flag = false;
     }
     void processing_Drop()
     {
         send_state2(message(MachineState::onPassDropped, command::undef));
+        qDebug() << "Drop";
     }
     //=================================== TEST MODE ====================
     void from_server_set_test()
@@ -346,14 +359,9 @@ private:
     //================== file transfer ====================
     updater _updater;
 
-    bool ready_state_flag = true;
+    bool ready_state_flag = false;     //  поскольку нет простого способа узнать в каком состоянии машина
+    bool uncond_state_flag = false;    // сохраним пару состояний во флагах
     bool iron_mode_flag = false;
-    typedef void (controller::*MyCoolMethod)();
-    typedef void (controller::*onCheckType)();
-    struct server_cmd{
-        QString cmd_name;
-        MyCoolMethod cmd_ptr;
-    };
 
     QString cmd_arg{};
     void (controller::*handler_opener)() = &controller::from_server_to_entry;

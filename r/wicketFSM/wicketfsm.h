@@ -1,6 +1,9 @@
 #ifndef WICKETFSM_H
 #define WICKETFSM_H
 
+#include <QDebug>
+#include <QSignalTransition>
+//#include <QAbstractTransition>
 #include <QObject>
 #include <QState>
 #include <QTimer>
@@ -65,8 +68,8 @@ public:
         Exit->addTransition(this,                      &wicketFSM::set_FSM_ExitPassed,     exitPassed);
         exitPassed->addTransition( Ready );
 
-        UncondTimeout->addTransition(uncondDelayTimer, &QTimer::timeout,                   Ready);
-        UncondTimeout->addTransition(this,             &wicketFSM::set_FSM_to_onCheckEXit, OnCheckEXit); //Для возможности быстро чекнуть билет на выход не дожидаясь таймаута на досмотр
+        unCondToReady = UncondTimeout->addTransition(uncondDelayTimer, &QTimer::timeout,                   Ready);
+        unCondToCheckExit = UncondTimeout->addTransition(this,             &wicketFSM::set_FSM_to_onCheckEXit, OnCheckEXit); //Для возможности быстро чекнуть билет на выход не дожидаясь таймаута на досмотр
         Drop->addTransition(Ready);
 
         //=================================================================================================
@@ -97,11 +100,16 @@ public:
     }
     void set_type_Slave()
     {
-        unCondPassToReady = UncondTimeout->addTransition(Ready); // Не дожидаясь таймера сразу в Ready
+        UncondTimeout->removeTransition(unCondToCheckExit);
+        UncondTimeout->removeTransition(unCondToReady);
+        unCondToReadySlaveType = UncondTimeout->addTransition(Ready); // Не дожидаясь таймера сразу в Ready
+        //qDebug() << unCondToReadySlaveType << UncondTimeout->transitions();
     }
     void set_type_Main()
     {
-        UncondTimeout->removeTransition(unCondPassToReady);
+        UncondTimeout->removeTransition(unCondToReadySlaveType);// Удаляю безусловный переход
+        unCondToReady->setTargetState(UncondTimeout);           // Возвращаю условные переходы
+        unCondToCheckExit->setTargetState(UncondTimeout);
     }
 public slots:
     void set_uncondDelay_time(int uncondDelay = 6000)
@@ -124,8 +132,9 @@ signals:
 
 private:
 
-
-    QAbstractTransition *unCondPassToReady = nullptr;
+    QSignalTransition *unCondToReady = nullptr;
+    QSignalTransition *unCondToCheckExit = nullptr;
+    QAbstractTransition *unCondToReadySlaveType = nullptr;
 
     void set_timer()
     {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.14.2, 2021-04-15T21:26:20. -->
+<!-- Written by QtCreator 4.14.2, 2021-04-19T12:29:25. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -140,7 +140,7 @@
       <value type="bool" key="ProjectExplorer.BuildStep.Enabled">true</value>
       <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">QtProjectManager.QMakeBuildStep</value>
       <value type="QString" key="QtProjectManager.QMakeBuildStep.QMakeArguments"></value>
-      <value type="bool" key="QtProjectManager.QMakeBuildStep.QMakeForced">true</value>
+      <value type="bool" key="QtProjectManager.QMakeBuildStep.QMakeForced">false</value>
       <valuelist type="QVariantList" key="QtProjectManager.QMakeBuildStep.SelectedAbis"/>
      </valuemap>
      <valuemap type="QVariantMap" key="ProjectExplorer.BuildStepList.Step.1">
@@ -324,6 +324,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">RemoteLinuxRunConfiguration:/home/a/Documents/GitHub/wicket-client/r/r.pro</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/a/Documents/GitHub/wicket-client/r/r.pro</value>
     <value type="int" key="RemoteLinux.EnvironmentAspect.Version">1</value>
+    <value type="QString" key="RemoteLinux.RunConfig.AlternateRemoteExecutable">killall r&amp;/usr/r</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
