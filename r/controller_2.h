@@ -41,8 +41,8 @@ public slots:
         // это состояние нужно для показа картинки (а может достаточно ИП) состояния на дисплее(а может и не нужно)
         serverFound = new wicketLocker(machine); // состояние сервер найден теперь тут
 
-        serverSearch->addTransition(this, SIGNAL(ext_provided_network_readySIG()), serverFound);//// Из любого состояния можно перейти в проебана сеть
-        serverFound->addTransition(this, SIGNAL(ext_provided_server_searchSIG()), serverSearch);//// Из любого состояния можно перейти в проебана сеть
+        serverSearch->addTransition(this, &controller::ext_provided_network_readySIG, serverFound);//// Из любого состояния можно перейти в проебана сеть
+        serverFound->addTransition(this, &controller::ext_provided_server_searchSIG, serverSearch);//// Из любого состояния можно перейти в проебана сеть
 
         connect(serverSearch, &QState::entered, this, &controller::processing_serverSearch); // тут покажем картинку что идет поиск (или просто включим мигание ИП
         //   connect(_wicketLocker_serverFound, &QState::entered, this, &controller::set_status_READY);   //вызовем слот  для показа картинок по сути
@@ -117,7 +117,7 @@ public slots:
             case command::set_test                    : emit from_server_set_test();      break;
             case command::set_normal                  : emit from_server_set_normal();    break;
             case command::set_iron_mode               : emit from_server_set_iron_mode(); break;
-            case command::set_type_out                : emit set_type_Slave(); break;
+            case command::set_type_out                : emit set_type_Slave();            break;
             case command::set_Armed                   : emit from_server_setArmed();      break;
             case command::set_Unlock                  : emit from_server_setUnLocked();   break;
 
@@ -442,12 +442,12 @@ private:
         if ( machine->isRunning() )
         {
             //qDebug() << machine->configuration();
-            if (machine->configuration().contains( serverFound->Armed->Ready))
-                emit send_to_server(message(MachineState::onReady, command::undef, ""));
-            if ( machine->configuration().contains( serverFound->Armed ) )
-                emit send_to_server(message(MachineState::onArmed, command::undef, ""));
-            if ( machine->configuration().contains( serverFound->UnLocked ) )
-                emit send_to_server(message(MachineState::onUnlocked, command::undef, ""));
+          //  if (machine->configuration().contains( serverFound->Armed->Ready))
+          //      emit send_to_server(message(MachineState::onReady, command::undef, ""));
+          //  if ( machine->configuration().contains( serverFound->Armed ) )
+          //      emit send_to_server(message(MachineState::onArmed, command::undef, ""));
+           // if ( machine->configuration().contains( serverFound->UnLocked ) )
+           //     emit send_to_server(message(MachineState::onUnlocked, command::undef, ""));
         }
         // else
         //     emit send_to_server(message(MachineState::onStateMachineNotReady, command::undef, ""));
