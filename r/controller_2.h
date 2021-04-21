@@ -24,6 +24,7 @@ class controller: public QObject
     Q_OBJECT
 public:
     _reader_type reader_type = _reader_type::_main;
+    dir_type direction_type = dir_type::entry;
     controller()
     { }
     wicketLocker *serverFound;
@@ -98,7 +99,7 @@ public slots:
         //==================================================================================================================
         machine->start();
 
-        //serverFound->Armed->set_type_OUT();   // для теста!!!!
+        //set_reverse();   // для теста!!!!
     }
     void new_cmd_parse(message msg)
     {
@@ -146,7 +147,7 @@ public slots:
             default                                   :                                    break;
             }
     }
-    void remote_barcode(QString bc)
+    void remote_barcode(QString bc) // Дергается удаленно
     {
         if ( ready_state_flag || uncond_state_flag )
         {
@@ -159,7 +160,7 @@ public slots:
     {
         cmd_arg = data;
         t->start();
-        if ( ready_state_flag )
+        if ( ready_state_flag )  // наверное избыточная проверка, и так в онЧек можно только из рэди
         {
             (this->*local_onCheck_handler)(); //emit  predefined signal set_onCheckEntry or set_onCheckEXit;
 
@@ -226,47 +227,52 @@ private slots:
     {
         ready_state_flag = false;
     }
+    void sub_processing_onCheck(MachineState state)
+    {
+        message msg;
+        switch (reader_type)
+        {
+        case _reader_type::_main : msg = message(state, command::undef, cmd_arg); break;
+        case _reader_type::slave : msg = message(MachineState::getRemoteBarcode, command::undef, cmd_arg); break;
+        }
+        emit send_to_server(msg);
+        setPictureSIG(picture::pict_onCheck, "");
+        qDebug() << "onCheck: " << static_cast<int>(state);
+    }
     void processing_onCheckEntry()
     {
-        emit send_state2(message(MachineState::onCheckEntry, command::undef, cmd_arg ));
-        setPictureSIG(picture::pict_onCheck, "");
-        qDebug() << "onCheckEntry";
+        sub_processing_onCheck(MachineState::onCheckEntry);
     }
     void processing_onCheckExit()
     {
-        if(reader_type == _reader_type::slave)
-            emit send_to_server(message(MachineState::getRemoteBarcode, command::undef, cmd_arg ));
-        setPictureSIG(picture::pict_onCheck, "");
-        send_state2(message(MachineState::onCheckExit, command::undef, cmd_arg ));
-        qDebug() << "onCheckExit";
+        sub_processing_onCheck(MachineState::onCheckExit);
     }
     void processing_Entry()
     {
-        if(reader_type == _reader_type::_main)
+        if(direction_type == dir_type::entry)
         {
             wicket->setGREEN();
             setPictureSIG(picture::pict_access, "");
-            wicket->set_turnstile_to_pass(dir_type::entry);
         }
-        else if(reader_type == _reader_type::slave)
+        else if(direction_type == dir_type::exit_)
         {
             wicket->setRED();
             setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
         }
+        wicket->set_turnstile_to_pass(dir_type::entry);
         send_state2(message(MachineState::onEntry, command::undef));
         qDebug() << "Entry";
     }
     void processing_Exit()
     {
-        if(reader_type == _reader_type::_main)
+        if(direction_type == dir_type::entry)
         {
             wicket->setRED();
             setPictureSIG(picture::pict_denied, "Подождите, вам навстречу уже кто-то идет.");
         }
-        else if(reader_type == _reader_type::slave)
+        else if(direction_type == dir_type::exit_)
         {
             wicket->setGREEN();
-            //qDebug() << "time to enterd ENTRY state: " << cmd_arg << t->nsecsElapsed()/1000000 << "ms";
             setPictureSIG(picture::pict_access, "");
         }
         wicket->set_turnstile_to_pass(dir_type::exit_);
@@ -372,6 +378,7 @@ private:
         if ( reader_type != _reader_type::slave )
         {
             reader_type = _reader_type::slave;
+            change_direction_type();
             revert_onCheckHandler(); // Перевернем подключение сигналов считывателей
             //local_onCheck_handler = &controller::set_onCheckEXit;
             //remote_onCheck_handler = &controller::set_onCheckEntry;
@@ -381,7 +388,14 @@ private:
             //emit log(" set out " + cmd_arg);
         }
     }
-    void revert_onCheckHandler()
+    void change_direction_type()
+    {
+        if (direction_type == dir_type::entry)
+            direction_type = dir_type::exit_;
+        else
+            direction_type = dir_type::entry;
+    }
+    void revert_onCheckHandler()      //  переворачиваем подключение считывателей
     {
         void (controller::*var)() = local_onCheck_handler;
         local_onCheck_handler = remote_onCheck_handler;
@@ -389,12 +403,12 @@ private:
     }
     void set_reverse()   // Изменим направления Вход-выход турникета
     {
-        // Перевернем открыватели
+        // Перевернем открыватели и тогда сохранятся показываемые статусы
         void (controller::*var)() = entry_opener_handler;
         entry_opener_handler = exit_opener_handler;
         exit_opener_handler = var;
         //                             и также
-        revert_onCheckHandler(); // Перевернем подключение сигналов считывателей
+        // revert_onCheckHandler(); // Перевернем подключение сигналов считывателей
     }
     void set_timer()
     {
