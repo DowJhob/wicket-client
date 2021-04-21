@@ -104,27 +104,24 @@ public slots:
     void new_cmd_parse(message msg)
     {
         cmd_arg = msg.body.toString();
-
         if (msg.cmd != command::undef)
             switch (msg.cmd) {
             //     case _comm::heartbeat: ;
             //  безусловные команды
-            case command::set_test_ticket_onEntry     : emit from_server_set_test();      break;
-            case command::set_test_ticket_onExit      : emit from_server_set_test();      break;
-            case command::set_test_ticket_onPassEntry : emit from_server_set_test();      break;
-            case command::set_test_ticket_onPassExit  : emit from_server_set_test();      break;
-
             case command::set_test                    : emit from_server_set_test();      break;
             case command::set_normal                  : emit from_server_set_normal();    break;
             case command::set_iron_mode               : emit from_server_set_iron_mode(); break;
-            case command::set_type_out                : emit set_type_Slave();            break;
+            case command::set_type_main               : emit set_type_Main();             break;
+            case command::set_type_slave              : emit set_type_Slave();            break;
+            case command::set_type_entry              : emit set_type_Entry();            break;
+            case command::set_type_exit               : emit set_type_Exit();             break;
             case command::set_Armed                   : emit from_server_setArmed();      break;
             case command::set_Unlock                  : emit from_server_setUnLocked();   break;
 
             case command::set_Ready                   : emit from_server_to_ready();      break;
             case command::set_Wrong                   : emit from_server_to_wrong ();     break;
-            case command::set_EntryOpen               : (this->*entry_opener_handler)();  break;
-            case command::set_ExitOpen                : (this->*exit_opener_handler)();   break;
+            case command::set_EntryOpen               : emit from_server_to_entry();  break;
+            case command::set_ExitOpen                : emit from_server_to_exit();   break;
 
             default: break;
             }
@@ -369,47 +366,35 @@ private:
     bool test_flag = true;
 
     QString cmd_arg{};
-    void (controller::*entry_opener_handler)() = &controller::from_server_to_entry;
-    void (controller::*exit_opener_handler)() = &controller::from_server_to_exit;
     void (controller::*local_onCheck_handler)() = &controller::set_onCheckEntry; //дергается считывателем  шк
     void (controller::*remote_onCheck_handler)() = &controller::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
+    void set_type_Main()                          //Переключаем в режим ГЛАВНЫЙ
+    {
+            reader_type = _reader_type::_main;
+            serverFound->set_type_Main();
+            qDebug() << "Main";
+    }
     void set_type_Slave()                          //Переключаем в режим ПОДЧИНЕННЫЙ
     {
-        if ( reader_type != _reader_type::slave )
-        {
             reader_type = _reader_type::slave;
-            change_direction_type();
-            revert_onCheckHandler(); // Перевернем подключение сигналов считывателей
-            //local_onCheck_handler = &controller::set_onCheckEXit;
-            //remote_onCheck_handler = &controller::set_onCheckEntry;
-            //==================== отключим кросборду от автомата =================================
-            //======= И отключим состояние досмотр охраной =======
             serverFound->set_type_Slave();
-            //emit log(" set out " + cmd_arg);
-        }
+            qDebug() << "Slave";
     }
-    void change_direction_type()
+    void set_type_Entry()
     {
-        if (direction_type == dir_type::entry)
-            direction_type = dir_type::exit_;
-        else
-            direction_type = dir_type::entry;
+        direction_type = dir_type::entry;
+        local_onCheck_handler = &controller::set_onCheckEntry; //дергается считывателем  шк
+        remote_onCheck_handler = &controller::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
+        qDebug() << "Entry";
     }
-    void revert_onCheckHandler()      //  переворачиваем подключение считывателей
+    void set_type_Exit()
     {
-        void (controller::*var)() = local_onCheck_handler;
-        local_onCheck_handler = remote_onCheck_handler;
-        remote_onCheck_handler = var;
+        direction_type = dir_type::exit_;
+        local_onCheck_handler = &controller::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
+        remote_onCheck_handler = &controller::set_onCheckEntry; //дергается считывателем  шк
+        qDebug() << "Exit";
     }
-    void set_reverse()   // Изменим направления Вход-выход турникета
-    {
-        // Перевернем открыватели и тогда сохранятся показываемые статусы
-        void (controller::*var)() = entry_opener_handler;
-        entry_opener_handler = exit_opener_handler;
-        exit_opener_handler = var;
-        //                             и также
-        // revert_onCheckHandler(); // Перевернем подключение сигналов считывателей
-    }
+
     void set_timer()
     {
         testt_pass = new QTimer(this);
@@ -433,25 +418,15 @@ private:
     void wicket_init()
     {
         wicket = new nikiret();
-        connect(wicket, &nikiret::temp, this, &controller::send_state);
+        //connect(wicket, &nikiret::temp, this, &controller::send_state);
+
+        connect(wicket, &nikiret::temp, this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::getTemp, temp));});
+
         wicket->start();
     }
     void send_state(QString temp)
     {
         emit send_to_server(message(MachineState::undef, command::getTemp, temp));
-        if ( machine->isRunning() )
-        {
-            //qDebug() << machine->configuration();
-          //  if (machine->configuration().contains( serverFound->Armed->Ready))
-          //      emit send_to_server(message(MachineState::onReady, command::undef, ""));
-          //  if ( machine->configuration().contains( serverFound->Armed ) )
-          //      emit send_to_server(message(MachineState::onArmed, command::undef, ""));
-           // if ( machine->configuration().contains( serverFound->UnLocked ) )
-           //     emit send_to_server(message(MachineState::onUnlocked, command::undef, ""));
-        }
-        // else
-        //     emit send_to_server(message(MachineState::onStateMachineNotReady, command::undef, ""));
-
     }
 
 signals:

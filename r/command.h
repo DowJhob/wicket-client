@@ -34,12 +34,18 @@ undef,
 };
 enum class command {
     undef,
-    heartbeat,
+
     //from main to wicket
     set_test,
     set_normal,
     set_iron_mode,
-    set_type_out,
+
+    set_type_main,
+    set_type_slave,
+
+    set_type_entry,   // Направление пропуска данного считывателя
+    set_type_exit,
+
     set_Armed,
     set_Unlock,
 
@@ -47,51 +53,46 @@ enum class command {
     set_Ready,
     set_EntryOpen,
     set_ExitOpen,
+
     //from wicket to main
     get_Register,
-
-    getIronBC, //+barcode
     getBarcode, //+barcode
     getTemp,
-    set_test_ticket_onEntry,
-    set_test_ticket_onExit,
-    set_test_ticket_onPassEntry,
-    set_test_ticket_onPassExit
+
+    heartbeat
 };
 /*!
   *\brief gg::ggg
   *\param gdfg
 */
 
-typedef struct _message{
+typedef struct message{
     MachineState state;
     command cmd;
     QVariant body;
-    _message( MachineState state = MachineState::undef, command comm = command::heartbeat, QVariant body = "heartbeat")
-        : state(state), cmd(comm), body(body)
-    {
+//    int param;
+    message( MachineState state = MachineState::undef, command cmd = command::heartbeat, QVariant body = "heartbeat"):
+            state(state), cmd(cmd), body(body)
+        {}
+//    message( command cmd = command::heartbeat ):
+//            state(MachineState::undef), cmd(cmd), body("")
+//        {}
+//    message( MachineState state = MachineState::undef):
+//            state(state), cmd(command::undef), body("")
+//        {}
+//    explicit message( ):
+//            state(MachineState::undef), cmd(command::heartbeat), body("heartbeat")
+//        {}
+/*
 
-    }/*
-    _message( command comm = command::heartbeat, QVariant body = "heartbeat"):
-        state(MachineState::undef), cmd(comm), body(body)
-    {
-
-    }
-    _message( MachineState state = MachineState::undef, QVariant body = "heartbeat"):
-        state(state), cmd(command::heartbeat), body(body)
-    {
-
-    }
-    _message( MachineState state = MachineState::undef):
-        state(state), cmd(command::heartbeat), body("")
-    {
-
-    }
-    _message(): state(MachineState::undef), cmd(command::heartbeat), body("")
-    {
-
-    }*/
-}message;
+    explicit message(): body("heartbeat"), param(0)
+    {}
+    explicit message( MachineState state, QVariant body): body(body), param(static_cast<int>(state) )
+    {}
+    explicit message( command cmd, QVariant body):body(body), param(static_cast<int>(cmd))
+    {}
+*/
+}mmessage;
 
 inline QDataStream &operator <<(QDataStream &stream,const  message &msg) // сериализуем;
 {
