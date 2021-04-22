@@ -120,8 +120,8 @@ public slots:
 
             case command::set_Ready                   : emit from_server_to_ready();      break;
             case command::set_Wrong                   : emit from_server_to_wrong ();     break;
-            case command::set_EntryOpen               : emit from_server_to_entry();  break;
-            case command::set_ExitOpen                : emit from_server_to_exit();   break;
+            case command::set_EntryOpen               : emit from_server_to_entry();      break;
+            case command::set_ExitOpen                : emit from_server_to_exit();       break;
 
             default: break;
             }
@@ -209,7 +209,7 @@ private slots:
     {
         setPictureSIG(picture::pict_denied, cmd_arg );
         wicket->setRED();
-        send_state2(message(MachineState::onWrong, command::undef));
+        send_state2(message(MachineState::onWrong, command::undef, cmd_arg));
         qDebug() << "Wrong";
     }
     void processing_Ready()
