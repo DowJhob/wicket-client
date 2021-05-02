@@ -100,16 +100,17 @@ public:
     }
     void set_type_Slave()
     {
-      //  UncondTimeout->removeTransition(unCondToCheckExit);
-      //  UncondTimeout->removeTransition(unCondToReady);
+        //  UncondTimeout->removeTransition(unCondToCheckExit);
+        //  UncondTimeout->removeTransition(unCondToReady);
         unCondToReadySlaveType = UncondTimeout->addTransition(Ready); // Не дожидаясь таймера сразу в Ready
         //qDebug() << unCondToReadySlaveType << UncondTimeout->transitions();
     }
     void set_type_Main()
     {
-        UncondTimeout->removeTransition(unCondToReadySlaveType);// Удаляю безусловный переход
-   //     unCondToReady->setTargetState(UncondTimeout);           // Возвращаю условные переходы
-    //    unCondToCheckExit->setTargetState(UncondTimeout);
+        if(unCondToReadySlaveType != nullptr)
+            UncondTimeout->removeTransition(unCondToReadySlaveType);// Удаляю безусловный переход
+        //     unCondToReady->setTargetState(UncondTimeout);           // Возвращаю условные переходы
+        //    unCondToCheckExit->setTargetState(UncondTimeout);
     }
 public slots:
     void set_uncondDelay_time(int uncondDelay = 6000)
@@ -163,7 +164,7 @@ private:
     int wait_remote_time = 1000;
     int pass_wait_time = 10000;
     int wrong_light_TIME = 2000;
-//    int uncondDelay = 8000;
+    //    int uncondDelay = 8000;
 };
 
 #endif // WICKETFSM_H
