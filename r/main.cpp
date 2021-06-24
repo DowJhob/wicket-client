@@ -3,11 +3,33 @@
 //#include <controller.h>
 #include <network.h>
 #include <controller_2.h>
-#include <async_threaded_reader.h>
+#include "test_timer.h"
+
+#define TEST
+#define ISD 1
+#define NIKIRET 2
+#define WICKET_TYPE ISD
+
+//#include "barcode_reader/barcode_reader_interface.h"
+#if (WICKET_TYPE == ISD)
+#include <barcode_reader/motobarcode.h>
+#endif
+#if (WICKET_TYPE == NIKIRET)
+#include <barcode_reader/async_threaded_reader.h>
+#endif
+
 #include <picture2.h>
+
 #ifdef NFC_ON
 #include <NFC_copy.h>
 #endif
+
+
+
+
+#if (WICKET_TYPE == ISD)
+#endif
+
 int main(int argc, char *argv[])
 {
     qRegisterMetaType<message>("message");
@@ -22,35 +44,38 @@ int main(int argc, char *argv[])
     ///========================== OBJECTS =========================================
     controller _controller;
     network network_client;
+    ///========================== lcd_display =========================================
     picture2 lcd_display(network_client.localIP);
 //    libusb_async_reader barcode_reader;
 //    QObject::connect( &barcode_reader, &libusb_async_reader::readyRead, &_controller,    &controller::send_barcode );
 //    QObject::connect( &barcode_reader, &libusb_async_reader::log,       &network_client, &network::logger);
-
-
-
-
-//    uchar      EP_IN = 0x81;
+    lcd_display.start();
+barcode_reader_interface *barcode_reader;
+    QThread thread;
+#if (WICKET_TYPE == ISD)
+    barcode_reader = new motoBARcode();
+    barcode_reader->ini(GetConsoleWindow());
+    a.installNativeEventFilter(barcode_reader);
+    barcode_reader->init();
+#endif
+#if (WICKET_TYPE == NIKIRET)
+    //    uchar      EP_IN = 0x81;
     uint16_t     VID = 0x05E0;
     uint16_t     PID = 0x1900;
     int iface = 0;
     int config = 1;
     int alt_config = 0;
-    QThread thread;
-    libusb_async_reader *asyncc = new libusb_async_reader( VID, PID, iface, config, alt_config);
-    QObject::connect(asyncc, &libusb_async_reader::readyRead_barcode,  &_controller, &controller::local_barcode);
-    QObject::connect(asyncc, &libusb_async_reader::log,  &network_client, &network::logger);
-    QObject::connect(&thread, &QThread::started, asyncc, &libusb_async_reader::init);
-    asyncc->moveToThread(&thread);
-    thread.start( );
+    barcode_reader = new libusb_async_reader( );
+    barcode_reader->ini(VID, PID, iface, config, alt_config);
+#endif
+    QObject::connect(barcode_reader, &barcode_reader_interface::readyRead_barcode,  &_controller, &controller::local_barcode);
+    QObject::connect(barcode_reader, &barcode_reader_interface::log,  &network_client, &network::logger);
+    QObject::connect(&thread, &QThread::started, barcode_reader, &barcode_reader_interface::init);
+    //barcode_reader->moveToThread(&thread);
+    //thread.start( );
 
 
 
-
-
-
-    ///========================== lcd_display =========================================
-    lcd_display.start();
     ///========================== controller =========================================
     QThread controller_thread;
     QObject::connect(&controller_thread, &QThread::started, &_controller, &controller::start);
@@ -68,6 +93,11 @@ int main(int argc, char *argv[])
     QObject::connect( &network_client, &network::enter_STATE_server_search_signal, &_controller, &controller::ext_provided_server_searchSIG);
     QObject::connect( &network_client, &network::readyRead,                        &_controller, &controller::new_cmd_parse);
     net_thread.start(QThread::TimeCriticalPriority);
+
+#ifdef TEST
+test_timer tt;
+QObject::connect(&tt, &test_timer::test, &network_client, &network::SendToServer);
+#endif
 
     //===================== NFC =======================
 #ifdef NFC_ON

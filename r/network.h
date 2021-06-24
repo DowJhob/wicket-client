@@ -2,7 +2,9 @@
 #define NETWORK_H
 
 #include <stdio.h>
+#ifdef unix
 #include <netinet/in.h>
+#endif
 
 #include <QTcpSocket>
 #include <QUdpSocket>
@@ -47,8 +49,8 @@ public slots:
         tcpSocket = new QTcpSocket(this);
 
         //for test
-        connect(tcpSocket, &QTcpSocket::disconnected, this, [&](){emit log("socket disconnect sig");});
-        connect(reconnect_timeout_timer, &QTimer::timeout, this, [&](){emit log("reconnect_timer timeout sig");});
+        connect(tcpSocket, &QTcpSocket::disconnected, this, [this](){emit log("socket disconnect sig");});
+        connect(reconnect_timeout_timer, &QTimer::timeout, this, [this](){emit log("reconnect_timer timeout sig");});
         //================================
         in.setDevice(tcpSocket);
         in.setVersion(QDataStream::Qt_5_12);
@@ -70,14 +72,14 @@ public slots:
         connect(serverSearch,       &QState::entered, this, &network::server_search);
         connect(startTCPconnection, &QState::entered, this, &network::reconnect);
 
-        connect(TCPconnected, &QState::entered, this, [&](){ reconnect_timeout_timer->setInterval(timeout_interval);
+        connect(TCPconnected, &QState::entered, this, [this](){ reconnect_timeout_timer->setInterval(timeout_interval);
             reconnect_timeout_timer->start();
             localIP = tcpSocket->localAddress().toString();
             network_status = state::ready;
             emit log("TCP connected:\n");
             SendToServer(message( MachineState::undef, command::get_Register, QVariant(MACAddress)));
             emit network_ready();});
-        connect(TCPconnected, &QState::exited, this, [&](){ network_status = state::disconnected;
+        connect(TCPconnected, &QState::exited, this, [this](){ network_status = state::disconnected;
             emit log("TCP disconnected:\n");});
         sockets_init();
         //========================================= timers setup ========================================
@@ -114,7 +116,10 @@ public slots:
                     localIP = entry.ip().toString();
                     fprintf(stdout,"%s\n", ( netInterface.name() + "/" + localIP + "/" + entry.netmask().toString() + "/" + MACAddress).toStdString().c_str());
                     fflush(stdout);
-                    break;
+                    //break;
+
+                    QByteArray datagram = "turnstile";
+                    udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
                 }
     }
     void logger(QString log)
@@ -152,8 +157,8 @@ private slots:
         network_status = state::network_search_host;
         emit log("server search started:\n");
         get_interface();
-        QByteArray datagram = "turnstile";
-        udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
+        //        QByteArray datagram = "turnstile";
+        //        udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
 
         emit enter_STATE_server_search_signal();
         reconnect_timeout_timer->start();
@@ -220,16 +225,19 @@ private slots:
     }
     void processPendingDatagrams()
     {
-        QByteArray datagram;
-        QHostAddress _ip_addr;
-        while (udpSocket->hasPendingDatagrams()) {
-            datagram.resize(int(udpSocket->pendingDatagramSize()));
-            udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
-            if ( datagram == "server_v2" )
-            {
-                emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
-                server_ip_addr = _ip_addr;
-                emit TCPserver_found();
+        if (network_status != state::ready)
+        {
+            QByteArray datagram;
+            QHostAddress _ip_addr;
+            while (udpSocket->hasPendingDatagrams()) {
+                datagram.resize(int(udpSocket->pendingDatagramSize()));
+                udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
+                if ( datagram == "server_v2" )
+                {
+                    emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
+                    server_ip_addr = _ip_addr;
+                    emit TCPserver_found();
+                }
             }
         }
     }

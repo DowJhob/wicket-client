@@ -5,23 +5,27 @@
 #include <QThread>
 #include <QTimer>
 #include <QDebug>
+#include "barcode_reader_interface.h"
 
 #define INTR_LENGTH		1024
 
-class libusb_async_reader: public QObject {
+class libusb_async_reader: public barcode_reader_interface
+{
     Q_OBJECT
 public:
     QByteArray d;
     struct libusb_device_handle *devh = nullptr;
-    libusb_async_reader( uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81):
-        VID( VID), PID( PID), EP_INTR(EP_INTR), iface ( iface), config (config), alt_config ( alt_config)
+    libusb_async_reader( )
     {
         m_instance = this;
         //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
         //        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
     }
+    void ini(uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81)
+    {
 
-protected:
+    }
+    protected:
     //async();
 private:
     static libusb_async_reader* m_instance;
