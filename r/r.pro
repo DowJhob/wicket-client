@@ -46,7 +46,6 @@ HEADERS += common_types.h \
 #controller.h \
 #    barcode_qt.h \
     barcode_reader/barcode_reader_interface.h \
-    barcode_reader/motobarcode.h \
     command.h \
     controller_2.h \
     network.h \
@@ -58,9 +57,13 @@ HEADERS += common_types.h \
     wicketFSM/wicketlocker.h
 
 unix{
-    HEADERS += barcode_reader/async_threaded_reader.h \
-    SOURCES += barcode_reader/async_threaded_reader.cpp \
+    HEADERS += barcode_reader/async_threaded_reader.h
+    SOURCES += barcode_reader/async_threaded_reader.cpp
     LIBS += -lusb-1.0
+}
+win32{
+    HEADERS += barcode_reader/motobarcode.h
+#    SOURCES +=
 }
 #CONFIG+=static
 QMAKE_CFLAGS += -Ofast

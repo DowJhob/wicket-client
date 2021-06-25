@@ -8,7 +8,8 @@
 #define TEST
 #define ISD 1
 #define NIKIRET 2
-#define WICKET_TYPE ISD
+//#define WICKET_TYPE ISD
+#define WICKET_TYPE NIKIRET
 
 //#include "barcode_reader/barcode_reader_interface.h"
 #if (WICKET_TYPE == ISD)
@@ -65,13 +66,14 @@ barcode_reader_interface *barcode_reader;
     int iface = 0;
     int config = 1;
     int alt_config = 0;
-    barcode_reader = new libusb_async_reader( );
+    barcode_reader = new libusb_async_reader();
     barcode_reader->ini(VID, PID, iface, config, alt_config);
 #endif
     QObject::connect(barcode_reader, &barcode_reader_interface::readyRead_barcode,  &_controller, &controller::local_barcode);
     QObject::connect(barcode_reader, &barcode_reader_interface::log,  &network_client, &network::logger);
     QObject::connect(&thread, &QThread::started, barcode_reader, &barcode_reader_interface::init);
     //barcode_reader->moveToThread(&thread);
+    barcode_reader->init();
     //thread.start( );
 
 

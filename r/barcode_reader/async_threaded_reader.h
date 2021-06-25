@@ -21,7 +21,7 @@ public:
         //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
         //        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
     }
-    void ini(uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81)
+    void ini(uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81) Q_DECL_OVERRIDE
     {
 
     }
@@ -126,7 +126,7 @@ private:
     }
 
 public slots:
-    void init()
+    void init() Q_DECL_OVERRIDE
     {
         int r = 0;
         //libusb_reset_device(devh);
