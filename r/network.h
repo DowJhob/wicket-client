@@ -154,6 +154,7 @@ private slots:
     {
         reconnect_timeout_timer->setInterval(reconnect_interval);
         tcpSocket->abort();
+        udpSocket->reset();
         network_status = state::network_search_host;
         emit log("server search started:\n");
         get_interface();
@@ -237,6 +238,7 @@ private slots:
                     emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
                     server_ip_addr = _ip_addr;
                     emit TCPserver_found();
+                    break;
                 }
             }
         }
