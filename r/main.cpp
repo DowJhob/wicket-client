@@ -5,19 +5,9 @@
 #include <controller_2.h>
 #include "test_timer.h"
 
-#define TEST
-#define ISD 1
-#define NIKIRET 2
-//#define WICKET_TYPE ISD
-#define WICKET_TYPE NIKIRET
+//#define TEST
 
-//#include "barcode_reader/barcode_reader_interface.h"
-#if (WICKET_TYPE == ISD)
-#include <barcode_reader/motobarcode.h>
-#endif
-#if (WICKET_TYPE == NIKIRET)
 #include <barcode_reader/async_threaded_reader.h>
-#endif
 
 #include <picture2.h>
 
@@ -25,11 +15,6 @@
 #include <NFC_copy.h>
 #endif
 
-
-
-
-#if (WICKET_TYPE == ISD)
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -53,13 +38,6 @@ int main(int argc, char *argv[])
     lcd_display.start();
 barcode_reader_interface *barcode_reader;
     QThread thread;
-#if (WICKET_TYPE == ISD)
-    barcode_reader = new motoBARcode();
-    barcode_reader->ini(GetConsoleWindow());
-    a.installNativeEventFilter(barcode_reader);
-    barcode_reader->init();
-#endif
-#if (WICKET_TYPE == NIKIRET)
     //    uchar      EP_IN = 0x81;
     uint16_t     VID = 0x05E0;
     uint16_t     PID = 0x1900;
@@ -68,13 +46,12 @@ barcode_reader_interface *barcode_reader;
     int alt_config = 0;
     barcode_reader = new libusb_async_reader();
     barcode_reader->ini(VID, PID, iface, config, alt_config);
-#endif
     QObject::connect(barcode_reader, &barcode_reader_interface::readyRead_barcode,  &_controller, &controller::local_barcode);
     QObject::connect(barcode_reader, &barcode_reader_interface::log,  &network_client, &network::logger);
     QObject::connect(&thread, &QThread::started, barcode_reader, &barcode_reader_interface::init);
-    //barcode_reader->moveToThread(&thread);
-    barcode_reader->init();
-    //thread.start( );
+    barcode_reader->moveToThread(&thread);
+    //barcode_reader->init();
+    thread.start( );
 
 
 
