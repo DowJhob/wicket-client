@@ -62,7 +62,7 @@ unix{
     LIBS += -lusb-1.0
 }
 win32{
-    HEADERS += barcode_reader/motobarcode.h
+    HEADERS +=
 #    SOURCES +=
 }
 #CONFIG+=static

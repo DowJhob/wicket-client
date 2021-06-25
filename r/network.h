@@ -225,7 +225,7 @@ private slots:
     }
     void processPendingDatagrams()
     {
-        if (network_status != state::ready)
+ //       if (network_status != state::ready)
         {
             QByteArray datagram;
             QHostAddress _ip_addr;
