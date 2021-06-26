@@ -1,11 +1,13 @@
 #include <QApplication>
 #include <common_types.h>
-//#include <controller.h>
 #include <network.h>
 #include <controller_2.h>
-#include "test_timer.h"
 
 //#define TEST
+#ifdef TEST
+#include "test_timer.h"
+#include <NFC_copy.h>
+#endif
 
 #include <barcode_reader/async_threaded_reader.h>
 
@@ -32,9 +34,7 @@ int main(int argc, char *argv[])
     network network_client;
     ///========================== lcd_display =========================================
     picture2 lcd_display(network_client.localIP);
-//    libusb_async_reader barcode_reader;
-//    QObject::connect( &barcode_reader, &libusb_async_reader::readyRead, &_controller,    &controller::send_barcode );
-//    QObject::connect( &barcode_reader, &libusb_async_reader::log,       &network_client, &network::logger);
+
     lcd_display.start();
 libusb_async_reader *barcode_reader;
     QThread thread;
