@@ -5,11 +5,10 @@
 #include <QThread>
 #include <QTimer>
 #include <QDebug>
-#include "barcode_reader_interface.h"
 
 #define INTR_LENGTH		1024
 
-class libusb_async_reader: public barcode_reader_interface
+class libusb_async_reader: public QObject
 {
     Q_OBJECT
 public:
@@ -21,11 +20,16 @@ public:
         //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
         //        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
     }
-    void ini(uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81) Q_DECL_OVERRIDE
+    void ini(uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81)
     {
-
+        this->VID = VID;
+        this->PID = PID;
+        this->iface = iface;
+        this->config = config;
+        this->alt_config = alt_config;
+        this->EP_INTR = EP_INTR;
     }
-    protected:
+protected:
     //async();
 private:
     static libusb_async_reader* m_instance;
@@ -53,7 +57,7 @@ private:
     {
         libusb_async_reader *readerInstance = reinterpret_cast<libusb_async_reader*>(transfer->user_data);
         QByteArray data = QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length );
-         readerInstance->parseSNAPImessage( data );
+        readerInstance->parseSNAPImessage( data );
         int rc = libusb_submit_transfer(readerInstance->irq_transfer);
         if (rc != 0)
             readerInstance->log("callback_wrapper: " + QString::fromLatin1(libusb_error_name(rc)));
@@ -126,7 +130,7 @@ private:
     }
 
 public slots:
-    void init() Q_DECL_OVERRIDE
+    void init()
     {
         int r = 0;
         //libusb_reset_device(devh);
