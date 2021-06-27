@@ -50,11 +50,7 @@ libusb_async_reader *barcode_reader;
     QObject::connect(barcode_reader, &libusb_async_reader::log,  &network_client, &network::logger);
     QObject::connect(&thread, &QThread::started, barcode_reader, &libusb_async_reader::init);
     barcode_reader->moveToThread(&thread);
-    //barcode_reader->init();
-    thread.start( );
-
-
-
+    thread.start();
     ///========================== controller =========================================
     QThread controller_thread;
     QObject::connect(&controller_thread, &QThread::started, &_controller, &controller::start);
