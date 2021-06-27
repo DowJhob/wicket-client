@@ -129,29 +129,14 @@ private:
     //                emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
     //        }
     //    }
-
-public slots:
-    void start()
+    bool set_libusb()
     {
-        int rc;
-        rc = libusb_handle_events_timeout(nullptr, &zero_tv);
-
-        set_param( SNAPI_BARCODE_REQ, 4, 100 );
-        if (rc != 0)
-            emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
-        emit _loop();
-    }
-    void init()
-    {
-        connect(this, &libusb_async_reader::_loop, this, &libusb_async_reader::start);
-
         int r = 0;
         //libusb_reset_device(devh);
         qDebug() << libusb_get_version()->describe << libusb_get_version()->major << libusb_get_version()->minor
                  << libusb_get_version()->micro << libusb_get_version()->nano;
         if ( (r = libusb_init(nullptr)) != LIBUSB_SUCCESS )
             qDebug() << "libusb_init error: " <<  libusb_error_name( r ) ;
-
         devh = libusb_open_device_with_vid_pid( nullptr, VID, PID );
         if ( devh != nullptr )
         {
@@ -163,15 +148,45 @@ public slots:
                 qDebug() << "libusb_claim_interface" << libusb_error_name( r );
             if((r = libusb_set_interface_alt_setting(devh, iface, alt_config)) != 0)
                 qDebug() << "NOT set ALT configuration: " << libusb_error_name( r );
+
+
+
+           // libusb_pollfd
+            auto pfd = libusb_get_pollfds(nullptr);
+
+
+
+
+
+            return true;
+        }
+        return false;
+    }
+public slots:
+    void init()
+    {
+        connect(this, &libusb_async_reader::_loop, this, &libusb_async_reader::start);
+        if ( set_libusb() )
+        {
             alloc_transfers();
             SNAPI_scaner_init();
-            start();
+            emit start();
             //emit init_completed();
         }
         else
             qDebug() << "libusb_open_device_with_vid_pid error: device not open";
     }
-
+private slots:
+    void start()
+    {
+        int rc;
+        //    rc = libusb_handle_events_timeout(nullptr, &zero_tv);
+        rc = libusb_handle_events(nullptr);
+        set_param( SNAPI_BARCODE_REQ, 4, 100 );
+        if (rc != 0)
+            emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
+        emit _loop();
+    }
 signals:
     void readyRead_barcode(QByteArray);
     void init_completed();
