@@ -32,6 +32,7 @@ public:
 protected:
     //async();
 private:
+    QTimer *loop;
     static libusb_async_reader* m_instance;
     uint16_t VID = 0x05E0;
     uint16_t PID = 0x1900;
@@ -115,23 +116,35 @@ private:
         set_param(SNAPI_RET0, 4, 300);
         set_param(SNAPI_RET0, 4, 300);
     }
-    [[ noreturn ]] void start()
-    {
-        int rc;
-        /* Handle Events */
-        while (true)
-        {
-            rc = libusb_handle_events_timeout(nullptr, &zero_tv);
+    //    [[ noreturn ]] void start()
+    //    {
+    //        int rc;
+    //        /* Handle Events */
+    //        while (true)
+    //        {
+    //            rc = libusb_handle_events_timeout(nullptr, &zero_tv);
 
-            set_param( SNAPI_BARCODE_REQ, 4, 100 );
-            if (rc != 0)
-                emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
-        }
-    }
+    //            set_param( SNAPI_BARCODE_REQ, 4, 100 );
+    //            if (rc != 0)
+    //                emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
+    //        }
+    //    }
 
 public slots:
+    void start()
+    {
+        int rc;
+        rc = libusb_handle_events_timeout(nullptr, &zero_tv);
+
+        set_param( SNAPI_BARCODE_REQ, 4, 100 );
+        if (rc != 0)
+            emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
+        emit _loop();
+    }
     void init()
     {
+        connect(this, &libusb_async_reader::_loop, this, &libusb_async_reader::start);
+
         int r = 0;
         //libusb_reset_device(devh);
         qDebug() << libusb_get_version()->describe << libusb_get_version()->major << libusb_get_version()->minor
@@ -163,6 +176,8 @@ signals:
     void readyRead_barcode(QByteArray);
     void init_completed();
     void log(QString);
+
+    void _loop();
 };
 
 #endif // ASYNC_H

@@ -152,15 +152,14 @@ private slots:
     }
     void server_search()
     {
+        char * data;
         reconnect_timeout_timer->setInterval(reconnect_interval);
         tcpSocket->abort();
-        udpSocket->reset();
+      //  udpSocket->reset();
+        udpSocket->readDatagram( data, 0 );
         network_status = state::network_search_host;
         emit log("server search started:\n");
         get_interface();
-        //        QByteArray datagram = "turnstile";
-        //        udpSocket->writeDatagram(datagram, broadcast_addr, udpPort);
-
         emit enter_STATE_server_search_signal();
         reconnect_timeout_timer->start();
     }
@@ -226,20 +225,17 @@ private slots:
     }
     void processPendingDatagrams()
     {
- //       if (network_status != state::ready)
-        {
-            QByteArray datagram;
-            QHostAddress _ip_addr;
-            while (udpSocket->hasPendingDatagrams()) {
-                datagram.resize(int(udpSocket->pendingDatagramSize()));
-                udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
-                if ( datagram == "server_v2" )
-                {
-                    emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
-                    server_ip_addr = _ip_addr;
-                    emit TCPserver_found();
-                    break;
-                }
+        QByteArray datagram;
+        QHostAddress _ip_addr;
+        while (udpSocket->hasPendingDatagrams()) {
+            datagram.resize(int(udpSocket->pendingDatagramSize()));
+            udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
+            if ( datagram == "server_v2" )
+            {
+                emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
+                server_ip_addr = _ip_addr;
+                emit TCPserver_found();
+                break;
             }
         }
     }
