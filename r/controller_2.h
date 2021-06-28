@@ -27,7 +27,7 @@ public:
     dir_type direction_type = dir_type::entry;
     controller()
     { }
-    ~controller() Q_DECL_OVERRIDE
+    ~controller() //Q_DECL_OVERRIDE
     {
 //        if(testt != nullptr)
 //            testt->deleteLater();
