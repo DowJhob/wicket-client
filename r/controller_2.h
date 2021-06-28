@@ -27,6 +27,22 @@ public:
     dir_type direction_type = dir_type::entry;
     controller()
     { }
+    ~controller() Q_DECL_OVERRIDE
+    {
+//        if(testt != nullptr)
+//            testt->deleteLater();
+//        if(testt_pass != nullptr)
+//            testt_pass->deleteLater();
+//        if(machine != nullptr)
+//            machine->deleteLater();
+//        if(serverSearch != nullptr)
+//            serverSearch->deleteLater();
+//        if(wicket != nullptr)
+//            wicket->deleteLater();
+//        if(serverFound != nullptr)
+//            serverFound->deleteLater();
+    }
+
     wicketLocker *serverFound;
     QElapsedTimer *t;
 public slots:
