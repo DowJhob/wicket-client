@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QDebug>
+#include <QSocketNotifier>
 
 #define INTR_LENGTH		1024
 
@@ -152,9 +153,17 @@ private:
 
 
            // libusb_pollfd
-            auto pfd = libusb_get_pollfds(nullptr);
+//            auto fds = libusb_get_pollfds(nullptr);
 
-
+//            const struct libusb_pollfd **it = fds;
+//            for(;*it != nullptr; ++it) {
+//         qDebug() << "Adding fd: " << (*it)->fd << ", " << (*it)->events << endl;
+//                auto fdddd = (*it)->fd;
+//                if((*it)->events == 1)
+//                {
+//                QSocketNotifier *d = new QSocketNotifier(fdddd, QSocketNotifier::Read);
+//                connect(d, &QSocketNotifier::activated, this, &libusb_async_reader::tac);
+//            }}
 
 
 
@@ -179,14 +188,22 @@ public slots:
 private slots:
     void start()
     {
+        qDebug() << "start";
         int rc;
+        set_param( SNAPI_BARCODE_REQ, 4, 100 );
         //    rc = libusb_handle_events_timeout(nullptr, &zero_tv);
         rc = libusb_handle_events(nullptr);
-        set_param( SNAPI_BARCODE_REQ, 4, 100 );
         if (rc != 0)
             emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
         emit _loop();
     }
+void tac()
+{
+    //rc =
+    libusb_handle_events_timeout(nullptr, &zero_tv);
+    set_param( SNAPI_BARCODE_REQ, 4, 100 );
+    qDebug() << "tac";
+}
 signals:
     void readyRead_barcode(QByteArray);
     void init_completed();
