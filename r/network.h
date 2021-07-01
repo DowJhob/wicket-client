@@ -153,7 +153,6 @@ private slots:
         char * data;
         reconnect_timeout_timer->setInterval(reconnect_interval);
         tcpSocket->abort();
-      //  udpSocket->reset();
         udpSocket->readDatagram( data, 0 );
         network_status = state::network_search_host;
         emit log("server search started:\n");
