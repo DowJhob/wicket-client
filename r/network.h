@@ -44,10 +44,8 @@ public:
 public slots:
     void start()
     {
-        //        reconnect_timer2 = new QTimer(this);
         reconnect_timeout_timer = new QTimer(this);
         tcpSocket = new QTcpSocket(this);
-
         //for test
         connect(tcpSocket, &QTcpSocket::disconnected, this, [this](){emit log("socket disconnect sig");});
         connect(reconnect_timeout_timer, &QTimer::timeout, this, [this](){emit log("reconnect_timer timeout sig");});
