@@ -20,11 +20,12 @@
 #include <common_types.h>
 #include "command.h"
 
+
 class network : public QObject
 {
     Q_OBJECT
 public:
-    int network_status = state::undefined;
+    net_state network_status = net_state::undefined;
     QHostAddress server_ip_addr = QHostAddress("10.1.7.11");
     QString MACAddress;
     QString localIP;
@@ -73,11 +74,11 @@ public slots:
         connect(TCPconnected, &QState::entered, this, [this](){ reconnect_timeout_timer->setInterval(timeout_interval);
             reconnect_timeout_timer->start();
             localIP = tcpSocket->localAddress().toString();
-            network_status = state::ready;
+            network_status = net_state::tcp_connected;
             emit log("TCP connected:\n");
             SendToServer(message( MachineState::undef, command::get_Register, QVariant(MACAddress)));
             emit network_ready();});
-        connect(TCPconnected, &QState::exited, this, [this](){ network_status = state::disconnected;
+        connect(TCPconnected, &QState::exited, this, [this](){ network_status = net_state::search;
             emit log("TCP disconnected:\n");});
         sockets_init();
         //========================================= timers setup ========================================
@@ -154,7 +155,7 @@ private slots:
         reconnect_timeout_timer->setInterval(reconnect_interval);
         tcpSocket->abort();
         udpSocket->readDatagram( data, 0 );
-        network_status = state::network_search_host;
+        network_status = net_state::search;
         emit log("server search started:\n");
         get_interface();
         emit enter_STATE_server_search_signal();
@@ -185,7 +186,7 @@ private slots:
     }
     void slotError(QAbstractSocket::SocketError err)
     {
-        network_status = state::error;
+     //   network_status = state::error;
         QString strError =
                 (err == QAbstractSocket::HostNotFoundError ?
                      "The host was not found." :
@@ -222,6 +223,12 @@ private slots:
     }
     void processPendingDatagrams()
     {
+        if(network_status == net_state::tcp_connected)
+        {
+            char * data;
+            udpSocket->readDatagram( data, 0 );
+            return;
+        }
         QByteArray datagram;
         QHostAddress _ip_addr;
         while (udpSocket->hasPendingDatagrams()) {
