@@ -160,19 +160,19 @@ private:
 public slots:
     void init()
     {
-        connect(this, &libusb_async_reader::_loop, this, &libusb_async_reader::start);
+        connect(this, &libusb_async_reader::_loop, this, &libusb_async_reader::tick);
         if ( set_libusb() )
         {
             alloc_transfers();
             SNAPI_scaner_init();
-            emit start();
+            emit tick();
             //emit init_completed();
         }
         else
             qDebug() << "libusb_open_device_with_vid_pid error: device not open";
     }
 private slots:
-    void start()
+    void tick()
     {
         //qDebug() << "start";
         int rc;
@@ -183,13 +183,6 @@ private slots:
             emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
         emit _loop();
     }
-void tac()
-{
-    //rc =
-    libusb_handle_events_timeout(nullptr, &zero_tv);
-    set_param( SNAPI_BARCODE_REQ, 4, 100 );
-    qDebug() << "tac";
-}
 signals:
     void readyRead_barcode(QByteArray);
     void init_completed();
