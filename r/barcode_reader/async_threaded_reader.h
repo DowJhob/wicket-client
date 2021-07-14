@@ -64,24 +64,59 @@ private:
         if (rc != 0)
             readerInstance->log("callback_wrapper: " + QString::fromLatin1(libusb_error_name(rc)));
     }
-    void parseSNAPImessage( QByteArray data )
+
+    bool set_libusb()
     {
-        if ( !data.isNull() and data.size() >= 32 and static_cast<int>(data[0]) == 34 //
-             and static_cast<int>(data[1]) > 0 and message.count() < data[1] )
+        int r = 0;
+        //libusb_reset_device(devh);
+        qDebug() << libusb_get_version()->describe << libusb_get_version()->major << libusb_get_version()->minor
+                 << libusb_get_version()->micro << libusb_get_version()->nano;
+        if ( (r = libusb_init(nullptr)) != LIBUSB_SUCCESS )
+            qDebug() << "libusb_init error: " <<  libusb_error_name( r ) ;
+        devh = libusb_open_device_with_vid_pid( nullptr, VID, PID );
+        if ( devh != nullptr )
         {
-            message.insert( data[2], data.mid(6, data.at(3)));
-            if( message.count() == data[1] )    // Total messages
-            {
-                QByteArray aaa{};
-                for(int i = 0; i < message.count(); i++)
-                    aaa += message.value(i);
-                readyRead_barcode(aaa);
-                message.clear();
-                qDebug() << "Barcode data decode2: " << aaa;
-                set_param( SNAPI_BEEP, 32, 100 );
-                set_param( SNAPI_RET0, 4, 100 );
-            }
+            r = libusb_detach_kernel_driver( devh, iface );
+            if(( r != LIBUSB_SUCCESS) && (r != LIBUSB_ERROR_NOT_FOUND ) )
+                qDebug() << "libusb_detach_kernel_driver error:" << libusb_error_name( r );
+            if((r = libusb_set_configuration(devh, config)) != LIBUSB_SUCCESS)
+                qDebug() << "NOT set configuration: " << libusb_error_name( r );
+            if((r = libusb_claim_interface(devh, iface)) != LIBUSB_SUCCESS)
+                qDebug() << "libusb_claim_interface" << libusb_error_name( r );
+            if((r = libusb_set_interface_alt_setting(devh, iface, alt_config)) != LIBUSB_SUCCESS)
+                qDebug() << "NOT set ALT configuration: " << libusb_error_name( r );
+           // libusb_pollfd
+//            auto fds = libusb_get_pollfds(nullptr);
+//            const struct libusb_pollfd **it = fds;
+//            for(;*it != nullptr; ++it) {
+//         qDebug() << "Adding fd: " << (*it)->fd << ", " << (*it)->events << endl;
+//                auto fdddd = (*it)->fd;
+//                if((*it)->events == 1)
+//                {
+//                QSocketNotifier *d = new QSocketNotifier(fdddd, QSocketNotifier::Read);
+//                connect(d, &QSocketNotifier::activated, this, &libusb_async_reader::tac);
+//            }}
+            return true;
         }
+        return false;
+    }
+    void SNAPI_scaner_init( )
+    {
+        //--------Init usb--------------
+        //qDebug() << "first libusb_control_transfer error: " <<
+        libusb_control_transfer( devh, LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_OUT,
+                                 10, 0, 0, nullptr, 0, 300 ) ;
+        //sleep(2)
+
+        //--------Init usb 1------------
+        set_param( SNAPI_INIT_1, 32, 300 );
+        set_param( SNAPI_RET0, 4, 300 );
+        set_param( ENABLE_SCANNER, 2, 300);
+        //sleep(2)
+        //---------Init command 1------')
+        set_param(SNAPI_COMMAND_1, 32, 300);
+        set_param(SNAPI_RET0, 4, 300);
+        set_param(SNAPI_RET0, 4, 300);
     }
     void alloc_transfers(void)
     {
@@ -102,75 +137,26 @@ private:
         if (rc < 0)
             emit log("set_param: " + QString::fromLatin1(libusb_error_name(rc)));
     }
-    void SNAPI_scaner_init( )
+    void parseSNAPImessage( QByteArray data )
     {
-        //--------Init usb--------------
-        //qDebug() << "first libusb_control_transfer error: " <<
-        libusb_control_transfer( devh, LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_OUT,
-                                 10, 0, 0, nullptr, 0, 300 ) ;
-        //--------Init usb 1------------
-        set_param( SNAPI_INIT_1, 32, 300 );
-        set_param( SNAPI_RET0, 4, 300 );
-        set_param( ENABLE_SCANNER, 2, 300);
-        //---------Init command 1------')
-        set_param(SNAPI_COMMAND_1, 32, 300);
-        set_param(SNAPI_RET0, 4, 300);
-        set_param(SNAPI_RET0, 4, 300);
-    }
-    //    [[ noreturn ]] void start()
-    //    {
-    //        int rc;
-    //        /* Handle Events */
-    //        while (true)
-    //        {
-    //            rc = libusb_handle_events_timeout(nullptr, &zero_tv);
-
-    //            set_param( SNAPI_BARCODE_REQ, 4, 100 );
-    //            if (rc != 0)
-    //                emit log("start: " + QString::fromLatin1(libusb_error_name(rc)));
-    //        }
-    //    }
-    bool set_libusb()
-    {
-        int r = 0;
-        //libusb_reset_device(devh);
-        qDebug() << libusb_get_version()->describe << libusb_get_version()->major << libusb_get_version()->minor
-                 << libusb_get_version()->micro << libusb_get_version()->nano;
-        if ( (r = libusb_init(nullptr)) != LIBUSB_SUCCESS )
-            qDebug() << "libusb_init error: " <<  libusb_error_name( r ) ;
-        devh = libusb_open_device_with_vid_pid( nullptr, VID, PID );
-        if ( devh != nullptr )
+        if ( !data.isNull() and data.size() >= 32 and static_cast<int>(data[0]) == 34 //
+             and static_cast<int>(data[1]) > 0 and message.count() < data[1] )
         {
-            if((r = libusb_detach_kernel_driver( devh, iface ) ) != LIBUSB_SUCCESS )
-                qDebug() << "libusb_detach_kernel_driver error:" << libusb_error_name( r );
-            if((r = libusb_set_configuration(devh, config)) != 0)
-                qDebug() << "NOT set configuration: " << libusb_error_name( r );
-            if((r = libusb_claim_interface(devh, iface)) != 0)
-                qDebug() << "libusb_claim_interface" << libusb_error_name( r );
-            if((r = libusb_set_interface_alt_setting(devh, iface, alt_config)) != 0)
-                qDebug() << "NOT set ALT configuration: " << libusb_error_name( r );
-
-
-
-           // libusb_pollfd
-//            auto fds = libusb_get_pollfds(nullptr);
-
-//            const struct libusb_pollfd **it = fds;
-//            for(;*it != nullptr; ++it) {
-//         qDebug() << "Adding fd: " << (*it)->fd << ", " << (*it)->events << endl;
-//                auto fdddd = (*it)->fd;
-//                if((*it)->events == 1)
-//                {
-//                QSocketNotifier *d = new QSocketNotifier(fdddd, QSocketNotifier::Read);
-//                connect(d, &QSocketNotifier::activated, this, &libusb_async_reader::tac);
-//            }}
-
-
-
-            return true;
+            message.insert( data[2], data.mid(6, data.at(3)));
+            if( message.count() == data[1] )    // Total messages
+            {
+                QByteArray aaa{};
+                for(int i = 0; i < message.count(); i++)
+                    aaa += message.value(i);
+                readyRead_barcode(aaa);
+                message.clear();
+                qDebug() << "Barcode data decode2: " << aaa;
+                set_param( SNAPI_BEEP, 32, 100 );
+                set_param( SNAPI_RET0, 4, 100 );
+            }
         }
-        return false;
     }
+
 public slots:
     void init()
     {
@@ -188,7 +174,7 @@ public slots:
 private slots:
     void start()
     {
-        qDebug() << "start";
+        //qDebug() << "start";
         int rc;
         set_param( SNAPI_BARCODE_REQ, 4, 100 );
         //    rc = libusb_handle_events_timeout(nullptr, &zero_tv);
