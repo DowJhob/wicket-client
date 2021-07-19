@@ -170,7 +170,7 @@ public slots:
             send_to_server(message(MachineState::onWrongRemote, command::undef, "Ведущий считыватель\nне готов" ));
     }
     void local_barcode(QByteArray data)
-    {
+    {qDebug() << "local_barcode: " + data;
         cmd_arg = data;
         t->start();
         if ( ready_state_flag )  // наверное избыточная проверка, и так в онЧек можно только из рэди

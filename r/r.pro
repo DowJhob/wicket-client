@@ -45,9 +45,10 @@ HEADERS += common_types.h \
     NFC_copy.h \
 #controller.h \
 #    barcode_qt.h \
-    barcode_reader/barcode_reader_interface.h \
+    barcode_reader/barcode_msg.h \
     command.h \
     controller_2.h \
+    libs/libusb/include/libusb.h \
     network.h \
     nikiret.h \
     picture2.h \
