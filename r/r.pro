@@ -26,6 +26,7 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/mac_link.cpp \
 #        PN532-PN532_HSU/PN532/snep.cpp \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
+        barcode_reader/handler.cpp \
         main.cpp
 
 INSTALLS += target
@@ -46,6 +47,7 @@ HEADERS += common_types.h \
 #controller.h \
 #    barcode_qt.h \
     barcode_reader/barcode_msg.h \
+    barcode_reader/handler.h \
     command.h \
     controller_2.h \
     libs/libusb/include/libusb.h \

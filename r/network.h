@@ -39,9 +39,6 @@ public:
     {
 
     }
-    ~network()
-    {
-    }
 public slots:
     void start()
     {
@@ -49,7 +46,7 @@ public slots:
         tcpSocket = new QTcpSocket(this);
         //for test
         connect(tcpSocket, &QTcpSocket::disconnected, this, [this](){emit log("socket disconnect sig");});
-        connect(reconnect_timeout_timer, &QTimer::timeout, this, [this](){emit log("reconnect_timer timeout sig");});
+        connect(reconnect_timeout_timer, &QTimer::timeout, this, [this](){emit log("reconnect_timer timeout sig\n");});
         //================================
         in.setDevice(tcpSocket);
         in.setVersion(QDataStream::Qt_5_12);
