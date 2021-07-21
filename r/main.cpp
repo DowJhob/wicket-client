@@ -37,21 +37,22 @@ int main(int argc, char *argv[])
 
     lcd_display.start();
 libusb_async_reader *barcode_reader;
-    QThread thread;
+    //QThread thread;
     //    uchar      EP_IN = 0x81;
     uint16_t     VID = 0x05E0;
     uint16_t     PID = 0x1900;
     int iface = 0;
     int config = 1;
     int alt_config = 0;
-    barcode_reader = new libusb_async_reader();
-    barcode_reader->ini(VID, PID, iface, config, alt_config);
+    barcode_reader = new libusb_async_reader(VID, PID, iface, config, alt_config);
+
     QObject::connect(barcode_reader, &libusb_async_reader::readyRead_barcode,  &_controller, &controller::local_barcode, Qt::QueuedConnection);
     QObject::connect(barcode_reader, &libusb_async_reader::log,  &network_client, &network::logger, Qt::QueuedConnection);
-    QObject::connect(&thread, &QThread::started, barcode_reader, &libusb_async_reader::start);
-    barcode_reader->moveToThread(&thread);
-    thread.start(//QThread::TimeCriticalPriority
-                 );
+    //QObject::connect(&thread, &QThread::started, barcode_reader, &libusb_async_reader::start);
+    //barcode_reader->moveToThread(&thread);
+    //thread.start(//QThread::TimeCriticalPriority
+    //             );
+    barcode_reader->start();
     ///========================== controller =========================================
     QThread controller_thread;
     QObject::connect(&controller_thread, &QThread::started, &_controller, &controller::start);

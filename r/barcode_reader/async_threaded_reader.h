@@ -22,28 +22,20 @@ class libusb_async_reader: public QObject
     Q_OBJECT
 public:
     struct libusb_device_handle *dev_handle = nullptr;
-    libusb_async_reader( )
+    libusb_async_reader(uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81 )
     {
         qRegisterMetaType<barcode_msg>("barcode_msg");
         m_instance = this;
-        //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
-        //        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
-    }
-    ~libusb_async_reader() Q_DECL_OVERRIDE
-    {
-        deleteLater();
-        libusb_hotplug_deregister_callback(nullptr, callback_handle);
-        libusb_exit(nullptr);
-    }
-    void ini(uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81)
-    {
         this->VID = VID;
         this->PID = PID;
         this->iface = iface;
         this->config = config;
         this->alt_config = alt_config;
         this->EP_INTR = EP_INTR;
+        //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
+        //        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
     }
+
 protected:
     //async();
 private:
@@ -79,27 +71,7 @@ private:
     int status = 0;
     barcode_msg data{};
     QMap<int, QByteArray> message{};
-    static int LIBUSB_CALL hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev, libusb_hotplug_event event, void *user_data);
-    static void LIBUSB_CALL bulk_cb_wrppr( libusb_transfer *transfer)
-    {
-        //        if (transfer->status != LIBUSB_TRANSFER_COMPLETED)
-        //            qDebug() << "bulk_cb_wrppr transfer->status!" + QString::fromLatin1(libusb_error_name(transfer->status));
-        //        QByteArray a = QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length );
-        //        qDebug() << "bulk_cb_wrppr: " << a.toHex(':');
 
-        //        libusb_async_reader *readerInstance = reinterpret_cast<libusb_async_reader*>(transfer->user_data);
-        //        int rc = libusb_submit_transfer(readerInstance->bulk_transfer);
-        //        if (rc != 0)
-        //            qDebug() << "bulk_cb_wrppr submit_transfer err: " + QString::fromLatin1(libusb_error_name(rc));
-        //        barcode_msg data;
-        //        data.append( QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length ));
-        //        //readerInstance->parseSNAPImessage( data );
-        //        emit readerInstance->_tick( data );
-    }
-    static void LIBUSB_CALL intrrpt_cb_wrppr( libusb_transfer *transfer);
-
-    bool init_libusb();
-    bool device_init();
     void fds()
     {
         libusb_fd_list = libusb_get_pollfds(nullptr);
@@ -116,7 +88,6 @@ private:
         }
     }
 
-    void alloc_transfers(void);
     int set_param( unsigned char *_data, quint16 size, uint _timeout = 300)
     {
         quint16 send_value = 0x200 + _data[0];
@@ -163,7 +134,6 @@ private:
 public slots:
     void start()
     {
-        dev_handle = h.dev_handle;
         connect(&h, &handler::SNAPI_msg_sig, this, &libusb_async_reader::parseSNAPImessage
         #ifdef BLOCK
                 , Qt::BlockingQueuedConnection
@@ -178,7 +148,7 @@ public slots:
                 , Qt::QueuedConnection
         #endif
                 );
-        connect(&h, &handler::device_left_sig, this, &libusb_async_reader::disconnect_slot
+        connect(&h, &handler::device_left_sig, this, [this](){dev_handle = nullptr;}
         #ifdef BLOCK
                 , Qt::BlockingQueuedConnection
         #else
@@ -203,10 +173,9 @@ public slots:
 
         //  thread()->eventDispatcher()->processEvents(QEventLoop::AllEvents);
     }
-
     void parseSNAPImessage( barcode_msg data )
     {
-        qDebug() << "reciever parseSNAPImessage: " << data.toHex(':');
+        //qDebug() << "reciever parseSNAPImessage: " << data.toHex(':');
         if ( !data.isNull() and data.size() >= 3 )
         {
             switch (data.at(0))
@@ -225,93 +194,19 @@ public slots:
             }
         }
     }
+
 private slots:
-    void connect_slot()
-    {
-        bool b = device_init();
-        qDebug() << "connect_slot: " << b;
-        if (b)
-        {
-            printf("Reader inited \n");
-        }
-        else
-        {
-            printf("Could not open USB device\n");
-        }
-    }
-    void disconnect_slot()
-    {
-        if (dev_handle != nullptr)
-        {
-            printf("Disconnect reader \n");
-            //libusb_free_pollfds(readerInstance->libusb_fd_list);
-            libusb_release_interface(dev_handle, iface);
-            libusb_close(dev_handle);
-            dev_handle = nullptr;
-            libusb_free_transfer(irq_transfer);
-            //readerInstance->running = false;
-            //delete(fds_list);
-        }
-    }
-    void handle_loop_slot()
-    {
-        int rc;
-        //   int p = poll(fds_list, count, 100);
-        //        if (p >= 0 )
-        {
-            //rc = libusb_handle_events(nullptr);
-            rc = libusb_handle_events_timeout(nullptr, &zero_tv);
-            emit handle_loop_sig();
-            // handle events from other sources here
-        }
-    }
-    void hop()
-    {
-        int rc;
-        /* Handle Events */
-        qDebug() << "hop thread " << thread();
-        while (true)
-        {
-            status = 0;
-            //   int p = poll(fds_list, count, 100);
-            //        if (p >= 0 )
-            {
-                //rc = libusb_handle_events(nullptr);
-                rc = libusb_handle_events_timeout(nullptr, &zero_tv);
-                switch (status) {
-                case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED : SNAPI_scaner_init(); break;
-                case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT : disconnect_slot(); break;
-                    //case 3 : parseSNAPImessage(data); break;
-                }
-                thread()->eventDispatcher()->processEvents(QEventLoop::AllEvents);
-            }
-            // handle events from other sources here
-        }
-    }
     void beep()
     {
-        //        set_param( SNAPI_BARCODE_REQ, 4, 100 );
-
         set_param( SNAPI_BEEP2, 10, 100 );
-        //        set_param( SNAPI_RET0, 4, 100 );
     }
     void SNAPI_scaner_init( );
+
 signals:
-    void handle_loop_sig();
-    void SNAPI_msg_sig(barcode_msg);
-    void connect_sig();
-    void disconnect_sig();
     void readyRead_barcode(QByteArray);
-
-
-
-
-
 
     void init_completed();
     void log(QString);
-
-
 };
 
 #endif // ASYNC_H

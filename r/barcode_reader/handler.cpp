@@ -5,6 +5,7 @@ handler* handler::m_instance = nullptr;
 handler::handler()
 {
  //   int r = 0;
+    connect(this, &handler::loop_sig, this, &handler::loop, Qt::QueuedConnection);
     if (!usb_init())
         return;
     device_init();
@@ -21,6 +22,7 @@ bool handler::usb_init()
         printf("libusb_init error: %s\n", libusb_error_name(r));
         return false;
     }
+    cb_reg();
     return true;
 }
 
@@ -49,8 +51,8 @@ int handler::hotplug_callback(libusb_context *ctx, libusb_device *dev, libusb_ho
             libusb_free_transfer(readerInstance->irq_transfer);
             //readerInstance->running = false;
             //delete(fds_list);
+            emit readerInstance->device_left_sig();
         }
-        emit readerInstance->device_left_sig();
     } else {
         printf("Unhandled event %d\n", event);
     }
@@ -94,25 +96,6 @@ bool handler::device_init()
 
     printf(" -> device_getted handle");
 
-   r = libusb_hotplug_register_callback(nullptr, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
-                                         LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-                                         //LIBUSB_HOTPLUG_ENUMERATE,
-                                         0,
-                                         VID, PID,
-                                         LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, this,
-                                         &callback_handle);
-
-    if (LIBUSB_SUCCESS != r)
-    {
-        printf("\nError creating a hotplug callback\n");
-        libusb_exit(nullptr);
-        //return false;
-    }
-//    else
-    {
-    printf(" -> hotplug callback created");
-    //fflush(stdout);
-    }
          r = LIBUSB_SUCCESS;
         if( libusb_kernel_driver_active(dev_handle, iface))
             r = libusb_detach_kernel_driver( dev_handle, iface );
@@ -142,4 +125,27 @@ bool handler::device_init()
 
     printf("libusb_open_device_with_vid_pid: dont open device\n");
     return false;
+}
+
+void handler::cb_reg()
+{
+    int r = libusb_hotplug_register_callback(nullptr, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
+                                          LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                                          //LIBUSB_HOTPLUG_ENUMERATE,
+                                          0,
+                                          VID, PID,
+                                          LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, this,
+                                          &callback_handle);
+
+     if (LIBUSB_SUCCESS != r)
+     {
+         printf("\nError creating a hotplug callback\n");
+         libusb_exit(nullptr);
+         //return false;
+     }
+ //    else
+     {
+     printf(" -> hotplug callback created");
+     //fflush(stdout);
+     }
 }

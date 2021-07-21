@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QDebug>
 #include <QThread>
+#include <QTimer>
 #include "libusb.h"
 
 #include "barcode_msg.h"
@@ -17,26 +18,28 @@ public:
     struct libusb_device_handle *dev_handle = nullptr;
     timeval zero_tv { 0, 10000 };
     handler();
+    ~handler()Q_DECL_OVERRIDE
+    {
+        deleteLater();
+        libusb_exit(nullptr);
+    }
+protected:
     void run() Q_DECL_OVERRIDE
     {
         int rc;
         /* Handle Events */
         qDebug() << "hop thread " << thread();
-        while (true)
+        //QTimer::singleShot(0, this, &handler::loop);
+        emit loop();
+        //       while (true)
         {
             //   int p = poll(fds_list, count, 100);
             //        if (p >= 0 )
-            {
-                //rc = libusb_handle_events(nullptr);
-                rc = libusb_handle_events_timeout(nullptr, &zero_tv);
-                {
-                    //      qDebug() << "rrrrrrrrrrrrrrhhh";
-                    //     parseSNAPImessage( data );
-                    //              thread()->eventDispatcher()->processEvents(QEventLoop::AllEvents);
-                }
-            }
+            //rc = libusb_handle_events(nullptr);
+            //            rc = libusb_handle_events_timeout(nullptr, &zero_tv);
             // handle events from other sources here
         }
+        exec();
     }
 private:
     struct libusb_transfer *irq_transfer;
@@ -69,14 +72,23 @@ private:
     }
     static void LIBUSB_CALL intrrpt_cb_wrppr( libusb_transfer *transfer);
     bool usb_init();
+    void cb_reg();
     bool device_init();
-
+private slots:
+    void loop()
+    {
+        //rc =
+        libusb_handle_events_timeout(nullptr, &zero_tv);
+        //QTimer::singleShot(0, this, &handler::loop);
+        emit loop();
+        //qDebug() << "hop  ";
+    }
 signals:
     void device_arrived_sig();
     void device_left_sig();
     void SNAPI_msg_sig(barcode_msg);
 
-    void init_completed();
+    void loop_sig();
     void log(QString);
 
 };
