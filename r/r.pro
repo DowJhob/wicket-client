@@ -3,6 +3,8 @@ QT += core network
 QT += gui
 QT += widgets
 QT += serialport
+#QT += webkitwidgets
+#QT += webengine
 
 CONFIG += c++11
 CONFIG += console
@@ -26,8 +28,9 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/mac_link.cpp \
 #        PN532-PN532_HSU/PN532/snep.cpp \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
-        barcode_reader/handler.cpp \
-        main.cpp
+        barcode_reader/libusb-wrapper.cpp \
+        main.cpp \
+        wicketFSM/covidwrapper.cpp
 
 INSTALLS += target
 target.path = target.path = /usr
@@ -47,21 +50,25 @@ HEADERS += common_types.h \
 #controller.h \
 #    barcode_qt.h \
     barcode_reader/barcode_msg.h \
-    barcode_reader/handler.h \
+    barcode_reader/libusb-wrapper.h \
     command.h \
     controller_2.h \
+    htmlwidget.h \
     libs/libusb/include/libusb.h \
+    main-widget.h \
     network.h \
     nikiret.h \
-    picture2.h \
     test_timer.h \
     updater.h \
+    wicketFSM/covidwrapper.h \
     wicketFSM/wicketfsm.h \
     wicketFSM/wicketlocker.h
 
 unix{
-    HEADERS += barcode_reader/async_threaded_reader.h
-    SOURCES += barcode_reader/async_threaded_reader.cpp
+    HEADERS += \
+    barcode_reader/snapi-barcode-reader.h
+    SOURCES += \
+    barcode_reader/snapi-barcode-reader.cpp
     LIBS += -lusb-1.0
 }
 win32{

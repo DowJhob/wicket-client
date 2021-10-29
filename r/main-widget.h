@@ -1,5 +1,5 @@
-#ifndef PICTURE2_H
-#define PICTURE2_H
+#ifndef MAIN_WIDGET_H
+#define MAIN_WIDGET_H
 #include <QtGui>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -7,9 +7,10 @@
 #include <QMovie>
 #include <QFont>
 #include <QTimer>
+
 #include <common_types.h>
 
-class picture2: public QObject
+class picture2: public QWidget
 {
     Q_OBJECT
 public:
@@ -29,7 +30,10 @@ public slots:
         oncheck_pixmap.load(":images/oncheck.png");
         service_pixmap.load(":images/service.jpg");
 
-        background_widget.showMaximized();
+        setFixedWidth( 480 );
+        setFixedHeight( 640 );
+        setLayout( &background_layout );
+        showMaximized();
 
         access_palette.setBrush(QPalette::Background, access_pixmap);
         place_palette.setBrush(QPalette::Background, place_ticket_pixmap);
@@ -51,9 +55,7 @@ public slots:
         IP.setText("IP");
         info_log.setText("Слава робатам, убить всех человекав!\n");
         main_message.setText("main_message");
-        background_widget.setFixedWidth( 480 );
-        background_widget.setFixedHeight( 640 );
-        background_widget.setLayout( &background_layout );
+
 
         //background_layout.setSizeConstraint(QLayout::SetMinAndMaxSize);
         background_layout.addWidget(&IP, 0, Qt::AlignLeft | Qt::AlignTop );
@@ -101,7 +103,7 @@ private:
 
         main_message.setStyleSheet(main_style);
         main_message.setText(main_text);
-        background_widget.setPalette(palette);
+        setPalette(palette);
     }
 
     QString black_style = "QLabel{ color:black;}";
@@ -109,7 +111,7 @@ private:
     QFont _f10 = QFont("Times New Roman", 10, QFont :: Bold );
     QFont _f15 = QFont("Times New Roman", 15, QFont :: Bold );
 
-    QWidget background_widget;
+
     QVBoxLayout background_layout;
 
     QLabel IP;
@@ -130,4 +132,4 @@ private:
     QPixmap service_pixmap;
 
 };
-#endif // PICTURE_H
+#endif // MAIN_WIDGET_H

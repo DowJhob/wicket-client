@@ -1,18 +1,17 @@
-#include "handler.h"
+#include "libusb-wrapper.h"
 
-handler* handler::m_instance = nullptr;
+libusb_wrapper* libusb_wrapper::m_instance = nullptr;
 
-handler::handler()
+libusb_wrapper::libusb_wrapper()
 {
- //   int r = 0;
-    connect(this, &handler::loop_sig, this, &handler::loop, Qt::QueuedConnection);
+    connect(this, &libusb_wrapper::loop_sig, this, &libusb_wrapper::loop, Qt::QueuedConnection);
     if (!usb_init())
         return;
     device_init();
-   // }
+    fds();
 }
 
-bool handler::usb_init()
+bool libusb_wrapper::usb_init()
 {
     int r = 0;
     printf("%s - %d.%d.%d.%d", libusb_get_version()->describe, libusb_get_version()->major, libusb_get_version()->minor
@@ -26,10 +25,10 @@ bool handler::usb_init()
     return true;
 }
 
-int handler::hotplug_callback(libusb_context *ctx, libusb_device *dev, libusb_hotplug_event event, void *user_data)
+int libusb_wrapper::hotplug_callback(libusb_context *ctx, libusb_device *dev, libusb_hotplug_event event, void *user_data)
 {
     //qDebug() << "hot";
-    handler *readerInstance = reinterpret_cast<handler*>(user_data);
+    libusb_wrapper *readerInstance = reinterpret_cast<libusb_wrapper*>(user_data);
     if(readerInstance == nullptr)
     {
         qDebug() << "readerInstance nullptr!!!";
@@ -60,30 +59,43 @@ int handler::hotplug_callback(libusb_context *ctx, libusb_device *dev, libusb_ho
     return 0;
 }
 
-void handler::intrrpt_cb_wrppr(libusb_transfer *transfer)
+//void libusb_wrapper::bulk_cb_wrppr(libusb_transfer *transfer)
+//{
+//            if (transfer->status != LIBUSB_TRANSFER_COMPLETED)
+//                qDebug() << "bulk_cb_wrppr transfer->status!" + QString::fromLatin1(libusb_error_name(transfer->status));
+//            QByteArray a = QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length );
+//            qDebug() << "bulk_cb_wrppr: " << a.toHex(':');
+
+//            libusb_wrapper *readerInstance = reinterpret_cast<libusb_wrapper*>(transfer->user_data);
+//            int rc = libusb_submit_transfer(readerInstance->bulk_transfer);
+//            if (rc != 0)
+//                qDebug() << "bulk_cb_wrppr submit_transfer err: " + QString::fromLatin1(libusb_error_name(rc));
+//    //        barcode_msg data;
+//    //        data.append( QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length ));
+//    //        //readerInstance->parseSNAPImessage( data );
+//    //        emit readerInstance->_tick( data );
+//}
+
+void libusb_wrapper::intrrpt_cb_wrppr(libusb_transfer *transfer)
 {
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED)
         printf("intrrpt_cb_wrppr transfer->status: %s\n", libusb_error_name(transfer->status));
     else{
         QByteArray a = QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length );
         qDebug() << "intrrpt_cb_wrppr: " << a.toHex(':');
-        handler *readerInstance = reinterpret_cast<handler*>(transfer->user_data);
+        libusb_wrapper *readerInstance = reinterpret_cast<libusb_wrapper*>(transfer->user_data);
         int rc;
         if(readerInstance->irq_transfer)
             rc= libusb_submit_transfer(readerInstance->irq_transfer);
         barcode_msg data_;
-        //readerInstance->data.clear();
         data_.append( a);
-        //readerInstance->data.append( QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length ));
-        //readerInstance->parseSNAPImessage( data );
-        //readerInstance->status = 3;
-        emit readerInstance->SNAPI_msg_sig( data_ );
+        emit readerInstance->intrrpt_msg_sig( data_ );
         if (rc != 0)
             printf("intrrpt_cb_wrppr submit_transfer err: :%s\n", libusb_error_name(rc));
     }
 }
 
-bool handler::device_init()
+bool libusb_wrapper::device_init()
 {
     int r;
 
@@ -107,6 +119,8 @@ bool handler::device_init()
             printf("NOT set ALT configuration: - %s\n", libusb_error_name(r));
         if((r = libusb_claim_interface(dev_handle, iface)) != LIBUSB_SUCCESS)
             printf("libusb_claim_interface - %s\n", libusb_error_name(r));
+
+
         irq_transfer = libusb_alloc_transfer(0);
         //bulk_transfer = libusb_alloc_transfer(0);
         //if (!irq_transfer)
@@ -114,11 +128,20 @@ bool handler::device_init()
         irq_transfer->user_data = this;
         //bulk_transfer->user_data = this;
         libusb_fill_interrupt_transfer(irq_transfer, dev_handle, EP_INTR, irqbuf, sizeof(irqbuf), intrrpt_cb_wrppr, this, 0);
-        //libusb_fill_bulk_transfer(bulk_transfer, devh, EP_INTR, bulkbuf, sizeof(bulkbuf), bulk_cb_wrppr, this, 0);
+        //libusb_fill_bulk_transfer(bulk_transfer, dev_handle, 0x02, bulkbuf, sizeof(bulkbuf), bulk_cb_wrppr, this, 1000);
         //        irq_transfer->flags = LIBUSB_TRANSFER_SHORT_NOT_OK
         //            | LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
         libusb_submit_transfer(irq_transfer);
         //libusb_submit_transfer(bulk_transfer);
+
+
+
+        //int a =LIBUSB_ENDPOINT_IN;
+        //a =LIBUSB_ENDPOINT_OUT;
+
+
+
+
         printf(" -> device_inited\n");
         fflush(stdout);
         return true;
@@ -127,7 +150,7 @@ bool handler::device_init()
     return false;
 }
 
-void handler::cb_reg()
+void libusb_wrapper::cb_reg()
 {
     int r = libusb_hotplug_register_callback(nullptr, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
                                           LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
