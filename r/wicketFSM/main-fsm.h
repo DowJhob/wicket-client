@@ -39,7 +39,7 @@ private:
     bool *ready_state_flag;     //  поскольку нет простого способа узнать в каком состоянии машина
     bool *uncond_state_flag;    // сохраним пару состояний во флагах
 
-    _reader_type *reader_type;f
+    _reader_type *reader_type;
     dir_type *direction_type;
 
     nikiret *wicket;
