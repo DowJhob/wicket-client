@@ -29,8 +29,15 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/snep.cpp \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
         barcode_reader/libusb-wrapper.cpp \
+        controller_2.cpp \
+        main-widget.cpp \
         main.cpp \
-        wicketFSM/covidwrapper.cpp
+        network.cpp \
+        nikiret.cpp \
+        wicketFSM/covid-cert-cheker.cpp \
+        wicketFSM/main-fsm.cpp \
+        wicketFSM/wicketlocker.cpp \
+        wicketFSM/wicketfsm.cpp
 
 INSTALLS += target
 target.path = target.path = /usr
@@ -46,21 +53,22 @@ HEADERS += common_types.h \
 #    PN532-PN532_HSU/PN532/mac_link.h \
 #    PN532-PN532_HSU/PN532/snep.h \
 #    PN532-PN532_HSU/PN532/PN532_HSU.h \
-    NFC_copy.h \
+#    NFC_copy.h \
 #controller.h \
 #    barcode_qt.h \
     barcode_reader/barcode_msg.h \
     barcode_reader/libusb-wrapper.h \
     command.h \
     controller_2.h \
-    htmlwidget.h \
+#    htmlwidget.h \
     libs/libusb/include/libusb.h \
     main-widget.h \
     network.h \
     nikiret.h \
     test_timer.h \
-    updater.h \
-    wicketFSM/covidwrapper.h \
+#    updater.h \
+    wicketFSM/covid-cert-cheker.h \
+    wicketFSM/main-fsm.h \
     wicketFSM/wicketfsm.h \
     wicketFSM/wicketlocker.h
 

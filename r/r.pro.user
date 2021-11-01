@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.14.2, 2021-10-28T22:31:27. -->
+<!-- Written by QtCreator 4.14.2, 2021-11-01T19:48:40. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -320,15 +320,14 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">1</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">r (on KP-3:1ex--imx10.1.7.210)</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">r (на KP-2:12in--imx10.1.7.134)</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">RemoteLinuxRunConfiguration:/home/a/Documents/GitHub/wicket-client/r/r.pro</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/a/Documents/GitHub/wicket-client/r/r.pro</value>
     <value type="int" key="RemoteLinux.EnvironmentAspect.Version">1</value>
-    <value type="QString" key="RemoteLinux.RunConfig.AlternateRemoteExecutable">killall r&amp;/usr/r</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
-    <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">false</value>
+    <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.X11Forwarding">:0</value>
    </valuemap>
    <value type="int" key="ProjectExplorer.Target.RunConfigurationCount">1</value>

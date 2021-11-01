@@ -11,77 +11,49 @@ class wicketLocker : public QState
     Q_OBJECT
 public:
     wicketFSM *Armed;
+    wicketLocker(nikiret *wicket,
+                 _reader_type *reader_type,
+                 dir_type *direction_type,
+                 bool *ready_state_flag,
+                 bool *uncond_state_flag,
+                 QState *parent);
+
+    void set_type_Main();
+
+    void set_type_Slave();
+
+    void fromServer(command cmd);
+
+private:
     QState *UnLocked;
 
-    //// Из любого состояния можно перейти в проебана сеть
     QState *SetArmed;
     QState *SetUnLocked;
 
-    wicketLocker(QState *parent):QState(parent)
-    {
-        SetArmed    = new QState( this );
-        Armed       = new wicketFSM(this);
-        SetUnLocked = new QState( this );
-        UnLocked    = new QState( this );
+    bool *ready_state_flag;     //  поскольку нет простого способа узнать в каком состоянии машина
+    bool *uncond_state_flag;    // сохраним пару состояний во флагах
 
-        //это для безусловного сброса машины  по сигналу с сервера (что бы гасить лампы)
-        Armed->addTransition( this, &wicketLocker::from_server_setArmed, Armed );
-        //==   Это для принудительной установки состояния если турникет вернет такой сигнал =============
-        //== например при старте в разблокированном состоянии ===========================================
-        //== и сохраним для возможности удалить в случае если это ПОДЧИНЕННЫЙ считыватель ===============
-        ArmedToUnLockedTransition = Armed->addTransition( this, &wicketLocker::from_crsbrd_unlock, UnLocked );
-        UnLockedToArmedTransition = UnLocked->addTransition( this, &wicketLocker::from_crsbrd_armed, Armed );
-        ///================================================================================
-        // тут пошел нормальный цикл состояний// через сеттеры
-        SetUnLockedToUnLockedTransition =        //сохраним для возможности удалить в случае если это ПОДЧИНЕННЫЙ считыватель
-                SetUnLocked->addTransition( this, &wicketLocker::from_crsbrd_unlock, UnLocked);    // тут ждем когда разблокируется по сигналу с кросборды
+    _reader_type *reader_type;
+    dir_type *direction_type;
 
-        UnLocked->addTransition(this, &wicketLocker::from_server_setArmed, SetArmed);    // тут подаем кросборде сигнал на взведение турникета
-        SetArmedToArmedTransition =        //сохраним для возможности удалить в случае если это ВЫХОДНОЙ считыватель
-                SetArmed->addTransition(this, &wicketLocker::from_crsbrd_armed, Armed);            // тут ждем когда турникет будет готов по сигналу с кросборды
-        Armed->addTransition(this, &wicketLocker::from_server_setUnLocked, SetUnLocked); // тут подаем кросборде сигнал на разблокирование турникета
+    nikiret *wicket;
 
-        //=================================================================================================
-
-        setInitialState( Armed );
-    }
-    void set_type_Main()  // Блажь, врядли на лету будет нужда..
-    {
-        Armed->set_type_Main();
-        // Не забудь тут вернуть вынутые транзиции
-    }
-
-    void set_type_Slave()                          //Переключаем в подчиненный режим
-    {
-
-        //======= И отключим состояние досмотр охраной =======
-        Armed->set_type_Slave();
-
-        //==================== отключим кросборду от автомата =================================
-        Armed->removeTransition( ArmedToUnLockedTransition );
-        UnLocked->removeTransition( UnLockedToArmedTransition );
-
-        SetUnLocked->removeTransition( SetUnLockedToUnLockedTransition);
-        SetArmed->removeTransition( SetArmedToArmedTransition );
-
-        SetUnLocked->addTransition( UnLocked ); //делаем их безусловными что бы серверные сигналы не переключать
-        SetArmed->addTransition( Armed );
-
-        emit from_crsbrd_armed(); // гарантированно взводим
-    }
-
-signals:
-    void from_crsbrd_unlock();
-    void from_crsbrd_armed();
-    void from_server_setUnLocked();
-    void from_server_setArmed();
-
-private:
     QSignalTransition *ArmedToUnLockedTransition;
     QSignalTransition *UnLockedToArmedTransition;
 
     QSignalTransition *SetUnLockedToUnLockedTransition;
     QSignalTransition *SetArmedToArmedTransition;
+
+    void processing_Armed_();
+
+    void processing_UnLocked();
+
+signals:
+    void from_server_setUnLocked();
+    void from_server_setArmed();
+
+    void send_to_server(message);
+    void showState(picture, QString);
 };
 
 #endif // WICKETLOCKER_H

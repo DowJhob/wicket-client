@@ -54,15 +54,15 @@ int main(int argc, char *argv[])
     //             );
     barcode_reader->start();
     ///========================== controller =========================================
-    //QThread controller_thread;
-    //QObject::connect(&controller_thread, &QThread::started, &_controller, &controller::start);
-    //_controller.moveToThread(&controller_thread);
-    QObject::connect( &_controller, SIGNAL(setPictureSIG(int, QString)), &lcd_display,    SLOT(setPicture(int, QString)));
+    QThread controller_thread;
+    QObject::connect(&controller_thread, &QThread::started, &_controller, &controller::start);
+    _controller.moveToThread(&controller_thread);
+    QObject::connect( &_controller, SIGNAL(setPictureSIG(int, QString)), &lcd_display,    SLOT(showState(int, QString)));
     QObject::connect( &_controller, &controller::send_to_server,         &network_client, &network::SendToServer);
     QObject::connect( &_controller, &controller::log,                    &lcd_display,    &picture2::log);
-   // controller_thread.start(//QThread::TimeCriticalPriority
-    //                        );
-    _controller.start();
+    controller_thread.start(//QThread::TimeCriticalPriority
+                            );
+    //_controller.start();
     ///========================== network =========================================
     //QThread net_thread;
    // QObject::connect(&net_thread,        &QThread::started, &network_client, &network::start);
