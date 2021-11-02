@@ -12,6 +12,9 @@ class CovidWrapper : public QState
     Q_OBJECT
 public:
 
+    CovidWrapper(QState *parent, QByteArray CovidContollerPrefix, QByteArray controllerPrefix, QByteArray covidQRPrefix);
+
+private:
     QState *onReady;
     QState *onCheckBarcode;
     QState *onCheckCovid;
@@ -21,10 +24,6 @@ public:
     QState *TicketHandler;
     QState *onShowCovidFail;
     QState *onShowNoTicket;            // show fail screen when ticket first
-
-    CovidWrapper(QState *parent, QByteArray CovidContollerPrefix, QByteArray controllerPrefix, QByteArray covidQRPrefix);
-
-private:
     QByteArray currentBarcode="";
 
     QByteArray CovidContollerPrefix;
@@ -39,8 +38,6 @@ private:
 
     void checkBarcode(QByteArray bc);
 
-
-
     QTimer *communicationTimer;
     QTimer *showTimer;
     QTimer *CovidContollerCheckTimer;
@@ -52,7 +49,6 @@ private:
     int ticket_timeout = 30000;
 
 private slots:
-
 
 signals:
     void barcode(QByteArray);

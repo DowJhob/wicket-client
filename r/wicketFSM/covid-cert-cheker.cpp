@@ -10,7 +10,7 @@ CovidWrapper::CovidWrapper(QState *parent, QByteArray CovidContollerPrefix, QByt
     onCheckCovidContoller     = new QState( this );
     onShowCovidContollerFail  = new QState( this );
     onWaitCovidContollerCheck = new QState( this );
-    //      TicketHandler             = new wicketFSM(wicket, reader_type, direction_type, this);
+    //TicketHandler             = new wicketFSM(wicket, reader_type, direction_type, this);
     onShowCovidFail           = new QState( this );
     onShowNoTicket            = new QState( this );
 
