@@ -3,7 +3,6 @@
 CovidWrapper::CovidWrapper(QState *parent, QByteArray CovidContollerPrefix, QByteArray controllerPrefix, QByteArray covidQRPrefix):QState(parent),
     CovidContollerPrefix(CovidContollerPrefix), ControllerPrefix(controllerPrefix), covidQRPrefix(covidQRPrefix)
 {
-
     onReady                   = new QState( this );
     onCheckBarcode            = new QState( this );
     onCheckCovid              = new QState( this );
