@@ -9,18 +9,19 @@
 #include <QTimer>
 
 #include <common_types.h>
+#include <command.h>
 
-class picture2: public QWidget
+class mainWidget: public QWidget
 {
     Q_OBJECT
 public:
 
-    picture2(QString IPaddr);
+    mainWidget(QString IPaddr);
 
 public slots:
 
     void start();
-    void showState(int pict_type, QString ticket_status_description);
+    void showStatus(message msg);
 
     void log(QString str);
 

@@ -7,12 +7,19 @@
 #include <QTimer>
 #include <wicketFSM/wicketfsm.h>
 
-class CovidWrapper : public QState
+class checkCovidCert : public QState
 {
     Q_OBJECT
 public:
+    wicketFSM *TicketHandler;
 
-    CovidWrapper(QState *parent, QByteArray CovidContollerPrefix, QByteArray controllerPrefix, QByteArray covidQRPrefix);
+    checkCovidCert(//QByteArray CovidContollerPrefix, QByteArray controllerPrefix, QByteArray covidQRPrefix,
+                 //nikiret *wicket,
+                 _reader_type *reader_type,
+                 dir_type *direction_type,
+                 bool *ready_state_flag,
+                 bool *uncond_state_flag,
+                 QState *parent);
 
 private:
     QState *onReady;
@@ -21,18 +28,28 @@ private:
     QState *onCheckCovidContoller;
     QState *onShowCovidContollerFail;
     QState *onWaitCovidContollerCheck;  // проверка паспорта посетителя охраной
-    QState *TicketHandler;
     QState *onShowCovidFail;
     QState *onShowNoTicket;            // show fail screen when ticket first
+    //QState *onCounterCheck;
+
+
     QByteArray currentBarcode="";
 
     QByteArray CovidContollerPrefix;
     QByteArray ControllerPrefix;
     QByteArray covidQRPrefix;
 
+    bool *ready_state_flag;     //  поскольку нет простого способа узнать в каком состоянии машина
+    bool *uncond_state_flag;    // сохраним пару состояний во флагах
+
+    _reader_type *reader_type;
+    dir_type *direction_type;
+
+    nikiret *wicket;
+
     void set_timers();
 
-    void addTransition();
+    void addTransitions();
 
     void setAction();
 
@@ -41,12 +58,12 @@ private:
     QTimer *communicationTimer;
     QTimer *showTimer;
     QTimer *CovidContollerCheckTimer;
-    QTimer *ticket_timer;
+    //QTimer *ticket_timer;
 
     int communicationTimeout = 5000;
     int showTimeout = 2000;
     int CovidContollerCheckTimeout = 30000;
-    int ticket_timeout = 30000;
+    //int ticket_timeout = 30000;
 
 private slots:
 
@@ -66,6 +83,10 @@ signals:
     void _onShowNoTicket();
     void _onShowCovidFail();
     void _onShowCovidContollerFail();
+
+
+    void send_to_server(message);
+    void showState(showStatus, QString);
 
 };
 

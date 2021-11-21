@@ -3,37 +3,13 @@
 controller::controller()
 { }
 
-controller::~controller() //Q_DECL_OVERRIDE
-{
-    //        if(testt != nullptr)
-    //            testt->deleteLater();
-    //        if(testt_pass != nullptr)
-    //            testt_pass->deleteLater();
-    //        if(machine != nullptr)
-    //            machine->deleteLater();
-    //        if(serverSearch != nullptr)
-    //            serverSearch->deleteLater();
-    //        if(wicket != nullptr)
-    //            wicket->deleteLater();
-    //        if(serverFound != nullptr)
-    //            serverFound->deleteLater();
-}
-
 void controller::start()
 {
     t = new QElapsedTimer;
     wicket_init();
-    set_timer();
+    //set_timer();
     //==================================================================================================================
-    machine = new mainFSM(wicket,
-                          &reader_type,
-                          &direction_type,
-                          &ready_state_flag,
-                          &uncond_state_flag,
-                          this);
 
-    connect(this, &controller::ext_provided_server_searchSIG, machine, &mainFSM::serverSearchSIG);
-    connect(this, &controller::ext_provided_network_readySIG, machine, &mainFSM::serverFoundSIG);
 
     ///-----------------------------------------------------
     //==================================================================================================================
@@ -41,72 +17,70 @@ void controller::start()
     //_updater.setFilename( QCoreApplication::applicationFilePath() );
     //connect(&_updater, &updater::ready, [ & ](){ emit exit(42); } );
     //==================================================================================================================
-    connect(machine, &mainFSM::send_to_server, this, &controller::send_to_server);
-    machine->start();
 
 
     //set_reverse();   // для теста!!!!
 }
 
+void controller::wicket_init()
+{
+    wicket = new nikiret();
+    //connect(wicket, &nikiret::temp, this, &controller::send_state);
+
+    connect(wicket, &nikiret::temp,     this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::getTemp, temp));});
+    connect(wicket, &nikiret::armed,    this, [&](){emit send_to_server(message(MachineState::undef, command::getArmed));});
+    connect(wicket, &nikiret::unlocked, this, [&](){emit send_to_server(message(MachineState::undef, command::getUnlock));});
+    connect(wicket, &nikiret::passed,   this, [&](){emit send_to_server(message(MachineState::undef, command::getPassed));});
+
+    wicket->start();
+}
+
 void controller::new_cmd_parse(message msg)
 {
     cmd_arg = msg.body.toString();
-    if (msg.cmd != command::undef)
         switch (msg.cmd) {
         //  безусловные команды
-        case command::set_test       : emit from_server_set_test();      break;
-        case command::set_normal     : emit from_server_set_normal();    break;
-        case command::set_iron_mode  : emit from_server_set_iron_mode(); break;
-        case command::set_type_entry : set_type_Entry();            break;
-        case command::set_type_exit  : set_type_Exit();             break;
+        case command::setArmed                 : wicket->lock_unlock_sequence();    break;
+        case command::setUnlock                : wicket->lock_unlock_sequence();    break;
+        case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
+        case command::setExitOpen              : wicket->set_turnstile_to_pass(dir_type::exit_); break;            //
 
-        default                      : machine->fromServer(msg.cmd, msg.state); break;
-        }
-    // проксированные статусы
-    if (msg.state != MachineState::undef)
-        switch (msg.state) {
-        //========== синхронизация ведущего - подчиненного ==============
-        case MachineState::getRemoteBarcode : remote_barcode(cmd_arg);     break; // прокси команда от подчиненного
-            //========== остальные просто исполняем ==============
-        default                             : machine->fromServerState(msg.state);                      break;
-        }
-}
+        case command::setGreenLampOn           : wicket->setGREEN(); break;
+        case command::setRedLampOn             : wicket->setRED(); break;
+        case command::setLampOff               : wicket->setLightOFF();  break;             // Отправляем команду погасить лампы
 
-void controller::remote_barcode(QString bc) // Дергается удаленно
-{
-    if ( ready_state_flag || uncond_state_flag )
-    {
-        (machine->*remote_onCheck_handler)();
-    }
-    else
-        emit send_to_server(message(MachineState::onWrongRemote, command::undef, "Ведущий считыватель\nне готов" ));
+        case command::setAlarm                 : wicket->alarm(); break;              // Бибип
+
+            // Показываем картинку с текстом на эkране считывателя
+        case command::showServiceStatus        :       // Турникет не готов и все такое
+        case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
+        case command::showOpenStatus           :          // Пжалста проходите, зелЁни стралачка
+
+        case command::showPlaceStatus      :                   // синий? фон со стрелкой куда пихать
+        case command::showCheckStatus      :                   // оранжевый фон с часиками
+        case command::showFailStatus      :                      // Красный крестик
+
+       // case command::showDbWaitStatus         :       // Подождите проверяем билет, обычно не успевают увидеть
+//        case command::showWaitStatus           :         // Подождите вам навстречу уже кто то идет
+//        case command::showSecurityCheckStatus  :      // Подождите охрана проверяет предыщего посетителя
+
+//        case command::showTicketFailStatus     :    // Wrong ticket и что пошло не так
+//        case command::showDbTimeoutStatus      :     // База данных не отвечает
+//        case command::showDoubleScanFailStatus :
+            emit s_showStatus(msg); break;
+
+        default :
+            //machine->postEvent(new QEvent( static_cast<QEvent::Type>(QEvent::User + static_cast<int>(msg.cmd) ) ));
+            break;
+        }
+
 }
 
 void controller::local_barcode(QByteArray data)
 {
-    qDebug() << "local_barcode: " + data;
-    cmd_arg = data;
     t->start();
-    if ( ready_state_flag )  // наверное избыточная проверка, и так в онЧек можно только из рэди
-    {
-        (machine->*local_onCheck_handler)(); //emit  predefined signal set_onCheckEntry or set_onCheckEXit;
-
-        if (!test_state_flag)
-            wicket->alarm();
-        //if(iron_mode_flag)
-        //{
-        //    (this->*handler_opener)();   //https://stackoverflow.com/questions/26331628/reference-to-non-static-member-function-must-be-called
-        //    emit send_to_server(message(msg_type::command, command::iron_bc, data ));
-        //}
-        //else
-        //    emit send_to_server(message(msg_type::command, command::barcode, data ));
-    }
-}
-
-void controller::send_state2(message msg)
-{
-    if(reader_type == _reader_type::_main)
-        emit send_to_server(msg);
+    emit send_to_server(message(MachineState::undef, command::getBarcode, data));
+    qDebug() << "local_barcode: " + data;
 }
 
 void controller::from_server_set_test()
@@ -152,22 +126,6 @@ void controller::from_server_set_iron_mode()
     iron_mode_flag = true;
 }
 
-void controller::set_type_Entry()
-{
-    direction_type = dir_type::entry;
-    local_onCheck_handler = &mainFSM::set_onCheckEntry; //дергается считывателем  шк
-    remote_onCheck_handler = &mainFSM::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
-    qDebug() << "Entry";
-}
-
-void controller::set_type_Exit()
-{
-    direction_type = dir_type::exit_;
-    local_onCheck_handler = &mainFSM::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
-    remote_onCheck_handler = &mainFSM::set_onCheckEntry; //дергается считывателем  шк
-    qDebug() << "Exit";
-}
-
 void controller::set_timer()
 {
     testt_pass = new QTimer(this);
@@ -187,19 +145,4 @@ void controller::set_timer()
             local_barcode(b2);
         test_flag = !test_flag;
     } );
-}
-
-void controller::wicket_init()
-{
-    wicket = new nikiret();
-    //connect(wicket, &nikiret::temp, this, &controller::send_state);
-
-    connect(wicket, &nikiret::temp, this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::getTemp, temp));});
-
-    wicket->start();
-}
-
-void controller::send_state(QString temp)
-{
-    emit send_to_server(message(MachineState::undef, command::getTemp, temp));
 }

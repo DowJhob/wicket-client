@@ -1,11 +1,11 @@
 #include "main-widget.h"
 
-picture2::picture2(QString IPaddr)
+mainWidget::mainWidget(QString IPaddr)
 {
     IP.setText( IPaddr );
 }
 
-void picture2::start()
+void mainWidget::start()
 {
     access_pixmap.load(":images/access-4.png");
     place_ticket_pixmap.load(":images/place_ticket-4.png");
@@ -45,31 +45,61 @@ void picture2::start()
     background_layout.addWidget(&info_log, 5, Qt::AlignVCenter | Qt::AlignLeft );
     background_layout.addWidget(&main_message, 5, Qt::AlignHCenter | Qt::AlignBottom );
 
-    showState(pict_service, "");
+    showState(black_style, black_style,   "Пожалуйста подождите,\nидет настройка оборудования",
+                                                    "", service_palette, _f10);
 
 }
 
-void picture2::showState(int pict_type, QString ticket_status_description)
+void mainWidget::showStatus(message msg)
 {
     info_log.clear();
-    switch (pict_type) {
-    case pict_service : showState(black_style, black_style, "Пожалуйста подождите,\nидет настройка оборудования", ticket_status_description, service_palette, _f10);
+    command cmd = msg.cmd;
+    QString desc = msg.body.toString();
+    switch (cmd) {
+    case command::showServiceStatus        : showState(black_style, black_style,   "",
+                                                desc, service_palette, _f10);
         break;
-    case pict_ready   : showState(black_style, black_style, "Поднесите билет\nPlease place the ticket", ticket_status_description, place_palette, _f10);
+    case command::showReadyStatus          : showState(black_style, black_style,   "",
+                                                desc, place_palette, _f10);
+        qDebug() << " REadySHO";
         break;
-    case pict_onCheck : showState(black_style, black_style, "Подождите, проверяем\nваш билет\nPlease wait, check\n your ticket", ticket_status_description, oncheck_palette, _f10);
+    case command::showOpenStatus           : showState(black_style, black_style,   "",
+                                                desc, access_palette, _f10);
         break;
-    case pict_access  : showState(black_style, black_style, "Пожалуйста проходите\nPlease come in", ticket_status_description, access_palette, _f10);
+        //==========================================
+    case command::showPlaceStatus           : showState(black_style, black_style,   "",
+                                                desc, place_palette, _f10);
         break;
-    case pict_timeout : showState(black_style, black_style, "Пожалуйста подождите,\nохрана досматривает\nвпереди идущего", ticket_status_description, service_palette, _f10);
+    case command::showCheckStatus           : showState(black_style, black_style,   "По",
+                                                desc, oncheck_palette, _f10);
         break;
-    case pict_denied  : showState(yellow_style, yellow_style, "Доступ запрещен\nAccess denied", ticket_status_description, denied_palette, _f15);
+    case command::showFailStatus           : showState(black_style, black_style,   "",
+                                                desc, denied_palette, _f10);
         break;
+
+//    case command::showDbWaitStatus         : showState(black_style, black_style,   "Подождите, проверяем\nваш билет\nPlease wait, check\n your ticket",
+//                                                desc, oncheck_palette, _f10);
+//        break;
+//    case command::showWaitStatus           : showState(black_style, black_style,   "Подождите вам навстречу\nуже кто то идет\n",
+//                                                desc, denied_palette, _f10);
+//        break;
+//    case command::showSecurityCheckStatus       : showState(black_style, black_style,   "Пожалуйста подождите,\nохрана досматривает\nвпереди идущего",
+//                                                desc, service_palette, _f10);
+//        break;
+//    case command::showDoubleScanFailStatus : showState(yellow_style, yellow_style, "Попытка двойного\nпрохода!\nAttempt\nto double pass!",
+//                                                desc, denied_palette, _f15);
+//        break;
+//    case command::showDbTimeoutStatus      : showState(yellow_style, yellow_style, "База данных не отвечает\nDB not response",
+//                                                desc, denied_palette, _f15);
+//        break;
+//    case command::showTicketFailStatus     : showState(yellow_style, yellow_style, "Доступ запрещен!\nAccess denied",
+//                                                desc, denied_palette, _f15);
+//        break;
 
     }
 }
 
-void picture2::log(QString str)
+void mainWidget::log(QString str)
 {
     fprintf(stdout, "%s", str.toStdString().c_str() );
     fflush(stdout);
@@ -78,7 +108,7 @@ void picture2::log(QString str)
     info_log.setText( info_log.text() + str );
 }
 
-void picture2::showState(QString main_style, QString log_style, QString main_text, QString log_text, QPalette palette, QFont f)
+void mainWidget::showState(QString main_style, QString log_style, QString main_text, QString log_text, QPalette palette, QFont f)
 {
     info_log.setFont( f );
     info_log.setStyleSheet(log_style);

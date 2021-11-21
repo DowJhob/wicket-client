@@ -3,6 +3,8 @@
 
 #include <QDebug>
 #include <QSignalTransition>
+#include <QEventTransition>
+#include <QFinalState>
 //#include <QAbstractTransition>
 #include <QObject>
 #include <QState>
@@ -15,8 +17,9 @@ class wicketFSM : public QState
 {
     Q_OBJECT
 public:
-    wicketFSM(nikiret *wicket,
-              _reader_type *reader_type,
+    nikiret *wicket;
+
+    wicketFSM(_reader_type *reader_type,
               dir_type *direction_type,
               bool *ready_state_flag,
               bool *uncond_state_flag,
@@ -45,6 +48,8 @@ private:
     QState *Drop;
     QState *UncondTimeout;
 
+    QFinalState *FinalState;
+
 
     bool *ready_state_flag;     //  поскольку нет простого способа узнать в каком состоянии машина
     bool *uncond_state_flag;    // сохраним пару состояний во флагах
@@ -52,7 +57,6 @@ private:
     _reader_type *reader_type;
     dir_type *direction_type;
 
-    nikiret *wicket;
 
     QString cmd_arg{};
 
@@ -65,10 +69,18 @@ private:
     QTimer *wrong_light_timer;
     QTimer *_db_Timeout_timer;
     QTimer *uncondDelayTimer;
+    QTimer *totalWaitTimer;     //
     int wait_remote_time = 1000;
     int pass_wait_time = 10000;
     int wrong_light_TIME = 2000;
-    //    int uncondDelay = 8000;
+    //int uncondDelay = 8000;
+    int totalWaitTime = 20000;
+
+    void wicket_init();
+
+    void addTransitions();
+    //void setEventTransition(QState *source, command type, QState *target);
+    //void addEventTransitions();
 
     void setActions();
 
@@ -80,33 +92,19 @@ private:
 
 private slots:
     void send_state2(message msg);
-
     void processing_dbTimeout();
-
     void processing_Wrong();
-
     void processing_Ready();
-
     void processing_exReady();
-
     void sub_processing_onCheck(MachineState state);
-
     void processing_onCheckEntry();
-
     void processing_onCheckExit();
-
     void processing_Entry();
-
     void processing_Exit();
-
     void processing_EntryPassed();
-
     void processing_ExitPassed();
-
     void processing_UncondTimeout();
-
     void processing_exUncondTimeout();
-
     void processing_Drop();
 
 signals:
@@ -116,15 +114,13 @@ signals:
     void from_server_to_exitPassed();
     void from_server_to_wrong();
 
+    //void from_crossboard_to_passed();
 
-    void set_FSM_passed();
-
-
-    void set_FSM_to_onCheckEntry();
-    void set_FSM_to_onCheckEXit();
+    void from_reader_to_onCheckEntry();
+    void from_reader_to_onCheckEXit();
 
     void send_to_server(message);
-    void showState(picture, QString);
+    void showState(showStatus, QString);
 
 };
 

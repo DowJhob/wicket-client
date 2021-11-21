@@ -1,7 +1,6 @@
-#include "wicketlocker.h"
-#include <QStateMachine>
-wicketLocker::wicketLocker(nikiret *wicket,
-                           _reader_type *reader_type,
+#include "w2.wicketlocker.h"
+
+wicketLocker::wicketLocker(_reader_type *reader_type,
                            dir_type *direction_type,
                            bool *ready_state_flag,
                            bool *uncond_state_flag,
@@ -10,16 +9,24 @@ wicketLocker::wicketLocker(nikiret *wicket,
     ready_state_flag(ready_state_flag),
     uncond_state_flag(uncond_state_flag),
     reader_type(reader_type),
-    direction_type(direction_type),
-    wicket(wicket)
+    direction_type(direction_type)
 {
     SetArmed    = new QState( this );
-    Armed       = new wicketFSM(wicket,
-                                reader_type,
-                                direction_type,
-                                ready_state_flag,
-                                uncond_state_flag,
-                                this);
+//    Armed       = new wicketFSM(reader_type,
+//                                direction_type,
+//                                ready_state_flag,
+//                                uncond_state_flag,
+//                                this);
+
+    Armed       = new checkCovidCert(reader_type,
+                                   direction_type,
+                                   ready_state_flag,
+                                   uncond_state_flag,
+                                   this);
+
+    connect(Armed, &checkCovidCert::showState, this, &wicketLocker::showState);
+    connect(Armed, &checkCovidCert::send_to_server, this, &wicketLocker::send_to_server);
+
     SetUnLocked = new QState( this );
     UnLocked    = new QState( this );
 
@@ -28,36 +35,36 @@ wicketLocker::wicketLocker(nikiret *wicket,
     //==   Это для принудительной установки состояния если турникет вернет такой сигнал =============
     //== например при старте в разблокированном состоянии ===========================================
     //== и сохраним для возможности удалить в случае если это ПОДЧИНЕННЫЙ считыватель ===============
-    ArmedToUnLockedTransition = Armed->addTransition( wicket, &nikiret::unlocked, UnLocked );
-    UnLockedToArmedTransition = UnLocked->addTransition( wicket, &nikiret::armed, Armed );
+    ArmedToUnLockedTransition = Armed->addTransition( Armed->TicketHandler->wicket, &nikiret::unlocked, UnLocked );
+    UnLockedToArmedTransition = UnLocked->addTransition( Armed->TicketHandler->wicket, &nikiret::armed, Armed );
     ///================================================================================
     // тут пошел нормальный цикл состояний// через сеттеры
     SetUnLockedToUnLockedTransition =        //сохраним для возможности удалить в случае если это ПОДЧИНЕННЫЙ считыватель
-            SetUnLocked->addTransition( wicket, &nikiret::unlocked, UnLocked);    // тут ждем когда разблокируется по сигналу с кросборды
+            SetUnLocked->addTransition( Armed->TicketHandler->wicket, &nikiret::unlocked, UnLocked);    // тут ждем когда разблокируется по сигналу с кросборды
 
     UnLocked->addTransition(this, &wicketLocker::from_server_setArmed, SetArmed);    // тут подаем кросборде сигнал на взведение турникета
     SetArmedToArmedTransition =        //сохраним для возможности удалить в случае если это ВЫХОДНОЙ считыватель
-            SetArmed->addTransition(wicket, &nikiret::armed, Armed);            // тут ждем когда турникет будет готов по сигналу с кросборды
+            SetArmed->addTransition(Armed->TicketHandler->wicket, &nikiret::armed, Armed);            // тут ждем когда турникет будет готов по сигналу с кросборды
     Armed->addTransition(this, &wicketLocker::from_server_setUnLocked, SetUnLocked); // тут подаем кросборде сигнал на разблокирование турникета
 
-   //================================================================================
+    //================================================================================
     connect(Armed,    &QState::entered,           this, &wicketLocker::processing_Armed_);
     connect(UnLocked, &QState::entered,          this, &wicketLocker::processing_UnLocked);
 
-    connect(SetArmed,    &QState::entered, wicket, &nikiret::lock_unlock_sequence);
-    connect(SetUnLocked, &QState::entered, wicket, &nikiret::lock_unlock_sequence);
+    connect(SetArmed,    &QState::entered, Armed->TicketHandler->wicket, &nikiret::lock_unlock_sequence);
+    connect(SetUnLocked, &QState::entered, Armed->TicketHandler->wicket, &nikiret::lock_unlock_sequence);
 
-    connect(Armed, &wicketFSM::send_to_server, this, &wicketLocker::send_to_server);
+    connect(Armed->TicketHandler, &wicketFSM::send_to_server, this, &wicketLocker::send_to_server);
 
     setInitialState( Armed );
 
-//    qDebug() << "wicketLocker::wicketLocker" << this->machine()->configuration() ;
- //   emit from_server_setArmed();
+    //    qDebug() << "wicketLocker::wicketLocker" << this->machine()->configuration() ;
+    //   emit from_server_setArmed();
 }
 
 void wicketLocker::set_type_Main()  // Блажь, врядли на лету будет нужда..
 {
-    Armed->set_type_Main();
+    Armed->TicketHandler->set_type_Main();
     // Не забудь тут вернуть вынутые транзиции
 }
 
@@ -65,7 +72,7 @@ void wicketLocker::set_type_Slave()                          //Переключ�
 {
 
     //======= И отключим состояние досмотр охраной =======
-    Armed->set_type_Slave();
+    Armed->TicketHandler->set_type_Slave();
 
     //==================== отключим кросборду от автомата =================================
     Armed->removeTransition( ArmedToUnLockedTransition );
@@ -83,24 +90,24 @@ void wicketLocker::set_type_Slave()                          //Переключ�
 void wicketLocker::fromServer(command cmd)
 {
     switch (cmd) {
-    case command::set_Ready  : emit from_server_setArmed();    break;//безусловная установка родительское состояние что бы из любого состояния получить рэди
-    case command::set_Armed  : emit from_server_setArmed();    break;
-    case command::set_Unlock : emit from_server_setUnLocked(); break;
+    //case command::set_Ready  : emit from_server_setArmed();    break;//безусловная установка родительское состояние что бы из любого состояния получить рэди
+    //case command::set_Armed  : emit from_server_setArmed();    break;
+    //case command::set_Unlock : emit from_server_setUnLocked(); break;
 
-    default: Armed->fromServer(cmd); break;
+    default: Armed->TicketHandler->fromServer(cmd); break;
     }
 }
 
 void wicketLocker::processing_Armed_()
 {
-    emit send_to_server(message(MachineState::onArmed));
+    //emit send_to_server(message(MachineState::onArmed));
     qDebug() << "Armed";
 }
 
 void wicketLocker::processing_UnLocked()
 {
     emit send_to_server(message(MachineState::onUnlocked));
-    showState(picture::pict_access, "");
-    wicket->setGREEN();
+    emit showState(showStatus::pict_access, "");
+    Armed->TicketHandler->wicket->setGREEN();
     qDebug() << "Unlocked";
 }

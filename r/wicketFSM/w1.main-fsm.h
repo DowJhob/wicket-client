@@ -3,23 +3,20 @@
 
 #include <QStateMachine>
 #include <QObject>
+#include <QEventTransition>
 
-#include <wicketFSM/wicketfsm.h>
-#include <wicketFSM/wicketlocker.h>
+#include <wicketFSM/w2.wicketlocker.h>
 
-
-
-class mainFSM : public QObject
+class mainFSM : public QStateMachine
 {
     Q_OBJECT
 public:
-    mainFSM(nikiret *wicket,
-            _reader_type *reader_type,
+
+    mainFSM(_reader_type *reader_type,
             dir_type *direction_type,
             bool *ready_state_flag,
             bool *uncond_state_flag,
             QObject *parent);
-    void start();
 
     void set_type_Main();
 
@@ -35,14 +32,13 @@ public slots:
     void fromServerState(MachineState state);
 
 private:
-    QStateMachine m;
+    //QStateMachine m;
     bool *ready_state_flag;     //  поскольку нет простого способа узнать в каком состоянии машина
     bool *uncond_state_flag;    // сохраним пару состояний во флагах
 
     _reader_type *reader_type;
     dir_type *direction_type;
 
-    nikiret *wicket;
     //===================== STATE MACHINE =======================
     QState *serverSearch;                                   // поиск сети
     wicketLocker *serverFound;
@@ -53,7 +49,7 @@ signals:
     void serverSearchSIG();
 
     void send_to_server(message);
-    void showState(picture);
+    void showState(showStatus);
 };
 
 #endif // MAIN_FSM_H

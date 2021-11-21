@@ -34,10 +34,12 @@ SOURCES += \
         main.cpp \
         network.cpp \
         nikiret.cpp \
-        wicketFSM/covid-cert-cheker.cpp \
-        wicketFSM/main-fsm.cpp \
-        wicketFSM/wicketlocker.cpp \
-        wicketFSM/wicketfsm.cpp
+#        wicketFSM/w0.nestedstate.cpp \
+#        wicketFSM/w1.main-fsm.cpp \
+#        wicketFSM/w2.wicketlocker.cpp \
+#        wicketFSM/w3.countercheck.cpp \
+#        wicketFSM/w3.covid-cert-cheker.cpp \
+#        wicketFSM/wicketfsm.cpp
 
 INSTALLS += target
 target.path = target.path = /usr
@@ -67,10 +69,12 @@ HEADERS += common_types.h \
     nikiret.h \
     test_timer.h \
 #    updater.h \
-    wicketFSM/covid-cert-cheker.h \
-    wicketFSM/main-fsm.h \
-    wicketFSM/wicketfsm.h \
-    wicketFSM/wicketlocker.h
+#    wicketFSM/w0.nestedstate.h \
+#    wicketFSM/w1.main-fsm.h \
+#    wicketFSM/w2.wicketlocker.h \
+#    wicketFSM/w3.countercheck.h \
+#    wicketFSM/w3.covid-cert-cheker.h \
+#    wicketFSM/wicketfsm.h
 
 unix{
     HEADERS += \

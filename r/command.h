@@ -11,7 +11,7 @@
 #include <QString>
 
 enum class MachineState {
-undef,
+    undef,
     onArmed,
     onUnlocked,
 
@@ -35,31 +35,58 @@ undef,
 enum class command {
     undef,
 
-    //from main to wicket
-    set_test,
-    set_normal,
-    set_iron_mode,
-
-    set_type_main,
-    set_type_slave,
-
-    set_type_entry,   // Направление пропуска данного считывателя
-    set_type_exit,
-
-    set_Armed,
-    set_Unlock,
-
-    set_Wrong,  //+ description
-    set_Ready,
-    set_EntryOpen,
-    set_ExitOpen,
-
-    //from wicket to main
+    //====== from reader to server ==========================
     get_Register,
-    getBarcode, //+barcode
+    getBarcode,                               // Предъявлен ШК
     getTemp,
+    getArmed,                                 // Турникет готов
+    getUnlock,                                // Турникет разблокировался
+    getPassed,
 
-    heartbeat
+    setArmed,               // Взводим турникет
+    setUnlock,              // складываем  турникет
+
+    setEntryOpen,           // Открываем турникет
+    setExitOpen,            //
+
+    setGreenLampOn,
+    setRedLampOn,
+    setLampOff,             // Отправляем команду погасить лампы
+
+    setAlarm,               // Бибип
+
+    // Показываем картинку с текстом на эране считывателя
+
+
+    showPlaceStatus,                   // синий? фон со стрелкой куда пихать
+    showCheckStatus,                   // оранжевый фон с часиками
+    showFailStatus,                      // Красный крестик
+
+
+    //showPlaceCovidQRStatus,                   // Турникет готов, покажите ковид куар
+    //showCheckCovidQRStatus,                   // Проверяем ковид сертификат
+    //showPlaceCovidControllerQRStatus,         // Предъявите куар контролера
+    //showCheckCovidCovidControllerStatus,      // Проверяем ковид контролера
+    //showPlaceTicketStatus,                    // Предъявите билет (наверное можно оставить рэди статус)
+
+    //showNoTicketStatus,                       // Слишком рано предъявили билет
+    //showCovidFailStatus,                      // Невалидный сертификат
+    //showCovidCheckCommunicationTimeoutStatus, // Нет связи с госуслугами
+    //showCovidContollerFailStatus,             // Неизвестный контролер
+
+    showServiceStatus,                        // Турникет не готов и все такое
+    showReadyStatus,                          // Турникет готов, покажите билет
+    //showDbTimeoutStatus,                      // База данных не отвечает
+    showOpenStatus,                           // Пжалста проходите, зелЁни стрелачка
+    //showDbWaitStatus,                         // Подождите проверяем билет, обычно не успевают увидеть
+    //showWaitStatus,                           // Подождите вам навстречу уже кто то идет
+    //showSecurityCheckStatus,                  // Подождите охрана проверяет предыдущего посетителя
+
+    //showDbFailStatus,                         // База данных не отвечает
+    //showDoubleScanFailStatus,                 // Попытка двойного прохода!
+    //showTicketFailStatus,                     // Доступ запрещен
+
+    heartbeat               //
 };
 /*!
   *\brief gg::ggg
@@ -70,20 +97,20 @@ typedef struct message{
     MachineState state;
     command cmd;
     QVariant body;
-//    int param;
-    message( MachineState state = MachineState::undef, command cmd = command::heartbeat, QVariant body = "heartbeat"):
-            state(state), cmd(cmd), body(body)
-        {}
-//    message( command cmd = command::heartbeat ):
-//            state(MachineState::undef), cmd(cmd), body("")
-//        {}
-//    message( MachineState state = MachineState::undef):
-//            state(state), cmd(command::undef), body("")
-//        {}
-//    explicit message( ):
-//            state(MachineState::undef), cmd(command::heartbeat), body("heartbeat")
-//        {}
-/*
+    //    int param;
+    message( MachineState state = MachineState::undef, command cmd = command::heartbeat, QVariant body = ""):
+        state(state), cmd(cmd), body(body)
+    {}
+    //    message( command cmd = command::heartbeat ):
+    //            state(MachineState::undef), cmd(cmd), body("")
+    //        {}
+    //    message( MachineState state = MachineState::undef):
+    //            state(state), cmd(command::undef), body("")
+    //        {}
+    //    explicit message( ):
+    //            state(MachineState::undef), cmd(command::heartbeat), body("heartbeat")
+    //        {}
+    /*
 
     explicit message(): body("heartbeat"), param(0)
     {}

@@ -1,18 +1,22 @@
-#ifndef WICKETLOCKER_H
-#define WICKETLOCKER_H
+#ifndef W2_H
+#define W2_H
 
 #include <QObject>
 #include <QState>
 #include <QSignalTransition>
-#include <wicketFSM/wicketfsm.h>
+
+#include "w3.countercheck.h"
+#include "w3.covid-cert-cheker.h"
+//#include <wicketFSM/wicketfsm.h>
 
 class wicketLocker : public QState
 {
     Q_OBJECT
 public:
-    wicketFSM *Armed;
-    wicketLocker(nikiret *wicket,
-                 _reader_type *reader_type,
+    //wicketFSM *Armed;
+    checkCovidCert *Armed;
+
+    wicketLocker(_reader_type *reader_type,
                  dir_type *direction_type,
                  bool *ready_state_flag,
                  bool *uncond_state_flag,
@@ -36,8 +40,6 @@ private:
     _reader_type *reader_type;
     dir_type *direction_type;
 
-    nikiret *wicket;
-
     QSignalTransition *ArmedToUnLockedTransition;
     QSignalTransition *UnLockedToArmedTransition;
 
@@ -53,7 +55,7 @@ signals:
     void from_server_setArmed();
 
     void send_to_server(message);
-    void showState(picture, QString);
+    void showState(showStatus, QString);
 };
 
-#endif // WICKETLOCKER_H
+#endif // W2_H

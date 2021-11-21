@@ -132,7 +132,8 @@ void network::tcp_readyRead_slot()
 
     //      int time = reconnect_timer->remainingTime();
     //      if (time < 100)
-    //           qDebug() << QString::number(time);
+    //           qDebug() << //QString::number(time)
+    //                       "hop";
     reconnect_timeout_timer->start();
     for (uint i = 0; i < 0xFFFF; i++)
     {
@@ -203,7 +204,7 @@ void network::processPendingDatagrams()
     while (udpSocket->hasPendingDatagrams()) {
         datagram.resize(int(udpSocket->pendingDatagramSize()));
         udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
-        if ( datagram == "server_v2" )
+        if ( datagram == "server_v3" )
         {
             emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
             server_ip_addr = _ip_addr;

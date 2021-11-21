@@ -1,7 +1,9 @@
 #include <QApplication>
 #include <common_types.h>
-#include <network.h>
+#include <barcode_reader/snapi-barcode-reader.h>
 #include <controller_2.h>
+#include <main-widget.h>
+#include <network.h>
 
 //#define TEST
 #ifdef TEST
@@ -9,9 +11,6 @@
 #include <NFC_copy.h>
 #endif
 
-#include <barcode_reader/snapi-barcode-reader.h>
-
-#include <main-widget.h>
 
 #ifdef NFC_ON
 #include <NFC_copy.h>
@@ -33,7 +32,7 @@ int main(int argc, char *argv[])
     controller _controller;
     network network_client;
     ///========================== lcd_display =========================================
-    picture2 lcd_display(network_client.localIP);
+    mainWidget lcd_display(network_client.localIP);
     lcd_display.start();
 
     snapi_barcode_reader *barcode_reader;
@@ -55,11 +54,11 @@ int main(int argc, char *argv[])
     barcode_reader->start();
     ///========================== controller =========================================
     QThread controller_thread;
-    QObject::connect(&controller_thread, &QThread::started, &_controller, &controller::start);
+    QObject::connect(&controller_thread, &QThread::started,      &_controller, &controller::start);
     _controller.moveToThread(&controller_thread);
-    QObject::connect( &_controller, SIGNAL(setPictureSIG(int, QString)), &lcd_display,    SLOT(showState(int, QString)));
-    QObject::connect( &_controller, &controller::send_to_server,         &network_client, &network::SendToServer);
-    QObject::connect( &_controller, &controller::log,                    &lcd_display,    &picture2::log);
+    QObject::connect( &_controller, &controller::s_showStatus,   &lcd_display,    &mainWidget::showStatus);
+    QObject::connect( &_controller, &controller::send_to_server, &network_client, &network::SendToServer);
+    QObject::connect( &_controller, &controller::log,            &lcd_display,    &mainWidget::log);
     controller_thread.start(//QThread::TimeCriticalPriority
                             );
     //_controller.start();
@@ -67,7 +66,7 @@ int main(int argc, char *argv[])
     //QThread net_thread;
    // QObject::connect(&net_thread,        &QThread::started, &network_client, &network::start);
     //network_client.moveToThread(&net_thread);
-    QObject::connect( &network_client, &network::log,                              &lcd_display, &picture2::log);
+    QObject::connect( &network_client, &network::log,                              &lcd_display, &mainWidget::log);
     QObject::connect( &network_client, &network::network_ready,                    &_controller, &controller::ext_provided_network_readySIG);
     QObject::connect( &network_client, &network::enter_STATE_server_search_signal, &_controller, &controller::ext_provided_server_searchSIG);
     QObject::connect( &network_client, &network::readyRead,                        &_controller, &controller::new_cmd_parse);

@@ -28,12 +28,15 @@ enum color {
     red,
     green
 };
-enum picture {
-    pict_service,
-    pict_ready,
-    pict_onCheck,
-    pict_access,
-    pict_timeout,
-    pict_denied
+enum class e_showStatus {
+    Service,
+    Ready,
+    DbWait,
+    Open,
+    Wait,
+    Security,
+    DoubleScanFail,
+    DbFail,
+    TicketFail
 };
 #endif // COMMON_TYPES_H
