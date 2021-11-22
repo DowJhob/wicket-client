@@ -4,19 +4,19 @@
 #include <QVBoxLayout>
 #include <QLabel>
 //#include <QPlainTextEdit>
-#include <QMovie>
+//#include <QMovie>
 #include <QFont>
 #include <QTimer>
 
 #include <common_types.h>
 #include <command.h>
 
-class mainWidget: public QWidget
+class showStateWgt: public QWidget
 {
     Q_OBJECT
 public:
 
-    mainWidget(QString IPaddr);
+    showStateWgt();
 
 public slots:
 

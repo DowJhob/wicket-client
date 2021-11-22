@@ -30,10 +30,12 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
         barcode_reader/libusb-wrapper.cpp \
         controller_2.cpp \
-        main-widget.cpp \
         main.cpp \
         network.cpp \
         nikiret.cpp \
+        widgets/mainStackedWgt.cpp \
+        widgets/showCertInfo.cpp \
+        widgets/showStateWgt.cpp
 #        wicketFSM/w0.nestedstate.cpp \
 #        wicketFSM/w1.main-fsm.cpp \
 #        wicketFSM/w2.wicketlocker.cpp \
@@ -64,10 +66,12 @@ HEADERS += common_types.h \
     controller_2.h \
 #    htmlwidget.h \
     libs/libusb/include/libusb.h \
-    main-widget.h \
     network.h \
     nikiret.h \
     test_timer.h \
+    widgets/mainStackedWgt.h \
+    widgets/showCertInfo.h \
+    widgets/showStateWgt.h
 #    updater.h \
 #    wicketFSM/w0.nestedstate.h \
 #    wicketFSM/w1.main-fsm.h \

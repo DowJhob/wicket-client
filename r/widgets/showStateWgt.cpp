@@ -1,11 +1,11 @@
-#include "main-widget.h"
+#include "showStateWgt.h"
 
-mainWidget::mainWidget(QString IPaddr)
+showStateWgt::showStateWgt()
 {
-    IP.setText( IPaddr );
+    //IP.setText( IPaddr );
 }
 
-void mainWidget::start()
+void showStateWgt::start()
 {
     access_pixmap.load(":images/access-4.png");
     place_ticket_pixmap.load(":images/place_ticket-4.png");
@@ -50,31 +50,25 @@ void mainWidget::start()
 
 }
 
-void mainWidget::showStatus(message msg)
+void showStateWgt::showStatus(message msg)
 {
     info_log.clear();
     command cmd = msg.cmd;
     QString desc = msg.body.toString();
     switch (cmd) {
-    case command::showServiceStatus        : showState(black_style, black_style,   "",
-                                                desc, service_palette, _f10);
+    case command::showServiceStatus        : showState(black_style, black_style, desc, "", service_palette, _f10);
         break;
-    case command::showReadyStatus          : showState(black_style, black_style,   "",
-                                                desc, place_palette, _f10);
+    case command::showReadyStatus          : showState(black_style, black_style, desc, "", place_palette, _f10);
         qDebug() << " REadySHO";
         break;
-    case command::showOpenStatus           : showState(black_style, black_style,   "",
-                                                desc, access_palette, _f10);
+    case command::showOpenStatus           : showState(black_style, black_style, desc, "", access_palette, _f10);
         break;
         //==========================================
-    case command::showPlaceStatus           : showState(black_style, black_style,   "",
-                                                desc, place_palette, _f10);
+    case command::showPlaceStatus           : showState(black_style, black_style, desc, "", place_palette, _f10);
         break;
-    case command::showCheckStatus           : showState(black_style, black_style,   "По",
-                                                desc, oncheck_palette, _f10);
+    case command::showCheckStatus           : showState(black_style, black_style,desc, "", oncheck_palette, _f10);
         break;
-    case command::showFailStatus           : showState(black_style, black_style,   "",
-                                                desc, denied_palette, _f10);
+    case command::showFailStatus           : showState(black_style, black_style, desc, "", denied_palette, _f10);
         break;
 
 //    case command::showDbWaitStatus         : showState(black_style, black_style,   "Подождите, проверяем\nваш билет\nPlease wait, check\n your ticket",
@@ -95,11 +89,12 @@ void mainWidget::showStatus(message msg)
 //    case command::showTicketFailStatus     : showState(yellow_style, yellow_style, "Доступ запрещен!\nAccess denied",
 //                                                desc, denied_palette, _f15);
 //        break;
+    default:break;
 
     }
 }
 
-void mainWidget::log(QString str)
+void showStateWgt::log(QString str)
 {
     fprintf(stdout, "%s", str.toStdString().c_str() );
     fflush(stdout);
@@ -108,7 +103,7 @@ void mainWidget::log(QString str)
     info_log.setText( info_log.text() + str );
 }
 
-void mainWidget::showState(QString main_style, QString log_style, QString main_text, QString log_text, QPalette palette, QFont f)
+void showStateWgt::showState(QString main_style, QString log_style, QString main_text, QString log_text, QPalette palette, QFont f)
 {
     info_log.setFont( f );
     info_log.setStyleSheet(log_style);
