@@ -7,12 +7,13 @@ void controller::start()
 {
     t = new QElapsedTimer;
     wicket_init();
+    //==================================================================================================================
     //set_timer();
+    //testt->start();
     //==================================================================================================================
 
 
     ///-----------------------------------------------------
-    //==================================================================================================================
     //_updater.setPort( FILE_TRANSFER_PORT );
     //_updater.setFilename( QCoreApplication::applicationFilePath() );
     //connect(&_updater, &updater::ready, [ & ](){ emit exit(42); } );
@@ -38,41 +39,30 @@ void controller::wicket_init()
 void controller::new_cmd_parse(message msg)
 {
     cmd_arg = msg.body.toString();
-        switch (msg.cmd) {
-        //  безусловные команды
-        case command::setArmed                 : wicket->lock_unlock_sequence();    break;
-        case command::setUnlock                : wicket->lock_unlock_sequence();    break;
-        case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
-        case command::setExitOpen              : wicket->set_turnstile_to_pass(dir_type::exit_); break;            //
+    switch (msg.cmd) {
+    //  безусловные команды
+    case command::setArmed                 : wicket->lock_unlock_sequence();    break;
+    case command::setUnlock                : wicket->lock_unlock_sequence();    break;
+    case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
+    case command::setExitOpen              : wicket->set_turnstile_to_pass(dir_type::exit_); break;            //
 
-        case command::setGreenLampOn           : wicket->setGREEN(); break;
-        case command::setRedLampOn             : wicket->setRED(); break;
-        case command::setLampOff               : wicket->setLightOFF();  break;             // Отправляем команду погасить лампы
+    case command::setGreenLampOn           : wicket->setGREEN(); break;
+    case command::setRedLampOn             : wicket->setRED(); break;
+    case command::setLampOff               : wicket->setLightOFF();  break;             // Отправляем команду погасить лампы
 
-        case command::setAlarm                 : wicket->alarm(); break;              // Бибип
+    case command::setAlarm                 : wicket->alarm(); break;              // Бибип
 
-            // Показываем картинку с текстом на эkране считывателя
-        case command::showServiceStatus        :       // Турникет не готов и все такое
-        case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
-        case command::showOpenStatus           :          // Пжалста проходите, зелЁни стралачка
+        // Показываем картинку с текстом на эkране считывателя
+    case command::showServiceStatus        :       // Турникет не готов и все такое
+    case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
+    case command::showOpenStatus           :          // Пжалста проходите, зелЁни стралачка
 
-        case command::showPlaceStatus      :                   // синий? фон со стрелкой куда пихать
-        case command::showCheckStatus      :                   // оранжевый фон с часиками
-        case command::showFailStatus      :                      // Красный крестик
+    case command::showPlaceStatus      :                   // синий? фон со стрелкой куда пихать
+    case command::showCheckStatus      :                   // оранжевый фон с часиками
+    case command::showFailStatus      : emit s_showStatus(msg); break;        // Красный крестик
 
-       // case command::showDbWaitStatus         :       // Подождите проверяем билет, обычно не успевают увидеть
-//        case command::showWaitStatus           :         // Подождите вам навстречу уже кто то идет
-//        case command::showSecurityCheckStatus  :      // Подождите охрана проверяет предыщего посетителя
-
-//        case command::showTicketFailStatus     :    // Wrong ticket и что пошло не так
-//        case command::showDbTimeoutStatus      :     // База данных не отвечает
-//        case command::showDoubleScanFailStatus :
-            emit s_showStatus(msg); break;
-
-        default :
-            //machine->postEvent(new QEvent( static_cast<QEvent::Type>(QEvent::User + static_cast<int>(msg.cmd) ) ));
-            break;
-        }
+    default :            break;
+    }
 
 }
 
@@ -134,15 +124,15 @@ void controller::set_timer()
 
 
     testt = new QTimer(this);
-    testt->setInterval(3000);
+    testt->setInterval(6000);
     //       connect(testt, &QTimer::timeout, [=](){ send_barcode("9780201379624");} );
     connect(testt, &QTimer::timeout, [=](){
         QByteArray b1 = "superticket";
         QByteArray b2 = "forbidticket";
-        if (test_flag)
-            local_barcode(b1);
-        else
-            local_barcode(b2);
-        test_flag = !test_flag;
+//        if (test_flag)
+            local_barcode("covidControllerPrefix:288b3de5-2734-440d-9dda-9a4d9025f179");
+//        else
+//            local_barcode(b2);
+//        test_flag = !test_flag;
     } );
 }

@@ -72,10 +72,10 @@ signals:
     void s_showStatus(message);
 
  //прокладка для трансляции в wicketFSM
-    void from_server_to_wrong(); //прокладка для трансляции в wicketFSM
+//    void from_server_to_wrong(); //прокладка для трансляции в wicketFSM
 
-    void from_server_setArmed(); //прокладка для трансляции в wicket_locker
-    void from_server_setUnLocked(); //прокладка для трансляции в wicket_locker
+//    void from_server_setArmed(); //прокладка для трансляции в wicket_locker
+//    void from_server_setUnLocked(); //прокладка для трансляции в wicket_locker
     void log(QString);
 
     void exit(int);

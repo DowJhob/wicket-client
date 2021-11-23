@@ -56,39 +56,19 @@ void showStateWgt::showStatus(message msg)
     command cmd = msg.cmd;
     QString desc = msg.body.toString();
     switch (cmd) {
-    case command::showServiceStatus        : showState(black_style, black_style, desc, "", service_palette, _f10);
+    case command::showServiceStatus : showState(black_style, black_style, desc, "", service_palette, _f10);
         break;
-    case command::showReadyStatus          : showState(black_style, black_style, desc, "", place_palette, _f10);
-        qDebug() << " REadySHO";
+    case command::showReadyStatus   : showState(black_style, black_style, desc, "", place_palette, _f10); qDebug() << " showReadyStatus" << desc;
         break;
-    case command::showOpenStatus           : showState(black_style, black_style, desc, "", access_palette, _f10);
+    case command::showOpenStatus    : showState(black_style, black_style, desc, "", access_palette, _f10); qDebug() << " showOpenStatus" << desc;
         break;
         //==========================================
-    case command::showPlaceStatus           : showState(black_style, black_style, desc, "", place_palette, _f10);
+    case command::showPlaceStatus   : showState(black_style, black_style, desc, "", place_palette, _f10); qDebug() << " showPlaceStatus" << desc;
         break;
-    case command::showCheckStatus           : showState(black_style, black_style,desc, "", oncheck_palette, _f10);
+    case command::showCheckStatus   : showState(black_style, black_style, desc, "", oncheck_palette, _f10); qDebug() << " showCheckStatus" << desc;
         break;
-    case command::showFailStatus           : showState(black_style, black_style, desc, "", denied_palette, _f10);
+    case command::showFailStatus    : showState(black_style, black_style, desc, "", denied_palette, _f10); qDebug() << " showFailStatus" << desc;
         break;
-
-//    case command::showDbWaitStatus         : showState(black_style, black_style,   "Подождите, проверяем\nваш билет\nPlease wait, check\n your ticket",
-//                                                desc, oncheck_palette, _f10);
-//        break;
-//    case command::showWaitStatus           : showState(black_style, black_style,   "Подождите вам навстречу\nуже кто то идет\n",
-//                                                desc, denied_palette, _f10);
-//        break;
-//    case command::showSecurityCheckStatus       : showState(black_style, black_style,   "Пожалуйста подождите,\nохрана досматривает\nвпереди идущего",
-//                                                desc, service_palette, _f10);
-//        break;
-//    case command::showDoubleScanFailStatus : showState(yellow_style, yellow_style, "Попытка двойного\nпрохода!\nAttempt\nto double pass!",
-//                                                desc, denied_palette, _f15);
-//        break;
-//    case command::showDbTimeoutStatus      : showState(yellow_style, yellow_style, "База данных не отвечает\nDB not response",
-//                                                desc, denied_palette, _f15);
-//        break;
-//    case command::showTicketFailStatus     : showState(yellow_style, yellow_style, "Доступ запрещен!\nAccess denied",
-//                                                desc, denied_palette, _f15);
-//        break;
     default:break;
 
     }

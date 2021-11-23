@@ -62,29 +62,10 @@ enum class command {
     showCheckStatus,                   // оранжевый фон с часиками
     showFailStatus,                      // Красный крестик
 
-
-    //showPlaceCovidQRStatus,                   // Турникет готов, покажите ковид куар
-    //showCheckCovidQRStatus,                   // Проверяем ковид сертификат
-    //showPlaceCovidControllerQRStatus,         // Предъявите куар контролера
-    //showCheckCovidCovidControllerStatus,      // Проверяем ковид контролера
-    //showPlaceTicketStatus,                    // Предъявите билет (наверное можно оставить рэди статус)
-
-    //showNoTicketStatus,                       // Слишком рано предъявили билет
-    //showCovidFailStatus,                      // Невалидный сертификат
-    //showCovidCheckCommunicationTimeoutStatus, // Нет связи с госуслугами
-    //showCovidContollerFailStatus,             // Неизвестный контролер
-
     showServiceStatus,                        // Турникет не готов и все такое
     showReadyStatus,                          // Турникет готов, покажите билет
     //showDbTimeoutStatus,                      // База данных не отвечает
     showOpenStatus,                           // Пжалста проходите, зелЁни стрелачка
-    //showDbWaitStatus,                         // Подождите проверяем билет, обычно не успевают увидеть
-    //showWaitStatus,                           // Подождите вам навстречу уже кто то идет
-    //showSecurityCheckStatus,                  // Подождите охрана проверяет предыдущего посетителя
-
-    //showDbFailStatus,                         // База данных не отвечает
-    //showDoubleScanFailStatus,                 // Попытка двойного прохода!
-    //showTicketFailStatus,                     // Доступ запрещен
 
     heartbeat               //
 };
