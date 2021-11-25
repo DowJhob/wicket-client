@@ -57,7 +57,7 @@ enum class command {
 
     // Показываем картинку с текстом на эране считывателя
 
-
+    showInfoStatus,
     showPlaceStatus,                   // синий? фон со стрелкой куда пихать
     showCheckStatus,                   // оранжевый фон с часиками
     showFailStatus,                      // Красный крестик

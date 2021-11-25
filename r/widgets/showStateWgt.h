@@ -19,14 +19,12 @@ public:
     showStateWgt();
 
 public slots:
-
-    void start();
-    void showStatus(message msg);
+    void showState(message msg);
 
     void log(QString str);
 
 private:
-    void showState(QString main_style, QString log_style, QString main_text, QString log_text, QPalette palette, QFont f);
+    void _showState(QString main_style, QString log_style, QString main_text, QString log_text, QPalette palette, QFont f);
 
     QString black_style = "QLabel{ color:black;}";
     QString yellow_style = "QLabel {  color : yellow; }";

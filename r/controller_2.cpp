@@ -53,6 +53,7 @@ void controller::new_cmd_parse(message msg)
     case command::setAlarm                 : wicket->alarm(); break;              // Бибип
 
         // Показываем картинку с текстом на эkране считывателя
+    case command::showInfoStatus        :
     case command::showServiceStatus        :       // Турникет не готов и все такое
     case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
     case command::showOpenStatus           :          // Пжалста проходите, зелЁни стралачка
@@ -130,7 +131,8 @@ void controller::set_timer()
         QByteArray b1 = "superticket";
         QByteArray b2 = "forbidticket";
 //        if (test_flag)
-            local_barcode("covidControllerPrefix:288b3de5-2734-440d-9dda-9a4d9025f179");
+        //local_barcode("covidControllerPrefix:288b3de5-2734-440d-9dda-9a4d9025f179");
+        local_barcode("https://www.gosuslugi.ru/covid-cert/status/52593579-7a51-43c5-bfaf-c9bde5d5f646?lang=ru");
 //        else
 //            local_barcode(b2);
 //        test_flag = !test_flag;

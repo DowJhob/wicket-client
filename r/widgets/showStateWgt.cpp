@@ -2,17 +2,13 @@
 
 showStateWgt::showStateWgt()
 {
-    //IP.setText( IPaddr );
-}
-
-void showStateWgt::start()
-{
     access_pixmap.load(":images/access-4.png");
     place_ticket_pixmap.load(":images/place_ticket-4.png");
     denied_pixmap.load(":images/denied-2.png");
     oncheck_pixmap.load(":images/oncheck.png");
     service_pixmap.load(":images/service.jpg");
 
+    setAutoFillBackground(true);
     setFixedWidth( 480 );
     setFixedHeight( 640 );
     setLayout( &background_layout );
@@ -27,47 +23,36 @@ void showStateWgt::start()
     IP.setFont( _f10 );
     info_log.setWordWrap(true);
     info_log.setFont( _f15 );
-    //info_log.setSizePolicy(QSizePolicy::Minimum,
-    //                       QSizePolicy::Minimum) ;
-    //main_message.setSizePolicy(QSizePolicy::Minimum,
-    //                               QSizePolicy::Minimum) ;
 
-    main_message.setFont( QFont("Times New Roman", 19, QFont :: Bold ) );
+    main_message.setWordWrap(true);
+    main_message.setFont( QFont("Times New Roman", 18, QFont :: Bold ) );
     main_message.setAlignment( Qt::AlignCenter | Qt::AlignBottom );
 
-    IP.setText("IP");
-    info_log.setText("Слава робатам, убить всех человекав!\n");
-    main_message.setText("main_message");
+    main_message.setText("Пожалуйста подождите, идет настройка оборудования");
 
-
-    //background_layout.setSizeConstraint(QLayout::SetMinAndMaxSize);
     background_layout.addWidget(&IP, 0, Qt::AlignLeft | Qt::AlignTop );
     background_layout.addWidget(&info_log, 5, Qt::AlignVCenter | Qt::AlignLeft );
     background_layout.addWidget(&main_message, 5, Qt::AlignHCenter | Qt::AlignBottom );
-
-    showState(black_style, black_style,   "Пожалуйста подождите,\nидет настройка оборудования",
-                                                    "", service_palette, _f10);
-
 }
 
-void showStateWgt::showStatus(message msg)
+void showStateWgt::showState(message msg)
 {
     info_log.clear();
     command cmd = msg.cmd;
     QString desc = msg.body.toString();
     switch (cmd) {
-    case command::showServiceStatus : showState(black_style, black_style, desc, "", service_palette, _f10);
+    case command::showServiceStatus : _showState(black_style, black_style, desc, "", service_palette, _f10);
         break;
-    case command::showReadyStatus   : showState(black_style, black_style, desc, "", place_palette, _f10); qDebug() << " showReadyStatus" << desc;
+    case command::showReadyStatus   : _showState(black_style, black_style, desc, "", place_palette, _f10); qDebug() << " showReadyStatus" << desc;
         break;
-    case command::showOpenStatus    : showState(black_style, black_style, desc, "", access_palette, _f10); qDebug() << " showOpenStatus" << desc;
+    case command::showOpenStatus    : _showState(black_style, black_style, desc, "", access_palette, _f10); qDebug() << " showOpenStatus" << desc;
         break;
         //==========================================
-    case command::showPlaceStatus   : showState(black_style, black_style, desc, "", place_palette, _f10); qDebug() << " showPlaceStatus" << desc;
+    case command::showPlaceStatus   : _showState(black_style, black_style, desc, "", place_palette, _f10); qDebug() << " showPlaceStatus" << desc;
         break;
-    case command::showCheckStatus   : showState(black_style, black_style, desc, "", oncheck_palette, _f10); qDebug() << " showCheckStatus" << desc;
+    case command::showCheckStatus   : _showState(black_style, black_style, desc, "", oncheck_palette, _f10); qDebug() << " showCheckStatus" << desc;
         break;
-    case command::showFailStatus    : showState(black_style, black_style, desc, "", denied_palette, _f10); qDebug() << " showFailStatus" << desc;
+    case command::showFailStatus    : _showState(black_style, black_style, desc, "", denied_palette, _f10); qDebug() << " showFailStatus" << desc;
         break;
     default:break;
 
@@ -83,11 +68,11 @@ void showStateWgt::log(QString str)
     info_log.setText( info_log.text() + str );
 }
 
-void showStateWgt::showState(QString main_style, QString log_style, QString main_text, QString log_text, QPalette palette, QFont f)
+void showStateWgt::_showState(QString main_style, QString log_style, QString main_text, QString log_text, QPalette palette, QFont f)
 {
-    info_log.setFont( f );
+    info_log.setFont(f);
     info_log.setStyleSheet(log_style);
-    info_log.setText( log_text );
+    info_log.setText(log_text);
 
     main_message.setStyleSheet(main_style);
     main_message.setText(main_text);

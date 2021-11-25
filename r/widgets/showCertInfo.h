@@ -5,6 +5,11 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+
+#include <command.h>
 
 class showCertInfo : public QWidget
 {
@@ -12,14 +17,23 @@ class showCertInfo : public QWidget
 public:
     showCertInfo();
 
+public slots:
+    void setInfo(message msg);
+
 private:
     QVBoxLayout background_layout;
     QPalette palette;
     QPixmap pixmap;
 
+    // ================
+    QVBoxLayout certInfo_layout;
     QLabel certNumber;
     QLabel Expired;
+
+    // ================
+    QVBoxLayout pers_layout;
     QLabel FIO;
+    QLabel birthday;
     QLabel Passport;
 
 };
