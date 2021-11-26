@@ -39,7 +39,7 @@ void network::start()
         localIP = tcpSocket->localAddress().toString();
         network_status = net_state::tcp_connected;
         emit log("TCP connected:\n");
-        SendToServer(message( MachineState::undef, command::get_Register, QVariant(MACAddress)));
+        SendToServer(message( MachineState::undef, command::onRegister, QVariant(MACAddress)));
         emit network_ready();});
     connect(TCPconnected, &QState::exited, this, [this](){ network_status = net_state::search;
         emit log("TCP disconnected:\n");});

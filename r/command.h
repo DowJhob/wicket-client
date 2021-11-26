@@ -36,13 +36,15 @@ enum class command {
     undef,
 
     //====== from reader to server ==========================
-    get_Register,
-    getBarcode,                               // Предъявлен ШК
-    getTemp,
-    getArmed,                                 // Турникет готов
-    getUnlock,                                // Турникет разблокировался
-    getPassed,
+    onRegister,
+    onBarcode,                               // Предъявлен ШК
+    onTemp,
+    onArmed,                                 // Турникет готов
+    onUnlock,                                // Турникет разблокировался
+    onPassed,
 
+    //======= server to reader =========
+    getState,
     setArmed,               // Взводим турникет
     setUnlock,              // складываем  турникет
 

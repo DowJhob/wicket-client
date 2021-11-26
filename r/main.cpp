@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <common_types.h>
 #include <barcode_reader/snapi-barcode-reader.h>
-#include <controller_2.h>
+#include <controller.h>
 #include <widgets/mainStackedWgt.h>
 #include <network.h>
 

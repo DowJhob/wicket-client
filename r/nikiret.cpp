@@ -203,18 +203,25 @@ void nikiret::recieve_buff_parse()
     buff.clear();
 }
 
+void nikiret::getState()
+{
+    if ( state == state::ready )
+    {
+        emit armed();
+    }
+    else if ( state == state::unlocked )
+    {
+        emit unlocked();
+    }
+}
+
 void nikiret::RDY_IO_processing(int turnstile_state)
 {
     pred_state = state;
     state = turnstile_state;
     if ( state != pred_state )
-        if ( turnstile_state == state::ready )
-        {
-            emit armed();
-        }
-    if ( turnstile_state == state::unlocked )
     {
-        emit unlocked();
+        getState();
     }
 }
 

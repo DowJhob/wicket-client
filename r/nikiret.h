@@ -22,7 +22,6 @@
 class nikiret: public QObject {
     Q_OBJECT
 public:
-    QString output_str;
     int state = state::undefined;
     int pred_state = state::undefined;
     dir_type _direction;
@@ -78,6 +77,7 @@ public slots:
     void stopFLASH();
 
     void alarm();
+    void getState();
     void set_turnstile_to_pass(dir_type direction);
     void lock_unlock_sequence();
 

@@ -29,7 +29,7 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/snep.cpp \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
         barcode_reader/libusb-wrapper.cpp \
-        controller_2.cpp \
+        controller.cpp \
         main.cpp \
         network.cpp \
         nikiret.cpp \
@@ -63,8 +63,8 @@ HEADERS += common_types.h \
     barcode_reader/barcode_msg.h \
     barcode_reader/libusb-wrapper.h \
     command.h \
-    controller_2.h \
 #    htmlwidget.h \
+    controller.h \
     libs/libusb/include/libusb.h \
     network.h \
     nikiret.h \

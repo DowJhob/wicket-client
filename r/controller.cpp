@@ -1,4 +1,4 @@
-#include "controller_2.h"
+#include "controller.h"
 
 controller::controller()
 { }
@@ -28,10 +28,10 @@ void controller::wicket_init()
     wicket = new nikiret();
     //connect(wicket, &nikiret::temp, this, &controller::send_state);
 
-    connect(wicket, &nikiret::temp,     this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::getTemp, temp));});
-    connect(wicket, &nikiret::armed,    this, [&](){emit send_to_server(message(MachineState::undef, command::getArmed));});
-    connect(wicket, &nikiret::unlocked, this, [&](){emit send_to_server(message(MachineState::undef, command::getUnlock));});
-    connect(wicket, &nikiret::passed,   this, [&](){emit send_to_server(message(MachineState::undef, command::getPassed));});
+    connect(wicket, &nikiret::temp,     this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::onTemp, temp));});
+    connect(wicket, &nikiret::armed,    this, [&](){emit send_to_server(message(MachineState::undef, command::onArmed));});
+    connect(wicket, &nikiret::unlocked, this, [&](){emit send_to_server(message(MachineState::undef, command::onUnlock));});
+    connect(wicket, &nikiret::passed,   this, [&](){emit send_to_server(message(MachineState::undef, command::onPassed));});
 
     wicket->start();
 }
@@ -41,6 +41,7 @@ void controller::new_cmd_parse(message msg)
     cmd_arg = msg.body.toString();
     switch (msg.cmd) {
     //  безусловные команды
+    case command::getState                 : wicket->getState();    break;
     case command::setArmed                 : wicket->lock_unlock_sequence();    break;
     case command::setUnlock                : wicket->lock_unlock_sequence();    break;
     case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
@@ -52,7 +53,7 @@ void controller::new_cmd_parse(message msg)
 
     case command::setAlarm                 : wicket->alarm(); break;              // Бибип
 
-        // Показываем картинку с текстом на эkране считывателя
+        // Показываем картинку с текстом на экране считывателя
     case command::showInfoStatus        :
     case command::showServiceStatus        :       // Турникет не готов и все такое
     case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
@@ -70,7 +71,7 @@ void controller::new_cmd_parse(message msg)
 void controller::local_barcode(QByteArray data)
 {
     t->start();
-    emit send_to_server(message(MachineState::undef, command::getBarcode, data));
+    emit send_to_server(message(MachineState::undef, command::onBarcode, data));
     qDebug() << "local_barcode: " + data;
 }
 
