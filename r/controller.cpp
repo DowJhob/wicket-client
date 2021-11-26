@@ -53,7 +53,7 @@ void controller::new_cmd_parse(message msg)
 
     case command::setAlarm                 : wicket->alarm(); break;              // Бибип
 
-        // Показываем картинку с текстом на экране считывателя
+    // Показываем картинку с текстом на экране считывателя
     case command::showInfoStatus        :
     case command::showServiceStatus        :       // Турникет не готов и все такое
     case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
