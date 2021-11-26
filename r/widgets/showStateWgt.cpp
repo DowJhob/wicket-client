@@ -29,6 +29,7 @@ showStateWgt::showStateWgt()
     main_message.setAlignment( Qt::AlignCenter | Qt::AlignBottom );
 
     main_message.setText("Пожалуйста подождите, идет настройка оборудования");
+    setPalette(service_palette);
 
     background_layout.addWidget(&IP, 0, Qt::AlignLeft | Qt::AlignTop );
     background_layout.addWidget(&info_log, 5, Qt::AlignVCenter | Qt::AlignLeft );
