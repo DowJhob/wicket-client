@@ -11,6 +11,19 @@ libusb_wrapper::libusb_wrapper()
     fds();
 }
 
+libusb_wrapper::~libusb_wrapper()
+{
+    deleteLater();
+    libusb_exit(nullptr);
+}
+
+void libusb_wrapper::run()
+{
+    qDebug() << "hop thread " << thread();
+    emit loop();
+    exec();
+}
+
 bool libusb_wrapper::usb_init()
 {
     int r = 0;
@@ -150,14 +163,41 @@ bool libusb_wrapper::device_init()
     return false;
 }
 
+void libusb_wrapper::fds()
+{
+    libusb_fd_list = libusb_get_pollfds(nullptr);
+    auto it = libusb_fd_list;
+
+    for(;it != nullptr;++it)
+        count++;
+    it = libusb_fd_list;
+    fds_list = new pollfd[count];
+    for(;it != nullptr;++it)
+    {
+        fds_list[--count].fd = (*it)->fd;
+        fds_list[--count].events = (*it)->events;
+    }
+}
+
+void libusb_wrapper::loop()
+{
+    int p = poll(fds_list, count, 100);
+    if (p >= 0 )
+        //libusb_handle_events(nullptr);
+        if ( int rc = libusb_handle_events_timeout(nullptr, &zero_tv) != LIBUSB_SUCCESS )
+            printf("handle event error: %s|%s\n", libusb_error_name(rc), libusb_strerror(rc));
+    emit loop();
+    //qDebug() << "loop  ";
+}
+
 void libusb_wrapper::cb_reg()
 {
     int r = libusb_hotplug_register_callback(nullptr, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
-                                          LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-                                          //LIBUSB_HOTPLUG_ENUMERATE,
-                                          0,
-                                          VID, PID,
-                                          LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, this,
+                                             LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                                             //LIBUSB_HOTPLUG_ENUMERATE,
+                                             0,
+                                             VID, PID,
+                                             LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, this,
                                           &callback_handle);
 
      if (LIBUSB_SUCCESS != r)

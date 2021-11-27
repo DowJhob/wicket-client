@@ -21,18 +21,11 @@ public:
     struct libusb_device_handle *dev_handle = nullptr;
     timeval zero_tv { 0, 10000 };
     libusb_wrapper();
-    ~libusb_wrapper()Q_DECL_OVERRIDE
-    {
-        deleteLater();
-        libusb_exit(nullptr);
-    }
+    ~libusb_wrapper()Q_DECL_OVERRIDE;
+
 protected:
-    void run() Q_DECL_OVERRIDE
-    {
-        qDebug() << "hop thread " << thread();
-        emit loop();
-        exec();
-    }
+    void run() Q_DECL_OVERRIDE;
+
 private:
     struct libusb_transfer *irq_transfer;
     unsigned char irqbuf[INTR_LENGTH];
@@ -59,33 +52,10 @@ private:
     void cb_reg();
     bool device_init();
 
-    void fds()
-    {
-        libusb_fd_list = libusb_get_pollfds(nullptr);
-        auto it = libusb_fd_list;
-
-        for(;it != nullptr;++it)
-            count++;
-        it = libusb_fd_list;
-        fds_list = new pollfd[count];
-        for(;it != nullptr;++it)
-        {
-            fds_list[--count].fd = (*it)->fd;
-            fds_list[--count].events = (*it)->events;
-        }
-    }
+    void fds();
 
 private slots:
-    void loop()
-    {
-        int p = poll(fds_list, count, 100);
-        if (p >= 0 )
-        //libusb_handle_events(nullptr);
-            if ( int rc = libusb_handle_events_timeout(nullptr, &zero_tv) != LIBUSB_SUCCESS )
-                printf("handle event error: %s|%s\n", libusb_error_name(rc), libusb_strerror(rc));
-        emit loop();
-        //qDebug() << "loop  ";
-    }
+    void loop();
 signals:
     void device_arrived_sig();
     void device_left_sig();
