@@ -18,7 +18,8 @@
 
 
 int main(int argc, char *argv[])
-{
+{    
+    qDebug() << QString("Version: %1").arg(GIT_HASH);
     qRegisterMetaType<message>("message");
     QApplication a(argc, argv, false);      //https://forum.qt.io/topic/2002/linux-non-gui-application-drawimage-crash/6
     //Constructs an application object with argc command line arguments in argv.
