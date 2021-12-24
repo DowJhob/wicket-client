@@ -65,8 +65,8 @@ private:
 
 signals:
     //================= network ===========================
-    void ext_provided_network_readySIG();
-    void ext_provided_server_searchSIG();
+    void serverReady();
+    void serverLost();
     void send_to_server(message);
 
     void s_showStatus(message);

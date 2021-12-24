@@ -76,9 +76,9 @@ private:
 signals:
     void readyRead(message);
 
-    void enter_STATE_server_search_signal();
+    void serverLost();
     void TCPserver_found();
-    void network_ready();
+    void serverReady();
 
     void log(QString);
 };

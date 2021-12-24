@@ -32,17 +32,19 @@ void network::start()
     TCPconnected->addTransition(      reconnect_timeout_timer, &QTimer::timeout,          serverSearch);    // но сигнала дисконект не будет если просто вынуть провод
     //---------------------
     connect(serverSearch,       &QState::entered, this, &network::server_search);
+    connect(serverSearch,       &QState::entered, this, &network::serverLost);
     connect(startTCPconnection, &QState::entered, this, &network::reconnect);
 
-    connect(TCPconnected, &QState::entered, this, [this](){ reconnect_timeout_timer->setInterval(timeout_interval);
-        reconnect_timeout_timer->start();
+    connect(TCPconnected, &QState::entered, this, [this](){
+        //reconnect_timeout_timer->setInterval(timeout_interval);
+        reconnect_timeout_timer->start(reconnect_interval);
         localIP = tcpSocket->localAddress().toString();
         network_status = net_state::tcp_connected;
         emit log("TCP connected:\n");
         SendToServer(message( MachineState::undef, command::onRegister, QVariant(MACAddress)));
-        emit network_ready();});
+        emit serverReady();});
     connect(TCPconnected, &QState::exited, this, [this](){ network_status = net_state::search;
-        reconnect_timeout_timer->stop();
+        tcpSocket->abort();
         emit log("TCP disconnected:\n");});
     sockets_init();
     //========================================= timers setup ========================================
@@ -117,15 +119,15 @@ void network::sockets_init()
 
 void network::server_search()
 {
+    reconnect_timeout_timer->start(reconnect_interval);
     char * data;
-    reconnect_timeout_timer->setInterval(reconnect_interval);
+    //reconnect_timeout_timer->setInterval(reconnect_interval);
     tcpSocket->abort();
     udpSocket->readDatagram( data, 0 );
     network_status = net_state::search;
     emit log("server search started:\n");
     get_interface();
-    emit enter_STATE_server_search_signal();
-    reconnect_timeout_timer->start();
+    //emit serverLost();
 }
 
 void network::tcp_readyRead_slot()
@@ -135,7 +137,7 @@ void network::tcp_readyRead_slot()
     //      if (time < 100)
     //           qDebug() << //QString::number(time)
     //                       "hop";
-    reconnect_timeout_timer->start();
+    reconnect_timeout_timer->start(reconnect_interval);
     for (uint i = 0; i < 0xFFFF; i++)
     {
         if (!m_nNextBlockSize) {
@@ -217,7 +219,7 @@ void network::processPendingDatagrams()
 
 void network::reconnect()
 {
-    reconnect_timeout_timer->start();
+    reconnect_timeout_timer->start(reconnect_interval);
     emit log("TCP reconnect:\n");
     //        connected = false;
     tcpSocket->connectToHost(server_ip_addr, control_tcp_port, QIODevice::ReadWrite);
