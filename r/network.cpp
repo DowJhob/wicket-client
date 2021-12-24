@@ -42,6 +42,7 @@ void network::start()
         SendToServer(message( MachineState::undef, command::onRegister, QVariant(MACAddress)));
         emit network_ready();});
     connect(TCPconnected, &QState::exited, this, [this](){ network_status = net_state::search;
+        reconnect_timeout_timer->stop();
         emit log("TCP disconnected:\n");});
     sockets_init();
     //========================================= timers setup ========================================

@@ -104,7 +104,7 @@ void snapi_barcode_reader::parseSNAPImessage(barcode_msg data)
         case 0x27 : if ( data.at(0x01) == 0x10)
                 parse_sn(data);
             set_param( SNAPI_RET0, 4, 100 );
-            qDebug() << "ret";
+            //qDebug() << "ret";
             break;
         }
     }

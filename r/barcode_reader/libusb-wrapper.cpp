@@ -19,7 +19,7 @@ libusb_wrapper::~libusb_wrapper()
 
 void libusb_wrapper::run()
 {
-    qDebug() << "hop thread " << thread();
+    //qDebug() << "hop thread " << thread();
     emit loop();
     exec();
 }
@@ -95,7 +95,7 @@ void libusb_wrapper::intrrpt_cb_wrppr(libusb_transfer *transfer)
         printf("intrrpt_cb_wrppr transfer->status: %s\n", libusb_error_name(transfer->status));
     else{
         QByteArray a = QByteArray::fromRawData( reinterpret_cast<char*>(transfer->buffer), transfer->actual_length );
-        qDebug() << "intrrpt_cb_wrppr: " << a.toHex(':');
+        //qDebug() << "intrrpt_cb_wrppr: " << a.toHex(':');
         libusb_wrapper *readerInstance = reinterpret_cast<libusb_wrapper*>(transfer->user_data);
         int rc;
         if(readerInstance->irq_transfer)
