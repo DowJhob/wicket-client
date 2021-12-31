@@ -218,6 +218,8 @@ void network::processPendingDatagrams()
             emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
             server_ip_addr = _ip_addr;
             emit TCPserver_found();
+            char * data;
+            udpSocket->readDatagram( data, 0 );
             datagramBuffer.clear();
             break;
         }
