@@ -196,36 +196,33 @@ void network::slot_stateChanged(QAbstractSocket::SocketState socketState)
 
 void network::processPendingDatagrams()
 {
-    if(network_status == net_state::tcp_connected)
+    char * data;
+    if(network_status != net_state::tcp_connected)
     {
-        char * data;
         udpSocket->readDatagram( data, 0 );
-        return;
-    }
-    QByteArray datagram;
-    QHostAddress _ip_addr;
-    while (udpSocket->hasPendingDatagrams())
-    {
-        quint16 port;
-        int size = int(udpSocket->pendingDatagramSize());
-        datagram.resize(size);
-        udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr, &port);
-        if(port != udpPort)
-            continue;
-        datagramBuffer.append(datagram);
-        if ( datagramBuffer.contains("server_v3" ))
+        QByteArray datagram;
+        QHostAddress _ip_addr;
+        while (udpSocket->hasPendingDatagrams())
         {
-            emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
-            server_ip_addr = _ip_addr;
-            emit TCPserver_found();
-            char * data;
-            udpSocket->readDatagram( data, 0 );
-            datagramBuffer.clear();
-            break;
+            quint16 port;
+            int size = int(udpSocket->pendingDatagramSize());
+            datagram.resize(size);
+            udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
+
+            datagramBuffer.append(datagram);
+            if ( datagramBuffer.contains("server_v3" ))
+            {
+                emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
+                server_ip_addr = _ip_addr;
+                emit TCPserver_found();
+                char * data;
+                udpSocket->readDatagram( data, 0 );
+                datagramBuffer.clear();
+                break;
+            }
+            if (datagramBuffer.size() > 0xffff)
+                datagramBuffer.clear();
         }
-        if (datagramBuffer.size() > 0xffff)
-            datagramBuffer.clear();
-        //else
     }
 }
 
