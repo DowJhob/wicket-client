@@ -204,7 +204,6 @@ void network::processPendingDatagrams()
         QHostAddress _ip_addr;
         while (udpSocket->hasPendingDatagrams())
         {
-            quint16 port;
             int size = int(udpSocket->pendingDatagramSize());
             datagram.resize(size);
             udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
