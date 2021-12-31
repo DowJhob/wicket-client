@@ -133,11 +133,6 @@ void network::processing_onServerLost()
 
 void network::tcp_readyRead_slot()
 {
-
-    //      int time = reconnect_timer->remainingTime();
-    //      if (time < 100)
-    //           qDebug() << //QString::number(time)
-    //                       "hop";
     reconnect_timer->start(reconnect_interval);
     for (uint i = 0; i < 0xFFFF; i++)
     {
@@ -155,9 +150,8 @@ void network::tcp_readyRead_slot()
 
         if (msg.cmd == command::getMAC)
             SendToServer(message( MachineState::undef, command::onRegister, QVariant(MACAddress)));
-
-
-        emit readyRead(msg);
+        else
+            emit readyRead(msg);
     }
 }
 
