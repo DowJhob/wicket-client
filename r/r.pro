@@ -92,6 +92,11 @@ unix{
     SOURCES += \
     barcode_reader/snapi-barcode-reader.cpp
     LIBS += -lusb-1.0
+
+    armv5te{
+        QMAKE_CFLAGS   += -march=armv5te
+        QMAKE_CXXFLAGS += -march=armv5te
+    }
 }
 win32{
     HEADERS +=
@@ -99,10 +104,6 @@ win32{
 }
 #CONFIG+=static
 QMAKE_CFLAGS += -Ofast
-armv5te{
-    QMAKE_CFLAGS   += -march=armv5te
-    QMAKE_CXXFLAGS += -march=armv5te
-}
 #QMAKE_CXXFLAGS += -flto
 QMAKE_CXXFLAGS += -funroll-loops
 QMAKE_CXXFLAGS += -fforce-addr

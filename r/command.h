@@ -44,6 +44,7 @@ enum class command {
     onPassed,
 
     //======= server to reader =========
+    getMAC,
     getState,
     setArmed,               // Взводим турникет
     setUnlock,              // складываем  турникет

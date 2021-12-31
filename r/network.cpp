@@ -8,46 +8,48 @@ network::network(int reconnect_interval, int timeout_interval):
 
 void network::start()
 {
-    reconnect_timeout_timer = new QTimer(this);
+    reconnect_timer = new QTimer(this);
     tcpSocket = new QTcpSocket(this);
-    //for test
-    connect(tcpSocket, &QTcpSocket::disconnected, this, [this](){emit log("socket disconnect sig");});
-    connect(reconnect_timeout_timer, &QTimer::timeout, this, [this](){emit log("reconnect_timer timeout sig\n");});
+
+    connect(reconnect_timer, &QTimer::timeout, this, [this](){emit log("reconnect_timer timeout sig\n");});
     //================================
     in.setDevice(tcpSocket);
     in.setVersion(QDataStream::Qt_5_12);
     machine = new QStateMachine(this);
-    serverSearch = new QState(machine);
-    startTCPconnection = new QState(machine);
-    TCPconnected = new QState(machine);
+    onServerLost = new QState(machine);
+    onConnection = new QState(machine);
+    onConnected = new QState(machine);
 
     //========================================== search host ========================================
-    machine->setInitialState( serverSearch );
+    machine->setInitialState( onServerLost );
 
-    serverSearch->addTransition(      reconnect_timeout_timer, &QTimer::timeout,          serverSearch);    // если за время реконнекта не найдем сервер заново установим начальное состояние
-    serverSearch->addTransition(                         this, &network::TCPserver_found, startTCPconnection); // если бродкастом нашли переходим к попытке соединения
-    startTCPconnection->addTransition(reconnect_timeout_timer, &QTimer::timeout,          serverSearch);    // если тут залипнем то по таймеру начнем сначала
-    startTCPconnection->addTransition(              tcpSocket, &QTcpSocket::connected,    TCPconnected);       // если соединились то запускаем таймер пересоединения в слоте
-    TCPconnected->addTransition(                    tcpSocket, &QTcpSocket::disconnected, serverSearch);    // тут все понятно, если дисконеткт сокета то снова ищем
-    TCPconnected->addTransition(      reconnect_timeout_timer, &QTimer::timeout,          serverSearch);    // но сигнала дисконект не будет если просто вынуть провод
+    onServerLost->addTransition(reconnect_timer, &QTimer::timeout,          onServerLost);    // если за время реконнекта не найдем сервер заново установим начальное состояние
+    onServerLost->addTransition(           this, &network::serverFound,     onConnection); // если бродкастом нашли переходим к попытке соединения
+    onConnection->addTransition(reconnect_timer, &QTimer::timeout,          onServerLost);    // если тут залипнем то по таймеру начнем сначала
+    onConnection->addTransition(      tcpSocket, &QTcpSocket::connected,    onConnected);       // если соединились то запускаем таймер пересоединения в слоте
+    onConnected->addTransition(       tcpSocket, &QTcpSocket::disconnected, onServerLost);    // тут все понятно, если дисконеткт сокета то снова ищем
+    onConnected->addTransition( reconnect_timer, &QTimer::timeout,          onServerLost);    // но сигнала дисконект не будет если просто вынуть провод
     //---------------------
-    connect(serverSearch,       &QState::entered, this, &network::server_search);
-    connect(serverSearch,       &QState::entered, this, &network::serverLost);
-    connect(startTCPconnection, &QState::entered, this, &network::reconnect);
+    connect(onServerLost, &QState::entered, this, &network::processing_onServerLost);
+    connect(onServerLost, &QState::entered, this, &network::serverLost);
+    connect(onConnection, &QState::entered, this, &network::serverConnection);
 
-    connect(TCPconnected, &QState::entered, this, [this](){
-        //reconnect_timeout_timer->setInterval(timeout_interval);
-        reconnect_timeout_timer->start(reconnect_interval);
-        localIP = tcpSocket->localAddress().toString();
+    connect(onConnected, &QState::entered, this, &network::serverReady);
+
+    connect(onConnected, &QState::entered, this, [this]()
+    {
+        reconnect_timer->start(reconnect_interval);
         network_status = net_state::tcp_connected;
         emit log("TCP connected:\n");
-        SendToServer(message( MachineState::undef, command::onRegister, QVariant(MACAddress)));
-        emit serverReady();});
-    connect(TCPconnected, &QState::exited, this, [this](){ network_status = net_state::search;
+        //SendToServer(message( MachineState::undef, command::onRegister, QVariant(MACAddress)));
+    });
+    connect(onConnected, &QState::exited, this, [this]()
+    {
         tcpSocket->abort();
         emit log("TCP disconnected:\n");});
+
     sockets_init();
-    //========================================= timers setup ========================================
+
     machine->start();
 }
 
@@ -67,7 +69,7 @@ void network::SendToServer(message in)
 
 void network::set_reconnect_interval(int reconnect_interval)
 {
-    reconnect_timeout_timer->setInterval(reconnect_interval);
+    reconnect_timer->setInterval(reconnect_interval);
 }
 
 void network::get_interface()
@@ -117,15 +119,14 @@ void network::sockets_init()
     //        connect(&tcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT( slot_stateChanged(QAbstractSocket::SocketState)));
 }
 
-void network::server_search()
+void network::processing_onServerLost()
 {
-    reconnect_timeout_timer->start(reconnect_interval);
-    char * data;
-    //reconnect_timeout_timer->setInterval(reconnect_interval);
-    tcpSocket->abort();
-    udpSocket->readDatagram( data, 0 );
     network_status = net_state::search;
-    emit log("server search started:\n");
+    reconnect_timer->start(reconnect_interval);
+    tcpSocket->abort();
+    char * data;
+    udpSocket->readDatagram( data, 0 );
+    emit log("server lost:\n");
     get_interface();
     //emit serverLost();
 }
@@ -137,7 +138,7 @@ void network::tcp_readyRead_slot()
     //      if (time < 100)
     //           qDebug() << //QString::number(time)
     //                       "hop";
-    reconnect_timeout_timer->start(reconnect_interval);
+    reconnect_timer->start(reconnect_interval);
     for (uint i = 0; i < 0xFFFF; i++)
     {
         if (!m_nNextBlockSize) {
@@ -151,6 +152,11 @@ void network::tcp_readyRead_slot()
         }
         in >> msg;
         m_nNextBlockSize = 0;
+
+        if (msg.cmd == command::getMAC)
+            SendToServer(message( MachineState::undef, command::onRegister, QVariant(MACAddress)));
+
+
         emit readyRead(msg);
     }
 }
@@ -197,40 +203,37 @@ void network::slot_stateChanged(QAbstractSocket::SocketState socketState)
 void network::processPendingDatagrams()
 {
     char * data;
-    if(network_status != net_state::tcp_connected)
+    if(network_status == net_state::tcp_connected)
     {
         udpSocket->readDatagram( data, 0 );
-        QByteArray datagram;
-        QHostAddress _ip_addr;
-        while (udpSocket->hasPendingDatagrams())
-        {
-            int size = int(udpSocket->pendingDatagramSize());
-            datagram.resize(size);
-            udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
+        return;
+    }
+    QByteArray datagram;
+    QHostAddress _ip_addr;
+    while (udpSocket->hasPendingDatagrams())
+    {
+        int size = int(udpSocket->pendingDatagramSize());
+        datagram.resize(size);
+        udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
 
-            datagramBuffer.append(datagram);
-            if ( datagramBuffer.contains("server_v3" ))
-            {
-                emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
-                server_ip_addr = _ip_addr;
-                emit TCPserver_found();
-                char * data;
-                udpSocket->readDatagram( data, 0 );
-                datagramBuffer.clear();
-                break;
-            }
-            if (datagramBuffer.size() > 0xffff)
-                datagramBuffer.clear();
+        datagramBuffer.append(datagram);
+        if ( datagramBuffer.contains("server_v3" ))
+        {
+            emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
+            server_ip_addr = _ip_addr;
+            emit serverFound();
+            udpSocket->readDatagram( data, 0 );
+            datagramBuffer.clear();
+            break;
         }
+        if (datagramBuffer.size() > 0xffff)
+            datagramBuffer.clear();
     }
 }
 
-void network::reconnect()
+void network::serverConnection()
 {
-    reconnect_timeout_timer->start(reconnect_interval);
+    reconnect_timer->start(reconnect_interval);
     emit log("TCP reconnect:\n");
-    //        connected = false;
     tcpSocket->connectToHost(server_ip_addr, control_tcp_port, QIODevice::ReadWrite);
-    //        if ( ++attempt_count > max_attempt_count )
-    //            emit network_unavailable();
 }

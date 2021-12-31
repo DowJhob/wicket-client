@@ -35,6 +35,7 @@ public:
     bool iron_mode = false;
     message msg;
     network(int reconnect_interval = 2000, int timeout_interval = 20000);
+
 public slots:
     void start();
 
@@ -46,25 +47,26 @@ public slots:
 
 private slots:
     void sockets_init();
-    void server_search();
+    void processing_onServerLost();
     void tcp_readyRead_slot();
     void slotError(QAbstractSocket::SocketError err);
     void slot_stateChanged(QAbstractSocket::SocketState socketState);
     void processPendingDatagrams();
-    void reconnect();
+    void serverConnection();
+
 private:
     QByteArray datagramBuffer{};
     QElapsedTimer t;
     QStateMachine *machine;
-    QState *serverSearch;
-    QState *startTCPconnection;
-    QState *TCPconnected;
+    QState *onServerLost;
+    QState *onConnection;
+    QState *onConnected;
     struct timeval timeout;
     QHostAddress broadcast_addr;
     QUdpSocket *udpSocket;
     QTcpSocket *tcpSocket;
     quint16 m_nNextBlockSize = 0;
-    QTimer *reconnect_timeout_timer;
+    QTimer *reconnect_timer;
     //QTimer *reconnect_timer2;
     int reconnect_interval;// = 3000;
     int timeout_interval;
@@ -78,7 +80,7 @@ signals:
     void readyRead(message);
 
     void serverLost();
-    void TCPserver_found();
+    void serverFound();
     void serverReady();
 
     void log(QString);

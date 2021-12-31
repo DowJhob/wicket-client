@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     ///========================== OBJECTS =========================================
     controller _controller;
-    network network_client;
+    network network_client(1500, 1000);
     ///========================== lcd_display =========================================
     mainStackedWgt lcd_display;
     //lcd_display.start();
