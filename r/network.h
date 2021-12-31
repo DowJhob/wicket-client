@@ -53,6 +53,7 @@ private slots:
     void processPendingDatagrams();
     void reconnect();
 private:
+    QByteArray datagramBuffer{};
     QElapsedTimer t;
     QStateMachine *machine;
     QState *serverSearch;

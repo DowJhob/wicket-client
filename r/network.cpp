@@ -204,16 +204,21 @@ void network::processPendingDatagrams()
     }
     QByteArray datagram;
     QHostAddress _ip_addr;
-    while (udpSocket->hasPendingDatagrams()) {
-        datagram.resize(int(udpSocket->pendingDatagramSize()));
+    while (udpSocket->hasPendingDatagrams())
+    {
+        int size = int(udpSocket->pendingDatagramSize());
+        datagram.resize(size);
         udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
-        if ( datagram == "server_v3" )
+        datagramBuffer.append(datagram);
+        if ( datagramBuffer.contains("server_v3" ))
         {
             emit log("recieved UDP datagramm: " + datagram + " from: " + _ip_addr.toString() + "\n");
             server_ip_addr = _ip_addr;
             emit TCPserver_found();
+            datagramBuffer.clear();
             break;
         }
+        //else
     }
 }
 
