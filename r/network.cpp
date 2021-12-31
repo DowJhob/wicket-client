@@ -211,7 +211,7 @@ void network::processPendingDatagrams()
         datagram.resize(size);
         udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr, &port);
         if(port != udpPort)
-            return;
+            continue;
         datagramBuffer.append(datagram);
         if ( datagramBuffer.contains("server_v3" ))
         {
