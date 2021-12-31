@@ -206,9 +206,12 @@ void network::processPendingDatagrams()
     QHostAddress _ip_addr;
     while (udpSocket->hasPendingDatagrams())
     {
+        quint16 port;
         int size = int(udpSocket->pendingDatagramSize());
         datagram.resize(size);
-        udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr);
+        udpSocket->readDatagram(datagram.data(), datagram.size(), &_ip_addr, &port);
+        if(port != udpPort)
+            return;
         datagramBuffer.append(datagram);
         if ( datagramBuffer.contains("server_v3" ))
         {
@@ -218,6 +221,8 @@ void network::processPendingDatagrams()
             datagramBuffer.clear();
             break;
         }
+        if (datagramBuffer.size() > 0xffff)
+            datagramBuffer.clear();
         //else
     }
 }
