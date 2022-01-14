@@ -2,6 +2,7 @@
 #define SHOWCERTINFO_H
 
 #include <QObject>
+#include <QDebug>
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QLabel>
