@@ -35,6 +35,7 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/snep.cpp \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
         barcode_reader/libusb-wrapper.cpp \
+        barcode_reader/serial.cpp \
         controller.cpp \
         main.cpp \
         network.cpp \
@@ -68,6 +69,7 @@ HEADERS += common_types.h \
 #    barcode_qt.h \
     barcode_reader/barcode_msg.h \
     barcode_reader/libusb-wrapper.h \
+    barcode_reader/serial.h \
     command.h \
 #    htmlwidget.h \
     controller.h \
