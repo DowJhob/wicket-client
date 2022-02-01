@@ -9,6 +9,13 @@ enum state {
     disconnected,
     error
 };
+enum class net_state
+{
+    undefined,
+    search,
+    tcp_searched,
+    tcp_connected
+};
 enum _reader_type {
     _main,
     slave

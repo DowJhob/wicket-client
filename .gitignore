@@ -1,5 +1,8 @@
-
-r/r.pro.user
-r/r.pro.user.cfd54cc
-r/r.pro.user
-r/r.pro.user
+#Ignore thumbnails created by Windows
+Thumbs.db
+#Ignore files built by Visual Studio
+*.obj
+*.exe
+[Bb]in
+[Rr]elease*/
+[Dd]ebug*/

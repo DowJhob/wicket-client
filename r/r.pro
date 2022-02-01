@@ -26,8 +26,7 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/mac_link.cpp \
 #        PN532-PN532_HSU/PN532/snep.cpp \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
-        async_threaded_reader.cpp \
-        command.cpp \
+        barcode_reader/handler.cpp \
         main.cpp
 
 INSTALLS += target
@@ -45,27 +44,36 @@ HEADERS += common_types.h \
 #    PN532-PN532_HSU/PN532/snep.h \
 #    PN532-PN532_HSU/PN532/PN532_HSU.h \
     NFC_copy.h \
-    async_threaded_reader.h \
 #controller.h \
 #    barcode_qt.h \
+    barcode_reader/barcode_msg.h \
+    barcode_reader/handler.h \
     command.h \
     controller_2.h \
+    libs/libusb/include/libusb.h \
     network.h \
     nikiret.h \
     picture2.h \
+    test_timer.h \
     updater.h \
     wicketFSM/wicketfsm.h \
     wicketFSM/wicketlocker.h
 
-
+unix{
+    HEADERS += barcode_reader/async_threaded_reader.h
+    SOURCES += barcode_reader/async_threaded_reader.cpp
+    LIBS += -lusb-1.0
+}
+win32{
+    HEADERS +=
+#    SOURCES +=
+}
 #CONFIG+=static
-#QMAKE_CXXFLAGS += -Wno-psabi
-##QMAKE_CFLAGS += -O3
-#QMAKE_CFLAGS +=-march=armv5te
 QMAKE_CFLAGS += -Ofast
-QMAKE_CFLAGS +=-march=armv5te
-
-QMAKE_CXXFLAGS += -march=armv5te
+armv5te{
+    QMAKE_CFLAGS   += -march=armv5te
+    QMAKE_CXXFLAGS += -march=armv5te
+}
 #QMAKE_CXXFLAGS += -flto
 QMAKE_CXXFLAGS += -funroll-loops
 QMAKE_CXXFLAGS += -fforce-addr
@@ -74,11 +82,8 @@ QMAKE_CXXFLAGS += -Ofast
 
 #QMAKE_CFLAGS -= -fno-keep-inline-dllexport
 
-#LIBS += -Llibs/libusb
-LIBS += -lusb-1.0
 INCLUDEPATH += libs/libusb/include
 
-#INCLUDEPATH += ./
-#DEPENDPATH += ./
+
 RESOURCES += \
     picture.qrc

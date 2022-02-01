@@ -274,7 +274,7 @@ private:
         cross_brd_temp = buff.mid( temp_pos + 5, 4 );
         if( cross_brd_temp.mid( 0, 2 ).toInt() < 15 && heater == 'D')
             send_to_crossboard("HEATER_ON\r");
-        else
+        else if( heater == 'E')
             send_to_crossboard("HEATER_OFF\r");
     }
 signals:
