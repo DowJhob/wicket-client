@@ -102,10 +102,14 @@ win32{
     HEADERS +=
 #    SOURCES +=
 }
+CONFIG(release, release|debug){
+                            QMAKE_CXXFLAGS  += -flto -funroll-loops
+                            CONFIG += -static
+                    }
+
 #CONFIG+=static
 QMAKE_CFLAGS += -Ofast
 #QMAKE_CXXFLAGS += -flto
-QMAKE_CXXFLAGS += -funroll-loops
 QMAKE_CXXFLAGS += -fforce-addr
 QMAKE_CXXFLAGS += -Ofast
 #QMAKE_CXXFLAGS += -O3

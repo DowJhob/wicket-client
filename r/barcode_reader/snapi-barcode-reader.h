@@ -30,25 +30,25 @@ protected:
     //async();
 private:
     libusb_wrapper h;
-    QTimer *loop;
+    //QTimer *loop;
     static snapi_barcode_reader* m_instance;
     uint16_t VID = 0x05E0;
     uint16_t PID = 0x1900;
     char EP_INTR;
 
     //static
-    struct libusb_transfer *irq_transfer;
-    libusb_hotplug_callback_handle callback_handle;
+    //struct libusb_transfer *irq_transfer;
+    //libusb_hotplug_callback_handle callback_handle;
 
     //struct libusb_transfer *bulk_transfer;
     int iface = 0;
     int config = 1;
     int alt_config;
     int completed=0;
-    timeval zero_tv { 0, 10000 };
+    //timeval zero_tv { 0, 10000 };
     bool running = false;
-    unsigned char irqbuf[INTR_LENGTH];
-    unsigned char bulkbuf[INTR_LENGTH];
+    //unsigned char irqbuf[INTR_LENGTH];
+    //unsigned char bulkbuf[INTR_LENGTH];
 
     //    uchar SNAPI_SETUP[4]         { 0x80, 0x02, 0x00, 0x01 };
     unsigned char SNAPI_INIT_1[32] {0x0D, 0x40, 0x00, 0x06, 0x00, 0x06, 0x20, 0x00, 0x04, 0xb0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
