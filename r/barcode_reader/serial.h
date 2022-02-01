@@ -5,25 +5,49 @@
 #include <QSerialPortInfo>
 #include <QSerialPort>
 
-#include <common_types.h>
+typedef struct
+{
+    quint8 retransmit   : 1;
+    quint8 continuation : 1;
+    quint8 reserved     : 1;
+    quint8 changeType   : 1;
+    quint8 unused       : 4;
+} Status;
 
-class serial: public QObject {
+typedef struct
+{
+    quint8 length;
+    quint8 opcode;
+    quint8 messageSource;
+    Status status;
+    quint8 barcodeType;
+} headerSSI;
+
+class serial: public QObject
+{
     Q_OBJECT
 public:
-    serial( bool CDC = true );
+    serial();
     bool open();
 
     bool close();
 
-signals:
-    void barcode_recive();
-
 private slots:
+    void packetSlicer();
 
-
-private:private:
+private:
     QSerialPortInfo portInfo;
     QSerialPort port;
+
+    QByteArray decodedData{};
+
+    void getCheckSum(QByteArray com)
+    {
+
+    }
+
+signals:
+    void decoded(QByteArray);
 
 };
 
