@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     mainStackedWgt lcd_display;
     //lcd_display.start();
 
-    snapi_barcode_reader *barcode_reader;
+    //snapi_barcode_reader *barcode_reader;
     //QThread thread;
     //    uchar      EP_IN = 0x81;
     uint16_t     VID = 0x05E0;
@@ -51,15 +51,15 @@ int main(int argc, char *argv[])
     int iface = 0;
     int config = 1;
     int alt_config = 0;
-    barcode_reader = new snapi_barcode_reader(VID, PID, iface, config, alt_config);
+    //barcode_reader = new snapi_barcode_reader(VID, PID, iface, config, alt_config);
 
-    QObject::connect(barcode_reader, &snapi_barcode_reader::readyRead_barcode,  &_controller, &controller::local_barcode, Qt::QueuedConnection);
-    QObject::connect(barcode_reader, &snapi_barcode_reader::log,  &network_client, &network::logger, Qt::QueuedConnection);
+    //QObject::connect(barcode_reader, &snapi_barcode_reader::readyRead_barcode,  &_controller, &controller::local_barcode, Qt::QueuedConnection);
+    //QObject::connect(barcode_reader, &snapi_barcode_reader::log,  &network_client, &network::logger, Qt::QueuedConnection);
     //QObject::connect(&thread, &QThread::started, barcode_reader, &libusb_async_reader::start);
     //barcode_reader->moveToThread(&thread);
     //thread.start(//QThread::TimeCriticalPriority
     //             );
-    barcode_reader->start();
+    //barcode_reader->start();
     ///========================== controller =========================================
     QThread controller_thread;
     QObject::connect(&controller_thread, &QThread::started,      &_controller, &controller::start);
