@@ -1,6 +1,10 @@
 #include <QApplication>
 #include <common_types.h>
 #include <barcode_reader/snapi-barcode-reader.h>
+
+#include "barcode_reader/serial.h"
+
+
 #include <controller.h>
 #include <widgets/mainStackedWgt.h>
 #include <network.h>
@@ -28,6 +32,9 @@ int main(int argc, char *argv[])
     //QThread::currentThread()->setPriority( QThread::TimeCriticalPriority );
     fprintf(stdout, "turnstile client - eulle@ya.ru\n");
     fflush(stdout);
+
+
+    serial serial;
 
     ///========================== OBJECTS =========================================
     controller _controller;
