@@ -16,12 +16,17 @@ int main(int argc, char *argv[])
     fprintf(stdout, "turnstile client - eulle@ya.ru\n");
     fflush(stdout);
 
-
-    //serial serial;
-
     ///========================== OBJECTS =========================================
     controller _controller;
     network network_client(1500, 1000);
+
+    MainWindow w;
+    w.show();
+    QObject::connect( &w, &MainWindow::send, &network_client, &network::SendToServer);
+    QObject::connect( &_controller, &controller::lamp, &w, &MainWindow::lamp);
+    //serial serial;
+
+
     ///========================== lcd_display =========================================
     mainStackedWgt lcd_display;
     //lcd_display.start();

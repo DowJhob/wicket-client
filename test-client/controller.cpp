@@ -51,9 +51,9 @@ void controller::new_cmd_parse(message msg)
 //    case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
 //    case command::setExitOpen              : wicket->set_turnstile_to_pass(dir_type::exit_); break;            //
 
-//    case command::setGreenLampOn           : wicket->setGREEN(); break;
-//    case command::setRedLampOn             : wicket->setRED(); break;
-//    case command::setLampOff               : wicket->setLightOFF();  break;             // Отправляем команду погасить лампы
+    case command::setGreenLampOn           : emit lamp(1); break;  // setGREEN
+    case command::setRedLampOn             : emit lamp(2); break;  // setRED
+    case command::setLampOff               : emit lamp(3);  break;             // setLightOFF Отправляем команду погасить лампы
 
 //    case command::setAlarm                 : wicket->alarm(); break;              // Бибип
 

@@ -81,6 +81,8 @@ signals:
 
     void exit(int);
 
+    void lamp(int);
+
 };
 
 #endif // CONTROLLER_H

@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "../common/command.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -14,8 +16,18 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void lamp(int a);
 
 private:
     Ui::MainWindow *ui;
+
+signals:
+    void send(message);
+
+private slots:
+    void on_PBcert_clicked();
+    void on_PBcovidC_clicked();
+    void on_PBticket_clicked();
+    void on_PBticketC_clicked();
 };
 #endif // MAINWINDOW_H
