@@ -22,6 +22,7 @@ SOURCES += \
         barcode_reader/serial.cpp \
         main.cpp \
         nikiret.cpp \
+        controller.cpp \
 #        wicketFSM/w0.nestedstate.cpp \
 #        wicketFSM/w1.main-fsm.cpp \
 #        wicketFSM/w2.wicketlocker.cpp \
@@ -49,6 +50,7 @@ HEADERS += common_types.h \
     barcode_reader/serial.h \
     libs/libusb/include/libusb.h \
     nikiret.h \
+    controller.h \
 #    updater.h \
 #    wicketFSM/w0.nestedstate.h \
 #    wicketFSM/w1.main-fsm.h \

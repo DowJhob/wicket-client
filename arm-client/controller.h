@@ -11,9 +11,9 @@
 #include <QThread>
 #include <QElapsedTimer>
 
-#include <../common/common_types.h>
-#include "command.h"
-//#include <nikiret.h>
+#include "../common/common_types.h"
+#include "../common/command.h"
+#include <nikiret.h>
 //#include <updater.h>
 
 #define CROSSBOARD_SERIAL_PORT_NAME     "/dev/ttyAPP3"
@@ -45,7 +45,7 @@ private slots:
     //======================================================================
 
 private:
-    //nikiret *wicket;
+    nikiret *wicket;
     //=================================== TEST ====================
     bool test_state_flag = false;
     QTimer *testt;

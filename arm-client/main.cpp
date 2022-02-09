@@ -1,13 +1,13 @@
 #include <QApplication>
-#include <common_types.h>
+#include "../common/common_types.h"
 #include <barcode_reader/snapi-barcode-reader.h>
 
 #include "barcode_reader/serial.h"
 
 
-#include <controller.h>
+#include "controller.h"
 #include "../common/widgets/mainStackedWgt.h"
-#include <network.h>
+#include "../common/network.h"
 
 //#define TEST
 #ifdef TEST

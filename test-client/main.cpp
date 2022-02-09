@@ -1,10 +1,10 @@
 #include "mainwindow.h"
 
 #include <QApplication>
-#include <../common/common_types.h>
-#include <../common/controller.h>
+#include "../common/common_types.h"
 #include "../common/widgets/mainStackedWgt.h"
-#include <../common/network.h>
+#include "../common/network.h"
+#include "controller.h"
 
 int main(int argc, char *argv[])
 {

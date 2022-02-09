@@ -12,7 +12,6 @@ include(../git-ver.pri)
 common = $$PWD/
 
 SOURCES += \
-            $$PWD/controller.cpp \
             $$PWD/network.cpp \
             $$PWD/widgets/mainStackedWgt.cpp \
             $$PWD/widgets/showCertInfo.cpp \

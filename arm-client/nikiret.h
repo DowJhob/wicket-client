@@ -15,7 +15,7 @@
 //#include <QSocketNotifier>
 //#include <QStateMachine>
 
-#include <common_types.h>
+#include "../common/common_types.h"
 
 //#define NFC_ON
 

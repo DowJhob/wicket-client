@@ -25,15 +25,14 @@ void controller::start()
 
 void controller::wicket_init()
 {
-//    wicket = new nikiret();
-//    //connect(wicket, &nikiret::temp, this, &controller::send_state);
+    wicket = new nikiret();
+    //connect(wicket, &nikiret::temp, this, &controller::send_state);
+        connect(wicket, &nikiret::temp,     this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::onTemp, temp));});
+    connect(wicket, &nikiret::armed,    this, [&](){emit send_to_server(message(MachineState::undef, command::onArmed));});
+    connect(wicket, &nikiret::unlocked, this, [&](){emit send_to_server(message(MachineState::undef, command::onUnlock));});
+    connect(wicket, &nikiret::passed,   this, [&](){emit send_to_server(message(MachineState::undef, command::onPassed));});
 
-//    connect(wicket, &nikiret::temp,     this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::onTemp, temp));});
-//    connect(wicket, &nikiret::armed,    this, [&](){emit send_to_server(message(MachineState::undef, command::onArmed));});
-//    connect(wicket, &nikiret::unlocked, this, [&](){emit send_to_server(message(MachineState::undef, command::onUnlock));});
-//    connect(wicket, &nikiret::passed,   this, [&](){emit send_to_server(message(MachineState::undef, command::onPassed));});
-
-//    wicket->start();
+    wicket->start();
 }
 
 void controller::new_cmd_parse(message msg)
@@ -41,17 +40,17 @@ void controller::new_cmd_parse(message msg)
     cmd_arg = msg.body.toString();
     switch (msg.cmd) {
     //  безусловные команды
-//    case command::getState                 : wicket->getState();    break;
-//    case command::setArmed                 : wicket->lock_unlock_sequence();    break;
-//    case command::setUnlock                : wicket->lock_unlock_sequence();    break;
-//    case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
-//    case command::setExitOpen              : wicket->set_turnstile_to_pass(dir_type::exit_); break;            //
+    case command::getState                 : wicket->getState();    break;
+    case command::setArmed                 : wicket->lock_unlock_sequence();    break;
+    case command::setUnlock                : wicket->lock_unlock_sequence();    break;
+    case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
+    case command::setExitOpen              : wicket->set_turnstile_to_pass(dir_type::exit_); break;            //
 
-//    case command::setGreenLampOn           : wicket->setGREEN(); break;
-//    case command::setRedLampOn             : wicket->setRED(); break;
-//    case command::setLampOff               : wicket->setLightOFF();  break;             // Отправляем команду погасить лампы
+    case command::setGreenLampOn           : wicket->setGREEN(); break;
+    case command::setRedLampOn             : wicket->setRED(); break;
+    case command::setLampOff               : wicket->setLightOFF();  break;             // Отправляем команду погасить лампы
 
-//    case command::setAlarm                 : wicket->alarm(); break;              // Бибип
+    case command::setAlarm                 : wicket->alarm(); break;              // Бибип
 
 
         // Показываем картинку с текстом на экране считывателя
