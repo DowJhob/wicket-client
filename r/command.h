@@ -11,7 +11,7 @@
 #include <QString>
 
 enum class MachineState {
-undef,
+    undef,
     onArmed,
     onUnlocked,
 
@@ -35,31 +35,42 @@ undef,
 enum class command {
     undef,
 
-    //from main to wicket
-    set_test,
-    set_normal,
-    set_iron_mode,
+    //====== from reader to server ==========================
+    onRegister,
+    onBarcode,                               // Предъявлен ШК
+    onTemp,
+    onArmed,                                 // Турникет готов
+    onUnlock,                                // Турникет разблокировался
+    onPassed,
 
-    set_type_main,
-    set_type_slave,
+    //======= server to reader =========
+    getMAC,
+    getState,
+    setArmed,               // Взводим турникет
+    setUnlock,              // складываем  турникет
 
-    set_type_entry,   // Направление пропуска данного считывателя
-    set_type_exit,
+    setEntryOpen,           // Открываем турникет
+    setExitOpen,            //
 
-    set_Armed,
-    set_Unlock,
+    setGreenLampOn,
+    setRedLampOn,
+    setLampOff,             // Отправляем команду погасить лампы
 
-    set_Wrong,  //+ description
-    set_Ready,
-    set_EntryOpen,
-    set_ExitOpen,
+    setAlarm,               // Бибип
 
-    //from wicket to main
-    get_Register,
-    getBarcode, //+barcode
-    getTemp,
+    // Показываем картинку с текстом на эране считывателя
 
-    heartbeat
+    showInfoStatus,
+    showPlaceStatus,                   // синий? фон со стрелкой куда пихать
+    showCheckStatus,                   // оранжевый фон с часиками
+    showFailStatus,                      // Красный крестик
+
+    showServiceStatus,                        // Турникет не готов и все такое
+    showReadyStatus,                          // Турникет готов, покажите билет
+    //showDbTimeoutStatus,                      // База данных не отвечает
+    showOpenStatus,                           // Пжалста проходите, зелЁни стрелачка
+
+    heartbeat               //
 };
 /*!
   *\brief gg::ggg
@@ -70,20 +81,20 @@ typedef struct message{
     MachineState state;
     command cmd;
     QVariant body;
-//    int param;
-    message( MachineState state = MachineState::undef, command cmd = command::heartbeat, QVariant body = "heartbeat"):
-            state(state), cmd(cmd), body(body)
-        {}
-//    message( command cmd = command::heartbeat ):
-//            state(MachineState::undef), cmd(cmd), body("")
-//        {}
-//    message( MachineState state = MachineState::undef):
-//            state(state), cmd(command::undef), body("")
-//        {}
-//    explicit message( ):
-//            state(MachineState::undef), cmd(command::heartbeat), body("heartbeat")
-//        {}
-/*
+    //    int param;
+    message( MachineState state = MachineState::undef, command cmd = command::heartbeat, QVariant body = ""):
+        state(state), cmd(cmd), body(body)
+    {}
+    //    message( command cmd = command::heartbeat ):
+    //            state(MachineState::undef), cmd(cmd), body("")
+    //        {}
+    //    message( MachineState state = MachineState::undef):
+    //            state(state), cmd(command::undef), body("")
+    //        {}
+    //    explicit message( ):
+    //            state(MachineState::undef), cmd(command::heartbeat), body("heartbeat")
+    //        {}
+    /*
 
     explicit message(): body("heartbeat"), param(0)
     {}

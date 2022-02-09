@@ -3,16 +3,39 @@
 
 #include <QDebug>
 #include <QSignalTransition>
+#include <QEventTransition>
+#include <QFinalState>
 //#include <QAbstractTransition>
 #include <QObject>
 #include <QState>
 #include <QTimer>
 
+#include "command.h"
+#include <nikiret.h>
+
 class wicketFSM : public QState
 {
     Q_OBJECT
 public:
-    //// Из любого состояния можно перейти в разблокированный турникет
+    nikiret *wicket;
+
+    wicketFSM(_reader_type *reader_type,
+              dir_type *direction_type,
+              bool *ready_state_flag,
+              bool *uncond_state_flag,
+              QState *parent);
+
+    void set_type_Slave();
+
+    void set_type_Main();
+
+public slots:
+    void set_uncondDelay_time(int uncondDelay = 6000);
+
+    void fromServer(command cmd);
+    void fromServerState(MachineState state);
+
+private:
     QState *Ready;
     QState *OnCheckEntry;
     QState *OnCheckEXit;
@@ -25,146 +48,80 @@ public:
     QState *Drop;
     QState *UncondTimeout;
 
+    QFinalState *FinalState;
 
-    wicketFSM(QState *parent):QState(parent) //// Из любого состояния можно перейти в разблокированный турникет
-    {
-        set_timer();
-        Ready                 = new QState( this );
-        OnCheckEntry          = new QState( this );
-        OnCheckEXit           = new QState( this );
-        dbTimeout             = new QState( this );
-        Entry                 = new QState( this );
-        entryPassed           = new QState( this );
-        Exit                  = new QState( this );
-        exitPassed            = new QState( this );
-        Wrong                 = new QState( this );
-        Drop                  = new QState( this );
-        UncondTimeout         = new QState( this );
 
-        setInitialState( Ready );
-        //================================================================================================================================================================================
-        Ready->addTransition(this, &wicketFSM::set_FSM_to_wrong, Wrong); // по сигналу с сервера переходим в состояния запрещено
-        Ready->addTransition(  this,                   &wicketFSM::set_FSM_to_onCheckEntry, OnCheckEntry); //состояние на проверке
-        Ready->addTransition(  this,                   &wicketFSM::set_FSM_to_onCheckEXit, OnCheckEXit); //состояние на проверке
+    bool *ready_state_flag;     //  поскольку нет простого способа узнать в каком состоянии машина
+    bool *uncond_state_flag;    // сохраним пару состояний во флагах
 
-        Wrong->addTransition(wrong_light_timer,        &QTimer::timeout, Ready); //по сигналу таймера тоже обратно
-        dbTimeout->addTransition( Wrong);
+    _reader_type *reader_type;
+    dir_type *direction_type;
 
-        OnCheckEntry->addTransition(this,              &wicketFSM::set_FSM_to_wrong, Wrong); //wrong ticket
-        OnCheckEntry->addTransition(this,              &wicketFSM::set_FSM_to_entry, Entry); // по сигналу с сервера переходим в состояние открыто на вход
-        OnCheckEntry->addTransition(_db_Timeout_timer, &QTimer::timeout,             dbTimeout);
 
-        OnCheckEXit->addTransition(this,               &wicketFSM::set_FSM_to_wrong, Wrong); //wrong ticket
-        OnCheckEXit->addTransition(this,               &wicketFSM::set_FSM_to_exit,  Exit); // по сигналу с сервера переходим в состояние открыто на выход
-        OnCheckEXit->addTransition(_db_Timeout_timer,  &QTimer::timeout,             dbTimeout);
-
-        Entry->addTransition(wait_pass_timer,          &QTimer::timeout,             Drop); //по сигналу таймера в состояние сброс прохода
-        Entry->addTransition(this,                     &wicketFSM::set_FSM_passed,   entryPassed); //по сигналу прохода от турникета перейдем в состояние проход
-        Entry->addTransition(this,                     &wicketFSM::set_FSM_EntryPassed,   entryPassed);
-        entryPassed->addTransition( UncondTimeout );           // и сразу в задержку прохода по пути отослав данные на сервер
-
-        Exit->addTransition(wait_pass_timer,           &QTimer::timeout,               Drop);
-        Exit->addTransition(this,                      &wicketFSM::set_FSM_passed,     exitPassed);
-        Exit->addTransition(this,                      &wicketFSM::set_FSM_ExitPassed,     exitPassed);
-        exitPassed->addTransition( Ready );
-
-        unCondToReady = UncondTimeout->addTransition(uncondDelayTimer, &QTimer::timeout,                   Ready);
-        unCondToCheckExit = UncondTimeout->addTransition(this,             &wicketFSM::set_FSM_to_onCheckEXit, OnCheckEXit); //Для возможности быстро чекнуть билет на выход не дожидаясь таймаута на досмотр
-        Drop->addTransition(Ready);
-
-        //=================================================================================================
-        connect(Ready,         &QState::entered, wrong_light_timer, &QTimer::stop );
-        connect(Ready,         &QState::entered, wait_pass_timer,   &QTimer::stop );
-        //=================================================================================================
-        //=================================================================================================
-        connect(OnCheckEntry,       SIGNAL(entered()), _db_Timeout_timer, SLOT(start()));
-        connect(OnCheckEntry,       &QState::exited,   _db_Timeout_timer, &QTimer::stop );
-        //=======                                                                   =======================
-        connect(OnCheckEXit,       SIGNAL(entered()), _db_Timeout_timer, SLOT(start()));
-        connect(OnCheckEXit,       &QState::exited,   _db_Timeout_timer, &QTimer::stop );
-        //=================================================================================================
-        //=================================================================================================
-        connect(Wrong,         SIGNAL(entered()), wrong_light_timer, SLOT(start()) );
-        connect(Wrong,       &QState::exited,   _db_Timeout_timer, &QTimer::stop );
-        //=================================================================================================
-        connect(Entry,         SIGNAL(entered()), wait_pass_timer, SLOT(start()) );  //вошли в состояния прохода, открыли калитку, зажгли лампы
-        connect(Entry,       &QState::exited,  wait_pass_timer, &QTimer::stop );
-        //==============                                              =====================================
-        connect(Exit,          SIGNAL(entered()), wait_pass_timer, SLOT(start()) );
-        connect(Exit,        &QState::exited,  wait_pass_timer, &QTimer::stop );
-        //=================================================================================================
-        //=================================================================================================
-        connect(UncondTimeout, SIGNAL(entered()), uncondDelayTimer, SLOT(start()) );
-        connect(UncondTimeout, &QState::exited,   uncondDelayTimer, &QTimer::stop );
-
-    }
-    void set_type_Slave()
-    {
-        //  UncondTimeout->removeTransition(unCondToCheckExit);
-        //  UncondTimeout->removeTransition(unCondToReady);
-        unCondToReadySlaveType = UncondTimeout->addTransition(Ready); // Не дожидаясь таймера сразу в Ready
-        //qDebug() << unCondToReadySlaveType << UncondTimeout->transitions();
-    }
-    void set_type_Main()
-    {
-        if(unCondToReadySlaveType != nullptr)
-            UncondTimeout->removeTransition(unCondToReadySlaveType);// Удаляю безусловный переход
-        //     unCondToReady->setTargetState(UncondTimeout);           // Возвращаю условные переходы
-        //    unCondToCheckExit->setTargetState(UncondTimeout);
-    }
-public slots:
-    void set_uncondDelay_time(int uncondDelay = 6000)
-    {
-        uncondDelayTimer->setInterval(uncondDelay);
-    }
-
-signals:
-    void set_FSM_to_entry();
-    void set_FSM_to_exit();
-    void set_FSM_passed();
-
-    void set_FSM_EntryPassed();
-    void set_FSM_ExitPassed();
-
-    void set_FSM_to_wrong();
-
-    void set_FSM_to_onCheckEntry();
-    void set_FSM_to_onCheckEXit();
-
-private:
+    QString cmd_arg{};
 
     QSignalTransition *unCondToReady = nullptr;
     QSignalTransition *unCondToCheckExit = nullptr;
     QAbstractTransition *unCondToReadySlaveType = nullptr;
-
-    void set_timer()
-    {
-        wait_pass_timer = new QTimer(this);
-        wrong_light_timer = new QTimer(this);
-        uncondDelayTimer = new QTimer(this);
-        _db_Timeout_timer = new QTimer(this);
-
-        _db_Timeout_timer->setSingleShot(true);
-        wait_pass_timer->setSingleShot(true);
-        wrong_light_timer->setSingleShot(true);
-        uncondDelayTimer->setSingleShot(true);
-
-        //uncondDelayTimer->setInterval(uncondDelay);
-        set_uncondDelay_time();
-        wait_pass_timer->setInterval(pass_wait_time);
-        wrong_light_timer->setInterval(wrong_light_TIME);
-        _db_Timeout_timer->setInterval(15000);
-    }
 
     QTimer *wait_remote_timer;
     QTimer *wait_pass_timer;
     QTimer *wrong_light_timer;
     QTimer *_db_Timeout_timer;
     QTimer *uncondDelayTimer;
+    QTimer *totalWaitTimer;     //
     int wait_remote_time = 1000;
     int pass_wait_time = 10000;
     int wrong_light_TIME = 2000;
-    //    int uncondDelay = 8000;
+    //int uncondDelay = 8000;
+    int totalWaitTime = 20000;
+
+    void wicket_init();
+
+    void addTransitions();
+    //void setEventTransition(QState *source, command type, QState *target);
+    //void addEventTransitions();
+
+    void setActions();
+
+    void set_timer();
+
+    void set_onCheckEntry();
+
+    void set_onCheckEXit();
+
+private slots:
+    void send_state2(message msg);
+    void processing_dbTimeout();
+    void processing_Wrong();
+    void processing_Ready();
+    void processing_exReady();
+    void sub_processing_onCheck(MachineState state);
+    void processing_onCheckEntry();
+    void processing_onCheckExit();
+    void processing_Entry();
+    void processing_Exit();
+    void processing_EntryPassed();
+    void processing_ExitPassed();
+    void processing_UncondTimeout();
+    void processing_exUncondTimeout();
+    void processing_Drop();
+
+signals:
+    void from_server_to_entry();
+    void from_server_to_exit();
+    void from_server_to_entryPassed();
+    void from_server_to_exitPassed();
+    void from_server_to_wrong();
+
+    //void from_crossboard_to_passed();
+
+    void from_reader_to_onCheckEntry();
+    void from_reader_to_onCheckEXit();
+
+    void send_to_server(message);
+    void showState(showStatus, QString);
+
 };
 
 #endif // WICKETFSM_H
