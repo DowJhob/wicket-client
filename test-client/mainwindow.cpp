@@ -46,3 +46,9 @@ void MainWindow::on_PBticketC_clicked()
     emit send(message(MachineState::undef, command::onBarcode, ui->LEticketC->text()));
 }
 
+
+void MainWindow::on_pushButton_clicked()
+{
+    emit send(message(MachineState::undef, command::onPassed));
+}
+

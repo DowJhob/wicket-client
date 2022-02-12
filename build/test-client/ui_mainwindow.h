@@ -46,6 +46,7 @@ public:
     QVBoxLayout *verticalLayout_6;
     QLineEdit *LEticketC;
     QPushButton *PBticketC;
+    QPushButton *pushButton;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -144,10 +145,15 @@ public:
 
         gridLayout->addWidget(groupBox_7, 0, 0, 1, 1);
 
+        pushButton = new QPushButton(centralwidget);
+        pushButton->setObjectName(QString::fromUtf8("pushButton"));
+
+        gridLayout->addWidget(pushButton, 0, 1, 1, 1);
+
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
-        menubar->setGeometry(QRect(0, 0, 684, 17));
+        menubar->setGeometry(QRect(0, 0, 684, 22));
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
@@ -173,6 +179,7 @@ public:
         PBticket->setText(QApplication::translate("MainWindow", "\320\221\320\270\320\273\320\265\321\202", nullptr));
         groupBox_6->setTitle(QString());
         PBticketC->setText(QApplication::translate("MainWindow", "\320\221\320\270\320\273\320\265\321\202\320\275\321\213\320\271 \320\272\320\276\320\275\321\202\321\200\320\276\320\273\320\265\321\200", nullptr));
+        pushButton->setText(QApplication::translate("MainWindow", "PushButton", nullptr));
     } // retranslateUi
 
 };

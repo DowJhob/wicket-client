@@ -29,5 +29,6 @@ private slots:
     void on_PBcovidC_clicked();
     void on_PBticket_clicked();
     void on_PBticketC_clicked();
+    void on_pushButton_clicked();
 };
 #endif // MAINWINDOW_H
