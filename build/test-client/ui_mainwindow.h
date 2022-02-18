@@ -178,8 +178,9 @@ public:
         LEticket->setText(QApplication::translate("MainWindow", "superticket", nullptr));
         PBticket->setText(QApplication::translate("MainWindow", "\320\221\320\270\320\273\320\265\321\202", nullptr));
         groupBox_6->setTitle(QString());
+        LEticketC->setText(QApplication::translate("MainWindow", "8032F48E-7B34-410B-A2B0-E6107BB8032C", nullptr));
         PBticketC->setText(QApplication::translate("MainWindow", "\320\221\320\270\320\273\320\265\321\202\320\275\321\213\320\271 \320\272\320\276\320\275\321\202\321\200\320\276\320\273\320\265\321\200", nullptr));
-        pushButton->setText(QApplication::translate("MainWindow", "PushButton", nullptr));
+        pushButton->setText(QApplication::translate("MainWindow", "\320\237\321\200\320\276\321\205\320\276\320\264", nullptr));
     } // retranslateUi
 
 };
