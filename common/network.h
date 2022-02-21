@@ -4,6 +4,8 @@
 #include <stdio.h>
 #ifdef unix
 #include <netinet/in.h>
+#else
+#include <winsock.h>
 #endif
 
 #include <QTcpSocket>
