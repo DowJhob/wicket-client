@@ -121,12 +121,13 @@ void network::sockets_init()
 
 void network::processing_onServerLost()
 {
+    emit showState(message(MachineState::undef, command::showServiceStatus, "Сетевое соединение потеряно"));
+    emit log("server lost:\n");
     network_status = net_state::search;
     reconnect_timer->start(reconnect_interval);
     tcpSocket->abort();
     char * data;
     udpSocket->readDatagram( data, 0 );
-    emit log("server lost:\n");
     get_interface();
     //emit serverLost();
 }
@@ -229,5 +230,6 @@ void network::serverConnection()
 {
     reconnect_timer->start(reconnect_interval);
     emit log("TCP reconnect:\n");
+    emit showState(message(MachineState::undef, command::showServiceStatus, "Сервер найден, соединяемся"));
     tcpSocket->connectToHost(server_ip_addr, control_tcp_port, QIODevice::ReadWrite);
 }

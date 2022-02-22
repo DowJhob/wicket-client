@@ -85,6 +85,8 @@ signals:
     void serverFound();
     void serverReady();
 
+
+    void showState(message);
     void log(QString);
 };
 

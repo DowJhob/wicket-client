@@ -25,19 +25,14 @@ void controller::start()
 
 void controller::wicket_init()
 {
-//    wicket = new nikiret();
-//    //connect(wicket, &nikiret::temp, this, &controller::send_state);
     QTimer *t = new QTimer;
-
     connect(t, &QTimer::timeout, this, [&](){emit send_to_server(message(MachineState::undef, command::onTemp, "100"));});
     t->start(800);
-
-    //    connect(wicket, &nikiret::temp,     this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::onTemp, temp));});
-//    connect(wicket, &nikiret::armed,    this, [&](){emit send_to_server(message(MachineState::undef, command::onArmed));});
-//    connect(wicket, &nikiret::unlocked, this, [&](){emit send_to_server(message(MachineState::undef, command::onUnlock));});
-//    connect(wicket, &nikiret::passed,   this, [&](){emit send_to_server(message(MachineState::undef, command::onPassed));});
-
-//    wicket->start();
+    //connect(wicket, &nikiret::temp,     this, [&](QString temp){emit send_to_server(message(MachineState::undef, command::onTemp, temp));});
+    //connect(wicket, &nikiret::armed,    this, [&](){emit send_to_server(message(MachineState::undef, command::onArmed));});
+    //connect(wicket, &nikiret::unlocked, this, [&](){emit send_to_server(message(MachineState::undef, command::onUnlock));});
+    //connect(wicket, &nikiret::passed,   this, [&](){emit send_to_server(message(MachineState::undef, command::onPassed));});
+    //wicket->start();
 }
 
 void controller::new_cmd_parse(message msg)
@@ -46,19 +41,19 @@ void controller::new_cmd_parse(message msg)
     switch (msg.cmd) {
     //  безусловные команды
     case command::getState                 : emit send_to_server(message(MachineState::undef, command::onArmed));    break;
-//    case command::setArmed                 : wicket->lock_unlock_sequence();    break;
+    //case command::setArmed                 : wicket->lock_unlock_sequence();    break;
     case command::setUnlock                :  emit send_to_server(message(MachineState::undef, command::onUnlock));    break;
-//    case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
-//    case command::setExitOpen              : wicket->set_turnstile_to_pass(dir_type::exit_); break;            //
+    //case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
+    //case command::setExitOpen              : wicket->set_turnstile_to_pass(dir_type::exit_); break;            //
 
     case command::setGreenLampOn           : emit lamp(1); break;  // setGREEN
     case command::setRedLampOn             : emit lamp(2); break;  // setRED
     case command::setLampOff               : emit lamp(3);  break;             // setLightOFF Отправляем команду погасить лампы
 
-//    case command::setAlarm                 : wicket->alarm(); break;              // Бибип
+    //case command::setAlarm                 : wicket->alarm(); break;              // Бибип
 
 
-        // Показываем картинку с текстом на экране считывателя
+    // Показываем картинку с текстом на экране считывателя
     case command::showInfoStatus        :
     case command::showServiceStatus        :       // Турникет не готов и все такое
     case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
@@ -136,11 +131,11 @@ void controller::set_timer()
     connect(testt, &QTimer::timeout, [=](){
         QByteArray b1 = "superticket";
         QByteArray b2 = "forbidticket";
-//        if (test_flag)
+        //        if (test_flag)
         //local_barcode("covidControllerPrefix:288b3de5-2734-440d-9dda-9a4d9025f179");
         local_barcode("https://www.gosuslugi.ru/covid-cert/status/52593579-7a51-43c5-bfaf-c9bde5d5f646?lang=ru");
-//        else
-//            local_barcode(b2);
-//        test_flag = !test_flag;
+        //        else
+        //            local_barcode(b2);
+        //        test_flag = !test_flag;
     } );
 }

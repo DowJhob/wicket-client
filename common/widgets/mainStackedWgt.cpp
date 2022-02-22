@@ -6,7 +6,7 @@ mainStackedWgt::mainStackedWgt()
     connect(this, &mainStackedWgt::log, &stWgt, &showStateWgt::log);
     addWidget(&stWgt);
     addWidget(&crtWgt);
-setBaseSize(480, 640);
+    setBaseSize(480, 640);
     show();
 }
 

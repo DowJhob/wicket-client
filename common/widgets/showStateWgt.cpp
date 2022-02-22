@@ -64,7 +64,7 @@ void showStateWgt::log(QString str)
 {
     fprintf(stdout, "%s", str.toStdString().c_str() );
     fflush(stdout);
-    main_message.setStyleSheet("QLabel {  color : black; }");
+    //main_message.setStyleSheet("QLabel {  color : black; }");
     info_log.setStyleSheet("QLabel {  color : black; }");
     info_log.setText( info_log.text() + str );
 }
