@@ -36,7 +36,7 @@ void nikiret::start()
 
 void nikiret::init()
 {
-    for(QString s : init_list)
+    for(const QString s : qAsConst(init_list))
         send_to_crossboard(s.toLatin1());
     state_polling_timer->start();
 }

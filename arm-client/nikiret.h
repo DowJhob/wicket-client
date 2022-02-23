@@ -4,7 +4,7 @@
 #include <stdio.h>
 //#include <termios.h>
 #include <fcntl.h>
-//#include <unistd.h>
+#include <unistd.h>
 
 //#include <QObject>
 //#include <QFile>
