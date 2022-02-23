@@ -40,7 +40,9 @@ void controller::new_cmd_parse(message msg)
     cmd_arg = msg.body.toString();
     switch (msg.cmd) {
     //  безусловные команды
-    case command::getState                 : emit send_to_server(message(MachineState::undef, command::onArmed));    break;
+    case command::getState                 :
+        emit send_to_server(message(MachineState::undef, command::onArmed));
+        emit setCaption(cmd_arg);    break;
     //case command::setArmed                 : wicket->lock_unlock_sequence();    break;
     case command::setUnlock                :  emit send_to_server(message(MachineState::undef, command::onUnlock));    break;
     //case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет

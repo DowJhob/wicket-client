@@ -14,15 +14,22 @@ class mainStackedWgt : public QStackedWidget
 public:
     mainStackedWgt();
 
+    void setCaption(QString caption)
+    {
+        this->caption.setText(caption);
+    }
+
 public slots:
     void showState(message msg);
 
 private:
-    showStateWgt stWgt;
+    QLabel caption;
+    QLabel version;
+    showStateWgt stWgt{&caption};
     showCertInfo crtWgt;
 
 signals:
-        void log(QString);
+    void log(QString);
 
 };
 

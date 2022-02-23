@@ -69,7 +69,7 @@ signals:
     void serverReady();
     void serverLost();
     void send_to_server(message);
-
+void setCaption(QString);
     void s_showStatus(message);
 
  //прокладка для трансляции в wicketFSM

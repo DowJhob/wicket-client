@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 
     ///========================== lcd_display =========================================
     mainStackedWgt lcd_display;
+    lcd_display.setCaption("test");
     //lcd_display.start();
 QGridLayout *gr = reinterpret_cast<QGridLayout*>(w.centralWidget()->layout());
 gr->addWidget(&lcd_display, 0, 0 );
@@ -36,6 +37,7 @@ gr->addWidget(&lcd_display, 0, 0 );
     QThread controller_thread;
     QObject::connect(&controller_thread, &QThread::started,      &_controller, &controller::start);
     _controller.moveToThread(&controller_thread);
+    QObject::connect( &_controller, &controller::setCaption,   &lcd_display,    &mainStackedWgt::setCaption);
     QObject::connect( &_controller, &controller::s_showStatus,   &lcd_display,    &mainStackedWgt::showState);
     QObject::connect( &_controller, &controller::send_to_server, &network_client, &network::SendToServer);
     QObject::connect( &_controller, &controller::log,            &lcd_display,    &mainStackedWgt::log);

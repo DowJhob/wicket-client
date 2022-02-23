@@ -16,7 +16,7 @@ class showStateWgt: public QWidget
     Q_OBJECT
 public:
 
-    showStateWgt();
+    showStateWgt(QLabel *caption);
 
 public slots:
     void showState(message msg);
