@@ -36,32 +36,18 @@ public slots:
     void local_barcode(QByteArray data);
 
 private slots:
-    //=================================== TEST MODE ====================
-    void from_server_set_test();
-    void from_server_set_normal();
-    void timer_wrapper();
-    //=================================== IRON MODE =====================
-    void from_server_set_iron_mode();
-    //======================================================================
+
 
 private:
     nikiret *wicket;
-    //=================================== TEST ====================
-    bool test_state_flag = false;
-    QTimer *testt;
-    QTimer *testt_pass;
 
     //================== file transfer ====================
     //updater _updater;
-
-    bool iron_mode_flag = false;
-    bool test_flag = true;
 
     QString cmd_arg{};
 //    void (mainFSM::*local_onCheck_handler)() = &mainFSM::set_onCheckEntry; //дергается считывателем  шк
 //    void (mainFSM::*remote_onCheck_handler)() = &mainFSM::set_onCheckEXit; // дергается сервером по команде удаленного считывателя
 
-    void set_timer();
     void wicket_init();
 
 signals:
@@ -71,13 +57,9 @@ signals:
     void send_to_server(message);
 
     void setCaption(QString);
+
     void s_showStatus(message);
 
- //прокладка для трансляции в wicketFSM
-//    void from_server_to_wrong(); //прокладка для трансляции в wicketFSM
-
-//    void from_server_setArmed(); //прокладка для трансляции в wicket_locker
-//    void from_server_setUnLocked(); //прокладка для трансляции в wicket_locker
     void log(QString);
 
     void exit(int);

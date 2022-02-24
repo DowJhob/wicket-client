@@ -3,7 +3,6 @@
 
 #include <QObject>
 
-
 #include <QVariant>
 #include <QDataStream>
 #include <QByteArray>

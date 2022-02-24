@@ -1,6 +1,6 @@
 #include "showStateWgt.h"
 
-showStateWgt::showStateWgt(QLabel *caption)
+showStateWgt::showStateWgt()
 {
     access_pixmap.load(":images/access-4.png");
     place_ticket_pixmap.load(":images/place_ticket-4.png");
@@ -20,7 +20,7 @@ showStateWgt::showStateWgt(QLabel *caption)
     service_palette.setBrush(QPalette::Background, service_pixmap);
     oncheck_palette.setBrush(QPalette::Background, oncheck_pixmap);
 
-    caption->setFont( _f10 );
+    caption.setFont( _f10 );
     info_log.setWordWrap(true);
     info_log.setFont( _f15 );
 
@@ -31,7 +31,16 @@ showStateWgt::showStateWgt(QLabel *caption)
     main_message.setText("Пожалуйста подождите, идет настройка оборудования");
     setPalette(service_palette);
 
-    background_layout.addWidget(caption, 0, Qt::AlignLeft | Qt::AlignTop );
+
+
+    info_layout.addWidget(&caption, 0, Qt::AlignLeft | Qt::AlignTop );
+    info_layout.addWidget(&version, 0, Qt::AlignRight | Qt::AlignTop );
+
+
+    background_layout.addLayout(&info_layout);
+
+
+
     background_layout.addWidget(&info_log, 5, Qt::AlignVCenter | Qt::AlignLeft );
     background_layout.addWidget(&main_message, 5, Qt::AlignHCenter | Qt::AlignBottom );
 }

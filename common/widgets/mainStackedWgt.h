@@ -16,16 +16,15 @@ public:
 
     void setCaption(QString caption)
     {
-        this->caption.setText(caption);
+        stWgt.caption.setText(caption);
+        crtWgt.caption.setText(caption);
     }
 
 public slots:
     void showState(message msg);
 
 private:
-    QLabel caption;
-    QLabel version;
-    showStateWgt stWgt{&caption};
+    showStateWgt stWgt;
     showCertInfo crtWgt;
 
 signals:

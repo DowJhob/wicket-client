@@ -15,8 +15,10 @@ class showStateWgt: public QWidget
 {
     Q_OBJECT
 public:
+    QLabel caption;
+    QLabel version{"Version: " GIT_HASH};
 
-    showStateWgt(QLabel *caption);
+    showStateWgt();
 
 public slots:
     void showState(message msg);
@@ -33,11 +35,11 @@ private:
 
 
     QVBoxLayout background_layout;
+    QHBoxLayout info_layout;
 
-    QLabel IP;
+    //QLabel IP;
     QLabel info_log;
     QLabel main_message;
-    //QLabel IP;
 
     QPalette access_palette;
     QPalette place_palette;
