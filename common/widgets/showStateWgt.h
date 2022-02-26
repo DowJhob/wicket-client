@@ -16,7 +16,7 @@ class showStateWgt: public QWidget
     Q_OBJECT
 public:
     QLabel caption;
-    QLabel version{"Version: " GIT_HASH};
+    QLabel version{"Version: " GIT_VERSION};
 
     showStateWgt();
 
@@ -41,13 +41,15 @@ private:
     QLabel info_log;
     QLabel main_message;
 
+    QPalette placeCertPltt;
+    QPalette placeTicketPltt;
     QPalette access_palette;
-    QPalette place_palette;
     QPalette denied_palette;
     QPalette service_palette;
     QPalette oncheck_palette;
 
-    QPixmap place_ticket_pixmap;
+    QPixmap placeCertPxmp;
+    QPixmap placeTicketPxmp;
     QPixmap oncheck_pixmap;
     QPixmap access_pixmap;
     QPixmap denied_pixmap;

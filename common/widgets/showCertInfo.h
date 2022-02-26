@@ -17,7 +17,7 @@ class showCertInfo : public QWidget
     Q_OBJECT
 public:
     QLabel caption;
-    QLabel version{"Version: " GIT_HASH};
+    QLabel version{"Version: " GIT_VERSION};
     showCertInfo();
 
 public slots:

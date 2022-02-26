@@ -13,9 +13,9 @@ showCertInfo::showCertInfo()
     certInfo_layout.addWidget(&certNumber);
     certInfo_layout.addWidget(&Expired);
 
-    FIO.setFont(QFont("Times New Roman", 15, QFont::Bold));
-    birthday.setFont(QFont("Times New Roman", 15, QFont::Bold));
-    Passport.setFont(QFont("Times New Roman", 15, QFont::Bold));
+    FIO.setFont(QFont("Times New Roman", 28, QFont::Bold));
+    birthday.setFont(QFont("Times New Roman", 28, QFont::Bold));
+    Passport.setFont(QFont("Times New Roman", 28, QFont::Bold));
 
     pers_layout.addWidget(&FIO);
     pers_layout.addWidget(&birthday);
@@ -43,7 +43,7 @@ void showCertInfo::setInfo(message msg)
     //QJsonArray info = doc["attrs"].toArray();
     QVariantList v = msg.body.toList();
     qDebug() << " showInfoStatus" << v;
-    for (auto o : qAsConst(v))
+    for (const auto &o : qAsConst(v))
     {
         auto oo = o.toMap();
 
