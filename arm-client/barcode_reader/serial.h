@@ -1,6 +1,8 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
+#include "ibarcode.h"
+
 #include <QDebug>
 #include <QSerialPortInfo>
 #include <QSerialPort>
@@ -23,12 +25,12 @@ typedef struct
     quint8 barcodeType;
 } headerSSI;
 
-class serial: public QObject
+class serial: public IBarcode
 {
     Q_OBJECT
 public:
-    serial();
-    bool open();
+    serial(QString portName = "/dev/ttyAMA0");
+    bool open(QString portName);
 
     bool close();
 
@@ -47,7 +49,6 @@ private:
     }
 
 signals:
-    void decoded(QByteArray);
 
 };
 

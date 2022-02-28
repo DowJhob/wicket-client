@@ -13,9 +13,9 @@ showCertInfo::showCertInfo()
     certInfo_layout.addWidget(&certNumber);
     certInfo_layout.addWidget(&Expired);
 
-    FIO.setFont(QFont("Times New Roman", 28, QFont::Bold));
-    birthday.setFont(QFont("Times New Roman", 28, QFont::Bold));
-    Passport.setFont(QFont("Times New Roman", 28, QFont::Bold));
+    FIO.setFont(QFont("Times New Roman", 15, QFont::Bold));
+    birthday.setFont(QFont("Times New Roman", 15, QFont::Bold));
+    Passport.setFont(QFont("Times New Roman", 15, QFont::Bold));
 
     pers_layout.addWidget(&FIO);
     pers_layout.addWidget(&birthday);

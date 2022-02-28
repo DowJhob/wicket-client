@@ -1,13 +1,8 @@
 #include <QApplication>
 #include "../common/common_types.h"
-#include <barcode_reader/snapi-barcode-reader.h>
-
-#include "barcode_reader/serial.h"
-
-
-#include "controller.h"
 #include "../common/widgets/mainStackedWgt.h"
 #include "../common/network.h"
+#include "controller.h"
 
 //#define TEST
 #ifdef TEST
@@ -43,22 +38,7 @@ int main(int argc, char *argv[])
     mainStackedWgt lcd_display;
     //lcd_display.start();
 
-    //QThread thread;
-    //    uchar      EP_IN = 0x81;
-    uint16_t     VID = 0x05E0;
-    uint16_t     PID = 0x1900;
-    int iface = 0;
-    int config = 1;
-    int alt_config = 0;
-    snapi_barcode_reader *barcode_reader = new snapi_barcode_reader(VID, PID, iface, config, alt_config);
 
-    QObject::connect(barcode_reader, &snapi_barcode_reader::readyRead_barcode,  &_controller, &controller::local_barcode, Qt::QueuedConnection);
-    QObject::connect(barcode_reader, &snapi_barcode_reader::log,  &network_client, &network::logger, Qt::QueuedConnection);
-    //QObject::connect(&thread, &QThread::started, barcode_reader, &libusb_async_reader::start);
-    //barcode_reader->moveToThread(&thread);
-    //thread.start(//QThread::TimeCriticalPriority
-    //             );
-    barcode_reader->start();
     ///========================== controller =========================================
     QThread controller_thread;
     QObject::connect(&controller_thread, &QThread::started,      &_controller, &controller::start);

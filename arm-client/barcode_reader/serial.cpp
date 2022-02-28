@@ -1,8 +1,8 @@
 #include "serial.h"
 
-serial::serial()
+serial::serial(QString portName)
 {
-    open();
+    open(portName);
     port.flush();
     connect(&port, &QSerialPort::readyRead, this, &serial::packetSlicer);
 
@@ -18,11 +18,11 @@ serial::serial()
 
 }
 
-bool serial::open()
+bool serial::open(QString portName)
 {
     qDebug() << "=========== serial::open ================";
     //port.setPort(portInfo);
-    port.setPortName("COM5");        //  "/dev/hidraw0"
+    port.setPortName(portName);        //  "/dev/hidraw0"
     port.setBaudRate(115200, QSerialPort::AllDirections);
     return port.open(QIODevice::ReadWrite);
     //            fprintf(stdout, "can not open barcode device %s\n", port.portName().toStdString().c_str());
@@ -54,7 +54,7 @@ void serial::packetSlicer()
         }
         if(!header->status.continuation)
         {
-            emit decoded(decodedData);
+            emit barcodeReady(decodedData);
             decodedData.clear();
         }
     }

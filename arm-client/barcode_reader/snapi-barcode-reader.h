@@ -1,6 +1,8 @@
 #ifndef SNAPI_BARCODE_READER_H
 #define SNAPI_BARCODE_READER_H
 
+#include "ibarcode.h"
+
 #include "libusb.h"
 //#include <QThread>
 //#include <QTimer>
@@ -19,7 +21,7 @@ struct comm{
     uchar* comm;
     int size;
 };
-class snapi_barcode_reader: public QObject
+class snapi_barcode_reader: public IBarcode
 {
     Q_OBJECT
 public:
@@ -95,8 +97,6 @@ private slots:
     void SNAPI_scaner_init( );
 
 signals:
-    void readyRead_barcode(QByteArray);
-
     void init_completed();
     void log(QString);
 };

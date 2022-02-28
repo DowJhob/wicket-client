@@ -16,6 +16,9 @@
 #include <nikiret.h>
 //#include <updater.h>
 
+#include <barcode_reader/snapi-barcode-reader.h>
+#include "barcode_reader/serial.h"
+
 #define CROSSBOARD_SERIAL_PORT_NAME     "/dev/ttyAPP3"
 #define FILE_TRANSFER_PORT              27008
 
@@ -33,6 +36,10 @@ public slots:
     void start();
     void new_cmd_parse(message msg);
 
+    void createSNAPI();
+
+    void createSerial();
+
     void local_barcode(QByteArray data);
 
 private slots:
@@ -40,6 +47,7 @@ private slots:
 
 private:
     nikiret *wicket;
+    IBarcode *barcodeReader;
 
     //================== file transfer ====================
     //updater _updater;

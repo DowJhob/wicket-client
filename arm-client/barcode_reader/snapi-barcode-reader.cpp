@@ -14,6 +14,7 @@ snapi_barcode_reader::snapi_barcode_reader(uint16_t VID, uint16_t PID, int iface
     this->EP_INTR = EP_INTR;
     //       connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::SNAPI_scaner_init );
     //        connect(this, &libusb_async_reader::init_completed, this, &libusb_async_reader::start );
+    start();
 }
 
 int snapi_barcode_reader::set_param(uchar *_data, quint16 size, uint _timeout)
@@ -48,7 +49,7 @@ void snapi_barcode_reader::parse_barcode(barcode_msg data)
             QByteArray aaa{};
             for(int i = 0; i < message.count(); i++)
                 aaa += message.value(i);
-            emit readyRead_barcode(aaa);
+            emit barcodeReady(aaa);
             beep();
             message.clear();
             qDebug() << "Barcode data decode: " << aaa;

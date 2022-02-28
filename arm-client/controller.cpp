@@ -1,26 +1,22 @@
 #include "controller.h"
 
 controller::controller()
-{ }
+{
+}
 
 void controller::start()
 {
     t = new QElapsedTimer;
     wicket_init();
-    //==================================================================================================================
-    //set_timer();
-    //testt->start();
-    //==================================================================================================================
 
+    //createSNAPI();
+    createSerial();
 
     ///-----------------------------------------------------
     //_updater.setPort( FILE_TRANSFER_PORT );
     //_updater.setFilename( QCoreApplication::applicationFilePath() );
     //connect(&_updater, &updater::ready, [ & ](){ emit exit(42); } );
     //==================================================================================================================
-
-
-    //set_reverse();   // для теста!!!!
 }
 
 void controller::wicket_init()
@@ -55,7 +51,7 @@ void controller::new_cmd_parse(message msg)
     case command::setAlarm                 : wicket->alarm(); break;              // Бибип
 
 
-    // Показываем картинку с текстом на экране считывателя
+        // Показываем картинку с текстом на экране считывателя
     case command::showInfoStatus        :
     case command::showServiceStatus        :       // Турникет не готов и все такое
     case command::showPlaceTicketStatus          :         // Турникет готов, покажите билет или ковид куар
@@ -68,6 +64,32 @@ void controller::new_cmd_parse(message msg)
     default :            break;
     }
 
+}
+
+void controller::createSNAPI()
+{
+    //QThread thread;
+    //    uchar      EP_IN = 0x81;
+    uint16_t     VID = 0x05E0;
+    uint16_t     PID = 0x1900;
+    int iface = 0;
+    int config = 1;
+    int alt_config = 0;
+    barcodeReader = new snapi_barcode_reader(VID, PID, iface, config, alt_config);
+
+    QObject::connect(barcodeReader, &snapi_barcode_reader::barcodeReady, this, &controller::local_barcode, Qt::QueuedConnection);
+    //QObject::connect(barcode_reader, &snapi_barcode_reader::log,  &network_client, &network::logger, Qt::QueuedConnection);
+    //QObject::connect(&thread, &QThread::started, barcode_reader, &libusb_async_reader::start);
+    //barcode_reader->moveToThread(&thread);
+    //thread.start(//QThread::TimeCriticalPriority
+    //             );
+    //barcode_reader->start();
+}
+
+void controller::createSerial()
+{
+    barcodeReader = new serial("/dev/ttyAMA0");
+    QObject::connect(barcodeReader, &snapi_barcode_reader::barcodeReady, this, &controller::local_barcode, Qt::QueuedConnection);
 }
 
 void controller::local_barcode(QByteArray data)

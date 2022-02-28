@@ -18,6 +18,7 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/mac_link.cpp \
 #        PN532-PN532_HSU/PN532/snep.cpp \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
+    barcode_reader/ibarcode.cpp \
         barcode_reader/libusb-wrapper.cpp \
         barcode_reader/serial.cpp \
         main.cpp \
@@ -46,6 +47,7 @@ HEADERS += common_types.h \
 #    PN532-PN532_HSU/PN532/PN532_HSU.h \
 #    NFC_copy.h \
     barcode_reader/barcode_msg.h \
+    barcode_reader/ibarcode.h \
     barcode_reader/libusb-wrapper.h \
     barcode_reader/serial.h \
     libs/libusb/include/libusb.h \
