@@ -77,7 +77,7 @@ void controller::createSNAPI()
     int alt_config = 0;
     barcodeReader = new snapi_barcode_reader(VID, PID, iface, config, alt_config);
 
-    QObject::connect(barcodeReader, &snapi_barcode_reader::barcodeReady, this, &controller::local_barcode, Qt::QueuedConnection);
+    QObject::connect(barcodeReader, &IBarcode::barcodeReady, this, &controller::local_barcode, Qt::QueuedConnection);
     //QObject::connect(barcode_reader, &snapi_barcode_reader::log,  &network_client, &network::logger, Qt::QueuedConnection);
     //QObject::connect(&thread, &QThread::started, barcode_reader, &libusb_async_reader::start);
     //barcode_reader->moveToThread(&thread);
@@ -88,8 +88,9 @@ void controller::createSNAPI()
 
 void controller::createSerial()
 {
-    barcodeReader = new serial("/dev/ttyAMA0");
-    QObject::connect(barcodeReader, &snapi_barcode_reader::barcodeReady, this, &controller::local_barcode, Qt::QueuedConnection);
+    barcodeReader = new serial;
+    qDebug() << "controller::createSerial";
+    QObject::connect(barcodeReader, &IBarcode::barcodeReady, this, &controller::local_barcode, Qt::QueuedConnection);
 }
 
 void controller::local_barcode(QByteArray data)

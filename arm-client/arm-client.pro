@@ -33,7 +33,8 @@ SOURCES += \
 
 INSTALLS += target
 target.path = target.path = /usr
-target.files = rd
+target.files = r
+
 
 HEADERS += common_types.h \
 #    NFC.h \

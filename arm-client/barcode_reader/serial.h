@@ -29,12 +29,13 @@ class serial: public IBarcode
 {
     Q_OBJECT
 public:
-    serial(QString portName = "/dev/ttyAMA0");
-    bool open(QString portName);
+    serial();
+    void open();
 
     bool close();
 
 private slots:
+    QSerialPortInfo getScaner();
     void packetSlicer();
 
 private:

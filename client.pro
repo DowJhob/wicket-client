@@ -7,7 +7,7 @@ CONFIG += ordered
 TEMPLATE = subdirs
 
 SUBDIRS = \
-            test-client \
+            test-client
 
 unix{
 SUBDIRS += arm-client
