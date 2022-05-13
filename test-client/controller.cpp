@@ -58,10 +58,10 @@ void controller::new_cmd_parse(message msg)
     // Показываем картинку с текстом на экране считывателя
     case command::showInfoStatus        :
     case command::showServiceStatus        :       // Турникет не готов и все такое
-    case command::showPlaceTicketStatus          :         // Турникет готов, покажите билет или ковид куар
+    case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
     case command::showOpenStatus           :          // Пжалста проходите, зелЁни стралачка
 
-    case command::showPlaceCertStatus      :                   // синий? фон со стрелкой куда пихать
+    case command::showPlaceStatus      :                   // синий? фон со стрелкой куда пихать
     case command::showCheckStatus      :                   // оранжевый фон с часиками
     case command::showFailStatus      : emit s_showStatus(msg); break;        // Красный крестик
 

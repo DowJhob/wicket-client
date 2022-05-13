@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    qDebug() << QString("Version: %1").arg(GIT_VERSION);
+    qDebug() << QString("Version: %1").arg(GIT_HASH);
     qRegisterMetaType<message>("message");
 
     fprintf(stdout, "turnstile client - eulle@ya.ru\n");

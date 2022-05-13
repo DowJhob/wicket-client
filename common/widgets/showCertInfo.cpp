@@ -43,7 +43,7 @@ void showCertInfo::setInfo(message msg)
     //QJsonArray info = doc["attrs"].toArray();
     QVariantList v = msg.body.toList();
     qDebug() << " showInfoStatus" << v;
-    for (const auto &o : qAsConst(v))
+    for (auto o : qAsConst(v))
     {
         auto oo = o.toMap();
 

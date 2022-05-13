@@ -60,18 +60,16 @@ enum class command {
     // Показываем картинку с текстом на эране считывателя
 
     showInfoStatus,
-    showPlaceCertStatus,                   // синий? фон со стрелкой куда пихать
+    showPlaceStatus,                   // синий? фон со стрелкой куда пихать
     showCheckStatus,                   // оранжевый фон с часиками
     showFailStatus,                      // Красный крестик
 
     showServiceStatus,                        // Турникет не готов и все такое
-    showPlaceTicketStatus,                          // Турникет готов, покажите билет
+    showReadyStatus,                          // Турникет готов, покажите билет
     //showDbTimeoutStatus,                      // База данных не отвечает
     showOpenStatus,                           // Пжалста проходите, зелЁни стрелачка
 
-    heartbeat,               //
-
-  //  showPlaceStatus                          // Турникет готов, покажите билет
+    heartbeat               //
 };
 /*!
   *\brief gg::ggg

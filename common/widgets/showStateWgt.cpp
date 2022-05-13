@@ -2,9 +2,8 @@
 
 showStateWgt::showStateWgt()
 {
-    placeCertPxmp.load(":images/QR.jpg");
-    placeTicketPxmp.load(":images/place_ticket.jpg");
     access_pixmap.load(":images/access-4.png");
+    place_ticket_pixmap.load(":images/place_ticket-4.png");
     denied_pixmap.load(":images/denied-2.png");
     oncheck_pixmap.load(":images/oncheck.png");
     service_pixmap.load(":images/service.jpg");
@@ -15,9 +14,8 @@ showStateWgt::showStateWgt()
     setLayout( &background_layout );
     showMaximized();
 
-    placeCertPltt.setBrush(QPalette::Background, placeCertPxmp);
-    placeTicketPltt.setBrush(QPalette::Background, placeTicketPxmp);
     access_palette.setBrush(QPalette::Background, access_pixmap);
+    place_palette.setBrush(QPalette::Background, place_ticket_pixmap);
     denied_palette.setBrush(QPalette::Background, denied_pixmap);
     service_palette.setBrush(QPalette::Background, service_pixmap);
     oncheck_palette.setBrush(QPalette::Background, oncheck_pixmap);
@@ -55,14 +53,12 @@ void showStateWgt::showState(message msg)
     switch (cmd) {
     case command::showServiceStatus : _showState(black_style, black_style, desc, "", service_palette, _f10);
         break;
-    //case command::showReadyStatus   : _showState(black_style, black_style, desc, "", placeCertPltt, _f10); qDebug() << " showReadyStatus" << desc;
-    //    break;
-    case command::showPlaceTicketStatus   : _showState(black_style, black_style, desc, "", placeTicketPltt, _f10); qDebug() << " showReadyStatus" << desc;
+    case command::showReadyStatus   : _showState(black_style, black_style, desc, "", place_palette, _f10); qDebug() << " showReadyStatus" << desc;
         break;
     case command::showOpenStatus    : _showState(black_style, black_style, desc, "", access_palette, _f10); qDebug() << " showOpenStatus" << desc;
         break;
         //==========================================
-    case command::showPlaceCertStatus   : _showState(black_style, black_style, desc, "", placeCertPltt, _f10); qDebug() << " showPlaceStatus" << desc;
+    case command::showPlaceStatus   : _showState(black_style, black_style, desc, "", place_palette, _f10); qDebug() << " showPlaceStatus" << desc;
         break;
     case command::showCheckStatus   : _showState(black_style, black_style, desc, "", oncheck_palette, _f10); qDebug() << " showCheckStatus" << desc;
         break;
