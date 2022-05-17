@@ -23,7 +23,7 @@
 
 int main(int argc, char *argv[])
 {    
-    qDebug() << QString("Version: %1").arg(GIT_HASH);
+    qDebug() << QString("Version: %1").arg(GIT_VERSION);
     qRegisterMetaType<message>("message");
     QApplication a(argc, argv, false);      //https://forum.qt.io/topic/2002/linux-non-gui-application-drawimage-crash/6
     //Constructs an application object with argc command line arguments in argv.
@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
     QThread controller_thread;
     QObject::connect(&controller_thread, &QThread::started,      &_controller, &controller::start);
     _controller.moveToThread(&controller_thread);
+    QObject::connect( &_controller, &controller::setCaption,     &lcd_display,    &mainStackedWgt::setCaption);
     QObject::connect( &_controller, &controller::s_showStatus,   &lcd_display,    &mainStackedWgt::showState);
     QObject::connect( &_controller, &controller::send_to_server, &network_client, &network::SendToServer);
     QObject::connect( &_controller, &controller::log,            &lcd_display,    &mainStackedWgt::log);

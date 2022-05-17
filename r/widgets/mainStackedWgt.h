@@ -15,6 +15,12 @@ public:
     mainStackedWgt();
 
 public slots:
+    void setCaption(QString caption)
+    {
+        stWgt.caption.setText(caption);
+        crtWgt.caption.setText(caption);
+    }
+
     void showState(message msg);
 
 private:

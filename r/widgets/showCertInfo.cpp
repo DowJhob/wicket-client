@@ -5,7 +5,7 @@ showCertInfo::showCertInfo()
     setAutoFillBackground(true);
     setFixedWidth( 480 );
     setFixedHeight( 640 );
-    setLayout( &background_layout );
+    //setLayout( &background_layout );
     pixmap.load(":images/access-4.png");
     palette.setBrush(QPalette::Background, pixmap);
     setPalette(palette);
@@ -20,6 +20,15 @@ showCertInfo::showCertInfo()
     pers_layout.addWidget(&FIO);
     pers_layout.addWidget(&birthday);
     pers_layout.addWidget(&Passport);
+
+    // ===========================================================================
+
+    info_layout.addWidget(&caption, 0, Qt::AlignLeft | Qt::AlignTop );
+    info_layout.addWidget(&version, 0, Qt::AlignRight | Qt::AlignTop );
+
+
+    background_layout.addLayout(&info_layout, 0);
+    //background_layout.addWidget(&caption, 0, Qt::AlignLeft | Qt::AlignTop );
 
     background_layout.addLayout(&certInfo_layout);
     background_layout.addLayout(&pers_layout);

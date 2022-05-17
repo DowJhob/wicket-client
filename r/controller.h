@@ -35,13 +35,6 @@ public slots:
     void local_barcode(QByteArray data);
 
 private slots:
-    //=================================== TEST MODE ====================
-    void from_server_set_test();
-    void from_server_set_normal();
-    void timer_wrapper();
-    //=================================== IRON MODE =====================
-    void from_server_set_iron_mode();
-    //======================================================================
 
 private:
     nikiret *wicket;
@@ -70,6 +63,8 @@ signals:
     void send_to_server(message);
 
     void s_showStatus(message);
+
+    void setCaption(QString);
 
  //прокладка для трансляции в wicketFSM
 //    void from_server_to_wrong(); //прокладка для трансляции в wicketFSM

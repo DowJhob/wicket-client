@@ -41,7 +41,9 @@ void controller::new_cmd_parse(message msg)
     cmd_arg = msg.body.toString();
     switch (msg.cmd) {
     //  безусловные команды
-    case command::getState                 : wicket->getState();    break;
+    case command::getState                 : wicket->getState();
+        emit setCaption(cmd_arg);
+        break;
     case command::setArmed                 : wicket->lock_unlock_sequence();    break;
     case command::setUnlock                : wicket->lock_unlock_sequence();    break;
     case command::setEntryOpen             : wicket->set_turnstile_to_pass(dir_type::entry); break;          // Открываем турникет
@@ -57,10 +59,10 @@ void controller::new_cmd_parse(message msg)
         // Показываем картинку с текстом на экране считывателя
     case command::showInfoStatus        :
     case command::showServiceStatus        :       // Турникет не готов и все такое
-    case command::showReadyStatus          :         // Турникет готов, покажите билет или ковид куар
+    case command::showPlaceTicketStatus          :         // Турникет готов, покажите билет или ковид куар
     case command::showOpenStatus           :          // Пжалста проходите, зелЁни стралачка
 
-    case command::showPlaceStatus      :                   // синий? фон со стрелкой куда пихать
+    case command::showPlaceCertStatus      :                   // синий? фон со стрелкой куда пихать
     case command::showCheckStatus      :                   // оранжевый фон с часиками
     case command::showFailStatus      : emit s_showStatus(msg); break;        // Красный крестик
 
@@ -71,72 +73,6 @@ void controller::new_cmd_parse(message msg)
 
 void controller::local_barcode(QByteArray data)
 {
-    t->start();
     emit send_to_server(message(MachineState::undef, command::onBarcode, data));
     qDebug() << "local_barcode: " + data;
-}
-
-void controller::from_server_set_test()
-{
-    //=================================== TEST TIMER =====================================================
-    qDebug() << "set test ==============================================================================TEST";
-    test_state_flag = true;
-    testt->start(3000);
-
-    if(reader_type == _reader_type::_main )
-    {
-        //connect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
-        //connect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
-        //connect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
-    }
-}
-
-void controller::from_server_set_normal()
-{
-    //=================================== TEST TIMER =====================================================
-    qDebug() << "set normal==============================================================================NORMAL";
-    test_state_flag = false;
-    iron_mode_flag = false;
-    testt->stop();
-    testt_pass->stop();
-
-    //disconnect(testt_pass, &QTimer::timeout,      serverFound->Armed, &wicketFSM::set_FSM_passed);
-
-
-    //disconnect(serverFound->Armed->Entry, &QState::entered,   this, &controller::timer_wrapper);
-    //disconnect(serverFound->Armed->Exit,  &QState::entered,   this, &controller::timer_wrapper);
-}
-
-void controller::timer_wrapper()
-{
-    qDebug()<<"wrapper";
-    testt_pass->start();
-}
-
-void controller::from_server_set_iron_mode()
-{
-    qDebug() << "set iron ==============================================================================IRON";
-    iron_mode_flag = true;
-}
-
-void controller::set_timer()
-{
-    testt_pass = new QTimer(this);
-    testt_pass->setInterval(1000);
-    testt_pass->setSingleShot(true);
-
-
-    testt = new QTimer(this);
-    testt->setInterval(6000);
-    //       connect(testt, &QTimer::timeout, [=](){ send_barcode("9780201379624");} );
-    connect(testt, &QTimer::timeout, [=](){
-        QByteArray b1 = "superticket";
-        QByteArray b2 = "forbidticket";
-//        if (test_flag)
-        //local_barcode("covidControllerPrefix:288b3de5-2734-440d-9dda-9a4d9025f179");
-        local_barcode("https://www.gosuslugi.ru/covid-cert/status/52593579-7a51-43c5-bfaf-c9bde5d5f646?lang=ru");
-//        else
-//            local_barcode(b2);
-//        test_flag = !test_flag;
-    } );
 }

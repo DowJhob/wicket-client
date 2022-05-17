@@ -61,12 +61,12 @@ enum class command {
     // Показываем картинку с текстом на эране считывателя
 
     showInfoStatus,
-    showPlaceStatus,                   // синий? фон со стрелкой куда пихать
+    showPlaceCertStatus,                   // синий? фон со стрелкой куда пихать
     showCheckStatus,                   // оранжевый фон с часиками
     showFailStatus,                      // Красный крестик
 
     showServiceStatus,                        // Турникет не готов и все такое
-    showReadyStatus,                          // Турникет готов, покажите билет
+    showPlaceTicketStatus,                          // Турникет готов, покажите билет
     //showDbTimeoutStatus,                      // База данных не отвечает
     showOpenStatus,                           // Пжалста проходите, зелЁни стрелачка
 

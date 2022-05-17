@@ -15,7 +15,8 @@ class showStateWgt: public QWidget
 {
     Q_OBJECT
 public:
-
+    QLabel caption;
+    QLabel version{"Version: " GIT_VERSION};
     showStateWgt();
 
 public slots:
@@ -33,19 +34,21 @@ private:
 
 
     QVBoxLayout background_layout;
+    QHBoxLayout info_layout;
 
-    QLabel IP;
     QLabel info_log;
     QLabel main_message;
     //QLabel IP;
 
     QPalette access_palette;
-    QPalette place_palette;
+    QPalette placeCertPltt;
+    QPalette placeTicketPltt;
     QPalette denied_palette;
     QPalette service_palette;
     QPalette oncheck_palette;
 
-    QPixmap place_ticket_pixmap;
+    QPixmap placeCertPxmp;
+    QPixmap placeTicketPxmp;
     QPixmap oncheck_pixmap;
     QPixmap access_pixmap;
     QPixmap denied_pixmap;
