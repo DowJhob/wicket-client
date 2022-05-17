@@ -4,8 +4,8 @@ showStateWgt::showStateWgt()
 {
     placeCertPxmp.load(":images/QR.jpg");
     placeTicketPxmp.load(":images/place_ticket.jpg");
-    access_pixmap.load(":images/access-4.png");
-    denied_pixmap.load(":images/denied-2.png");
+    access_pixmap.load(":images/access.png");
+    denied_pixmap.load(":images/denied.png");
     oncheck_pixmap.load(":images/oncheck.png");
     service_pixmap.load(":images/service.jpg");
 

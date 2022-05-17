@@ -1,9 +1,10 @@
 <RCC>
     <qresource prefix="/">
         <file>images/service.jpg</file>
-        <file>images/denied-2.png</file>
-        <file>images/access-4.png</file>
-        <file>images/place_ticket-4.png</file>
         <file>images/oncheck.png</file>
+        <file>images/place_ticket.jpg</file>
+        <file>images/access.jpg</file>
+        <file>images/QR.jpg</file>
+        <file>images/denied.jpg</file>
     </qresource>
 </RCC>
