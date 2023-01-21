@@ -24,7 +24,7 @@ int snapi_barcode_reader::set_param(uchar *_data, quint16 size, uint _timeout)
     //uint8_t request_type = LIBUSB_REQUEST_TYPE_CLASS ;
     uint8_t request = LIBUSB_REQUEST_SET_CONFIGURATION ;
     //LIBUSB_REQUEST_SET_INTERFACE;
-    int rc = libusb_control_transfer( dev_handle, request_type, request, send_value, 0, _data, size, _timeout );
+    int rc = libusb_control_transfer( usb_w->dev_handle, request_type, request, send_value, 0, _data, size, _timeout );
     if (rc < 0)
         printf("set_param error: %s|%s\n", libusb_error_name(rc), libusb_strerror(rc));
     else if (rc < size)
@@ -49,7 +49,7 @@ void snapi_barcode_reader::parse_barcode(barcode_msg data)
             for(int i = 0; i < message.count(); i++)
                 aaa += message.value(i);
             emit readyRead_barcode(aaa);
-            beep();
+            //dct hf,jnftnbeep();
             message.clear();
             qDebug() << "Barcode data decode: " << aaa;
         }
@@ -76,12 +76,19 @@ void snapi_barcode_reader::deque()
 
 void snapi_barcode_reader::start()
 {
-    connect(&h, &libusb_wrapper::intrrpt_msg_sig, this, &snapi_barcode_reader::parseSNAPImessage, Qt::QueuedConnection);
-    connect(&h, &libusb_wrapper::device_arrived_sig, this, &snapi_barcode_reader::SNAPI_scaner_init, Qt::QueuedConnection);
-    connect(&h, &libusb_wrapper::device_left_sig, this, [this](){dev_handle = nullptr;}, Qt::QueuedConnection);
-    h.start();
-    SNAPI_scaner_init();
-    deque();
+    usb_w = new libusb_wrapper;
+    connect(usb_w, &libusb_wrapper::intrrpt_msg_sig, this, &snapi_barcode_reader::parseSNAPImessage, Qt::QueuedConnection);
+    connect(usb_w, &libusb_wrapper::device_arrived_sig, this, &snapi_barcode_reader::SNAPI_scaner_init, Qt::QueuedConnection);
+    connect(usb_w, &libusb_wrapper::device_left_sig, this, [this](){command_queue.clear(); printf("Disconnect reader \n");}, Qt::QueuedConnection);
+
+    usb_w->cb_reg();
+    //if(usb_w->device_init())
+     //   SNAPI_scaner_init();
+
+
+
+    //h.start();
+//    deque();
     //set_param(SNAPI_IMAGE_JPG, 32, 500);
     //set_param(SNAPI_TRIGGER_MODE, 32, 500);
     //set_param(SNAPI_PULL_TRIGGER, 2, 500);
@@ -101,7 +108,8 @@ void snapi_barcode_reader::parseSNAPImessage(barcode_msg data)
         case 0x22 :
             set_param( SNAPI_BARCODE_REQ, 4, 100 );
             parse_barcode( data ); break;
-        case 0x27 : if ( data.at(0x01) == 0x10)
+        case 0x27 :
+            if ( data.at(0x01) == 0x10)
                 parse_sn(data);
             set_param( SNAPI_RET0, 4, 100 );
             //qDebug() << "ret";
@@ -117,7 +125,8 @@ void snapi_barcode_reader::beep()
 
 void snapi_barcode_reader::SNAPI_scaner_init()
 {
-    dev_handle = h.dev_handle;
+    //dev_handle = h.dev_handle;
+    //h.
     //--------Init usb--------------
     qDebug() << "SNAPI_scaner_init: ";
     int rc = 0;
@@ -130,7 +139,7 @@ void snapi_barcode_reader::SNAPI_scaner_init()
     uint8_t request_type = LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE;
     //uint8_t request_type = LIBUSB_REQUEST_TYPE_CLASS ;
     uint8_t request = LIBUSB_REQUEST_GET_INTERFACE ;
-    rc = libusb_control_transfer( dev_handle, request_type, request, 0, 0, nullptr, 0, 300 ) ;
+    rc = libusb_control_transfer( usb_w->dev_handle, request_type, request, 0, 0, nullptr, 0, 300 ) ;
     if (rc < 0)
         printf("first control_transfer error: %s|%s\n", libusb_error_name(rc), libusb_strerror(rc));
 
@@ -184,4 +193,6 @@ void snapi_barcode_reader::SNAPI_scaner_init()
     c.comm = SNAPI_BEEP2;
     c.size = 32;
     command_queue.enqueue(c);
+
+    deque();
 }

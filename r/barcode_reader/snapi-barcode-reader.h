@@ -23,13 +23,13 @@ class snapi_barcode_reader: public QObject
 {
     Q_OBJECT
 public:
-    struct libusb_device_handle *dev_handle = nullptr;
+    //struct libusb_device_handle *dev_handle = nullptr;
     snapi_barcode_reader(uint16_t VID = 0x05E0, uint16_t PID = 0x1900, int iface = 0, int config = 1, int alt_config = 0, char EP_INTR = 0x81 );
 
 protected:
     //async();
 private:
-    libusb_wrapper h;
+    libusb_wrapper *usb_w;
     //QTimer *loop;
     static snapi_barcode_reader* m_instance;
     uint16_t VID = 0x05E0;

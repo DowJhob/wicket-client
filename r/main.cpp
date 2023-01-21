@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     mainStackedWgt lcd_display;
     //lcd_display.start();
 
-    //QThread thread;
+    QThread thread;
     //    uchar      EP_IN = 0x81;
     uint16_t     VID = 0x05E0;
     uint16_t     PID = 0x1900;
@@ -54,19 +54,19 @@ int main(int argc, char *argv[])
 
     QObject::connect(barcode_reader, &snapi_barcode_reader::readyRead_barcode,  &_controller, &controller::local_barcode, Qt::QueuedConnection);
     QObject::connect(barcode_reader, &snapi_barcode_reader::log,  &network_client, &network::logger, Qt::QueuedConnection);
-    //QObject::connect(&thread, &QThread::started, barcode_reader, &libusb_async_reader::start);
-    //barcode_reader->moveToThread(&thread);
-    //thread.start(//QThread::TimeCriticalPriority
-    //             );
-    barcode_reader->start();
+    QObject::connect(&thread, &QThread::started, barcode_reader, &snapi_barcode_reader::start);
+    barcode_reader->moveToThread(&thread);
+    thread.start(//QThread::TimeCriticalPriority
+                 );
+    //barcode_reader->start();
     ///========================== controller =========================================
     QThread controller_thread;
     QObject::connect(&controller_thread, &QThread::started,      &_controller, &controller::start);
     _controller.moveToThread(&controller_thread);
-    QObject::connect( &_controller, &controller::setCaption,     &lcd_display,    &mainStackedWgt::setCaption);
-    QObject::connect( &_controller, &controller::s_showStatus,   &lcd_display,    &mainStackedWgt::showState);
-    QObject::connect( &_controller, &controller::send_to_server, &network_client, &network::SendToServer);
-    QObject::connect( &_controller, &controller::log,            &lcd_display,    &mainStackedWgt::log);
+    QObject::connect( &_controller, &controller::setCaption,     &lcd_display,    &mainStackedWgt::setCaption, Qt::QueuedConnection);
+    QObject::connect( &_controller, &controller::s_showStatus,   &lcd_display,    &mainStackedWgt::showState, Qt::QueuedConnection);
+    QObject::connect( &_controller, &controller::send_to_server, &network_client, &network::SendToServer, Qt::QueuedConnection);
+    QObject::connect( &_controller, &controller::log,            &lcd_display,    &mainStackedWgt::log, Qt::QueuedConnection);
     controller_thread.start(//QThread::TimeCriticalPriority
                             );
     //_controller.start();
@@ -74,10 +74,10 @@ int main(int argc, char *argv[])
     QThread net_thread;
     QObject::connect(&net_thread,        &QThread::started, &network_client, &network::start);
     network_client.moveToThread(&net_thread);
-    QObject::connect( &network_client, &network::log,         &lcd_display, &mainStackedWgt::log);
-    QObject::connect( &network_client, &network::serverReady, &_controller, &controller::serverReady);
-    QObject::connect( &network_client, &network::serverLost,  &_controller, &controller::serverLost);
-    QObject::connect( &network_client, &network::readyRead,   &_controller, &controller::new_cmd_parse);
+    QObject::connect( &network_client, &network::log,         &lcd_display, &mainStackedWgt::log, Qt::QueuedConnection);
+    QObject::connect( &network_client, &network::serverReady, &_controller, &controller::serverReady, Qt::QueuedConnection);
+    QObject::connect( &network_client, &network::serverLost,  &_controller, &controller::serverLost, Qt::QueuedConnection);
+    QObject::connect( &network_client, &network::readyRead,   &_controller, &controller::new_cmd_parse, Qt::QueuedConnection);
     net_thread.start(//QThread::TimeCriticalPriority
                      );
     //network_client.start();

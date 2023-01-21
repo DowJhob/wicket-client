@@ -42,7 +42,7 @@ SOURCES += \
 #        PN532-PN532_HSU/PN532/snep.cpp \
 #        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
         barcode_reader/libusb-wrapper.cpp \
-        barcode_reader/serial.cpp \
+#        barcode_reader/serial.cpp \
         controller.cpp \
         main.cpp \
         network.cpp \
@@ -56,10 +56,6 @@ SOURCES += \
 #        wicketFSM/w3.countercheck.cpp \
 #        wicketFSM/w3.covid-cert-cheker.cpp \
 #        wicketFSM/wicketfsm.cpp
-
-INSTALLS += target
-target.path = target.path = /usr
-target.files = rd
 
 HEADERS += common_types.h \
 #    NFC.h \
@@ -76,14 +72,14 @@ HEADERS += common_types.h \
 #    barcode_qt.h \
     barcode_reader/barcode_msg.h \
     barcode_reader/libusb-wrapper.h \
-    barcode_reader/serial.h \
+#    barcode_reader/serial.h \
     command.h \
 #    htmlwidget.h \
     controller.h \
     libs/libusb/include/libusb.h \
     network.h \
     nikiret.h \
-    test_timer.h \
+#    test_timer.h \
     widgets/mainStackedWgt.h \
     widgets/showCertInfo.h \
     widgets/showStateWgt.h
@@ -111,10 +107,10 @@ win32{
     HEADERS +=
 #    SOURCES +=
 }
-CONFIG(release, release|debug){
-                            QMAKE_CXXFLAGS  += -flto -funroll-loops
-                            CONFIG += -static
-                    }
+#CONFIG(release, release|debug){
+#                            QMAKE_CXXFLAGS  += -flto -funroll-loops
+#                            CONFIG += -static
+#                    }
 
 #CONFIG+=static
 QMAKE_CFLAGS += -Ofast
@@ -130,3 +126,12 @@ INCLUDEPATH += libs/libusb/include
 
 RESOURCES += \
     picture.qrc
+
+#TEMPLATE = app
+INSTALLS += target
+#TARGET = remote
+#target.sources = remote
+target.path = /usr
+target.files = r
+#DEPLOYMENT += target
+#

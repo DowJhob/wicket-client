@@ -73,6 +73,7 @@ void controller::new_cmd_parse(message msg)
 
 void controller::local_barcode(QByteArray data)
 {
-    emit send_to_server(message(MachineState::undef, command::onBarcode, data));
-    qDebug() << "local_barcode: " + data;
+    QByteArray _data(data);
+    emit send_to_server(message(MachineState::undef, command::onBarcode, _data));
+    qDebug() << "local_barcode: " + _data;
 }
