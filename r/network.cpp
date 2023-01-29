@@ -204,7 +204,7 @@ void network::processPendingDatagrams()
     }
     QByteArray datagram;
     QHostAddress _ip_addr;
-    while (udpSocket->hasPendingDatagrams())
+//    while (udpSocket->hasPendingDatagrams())
     {
         int size = int(udpSocket->pendingDatagramSize());
         datagram.resize(size);
@@ -218,7 +218,7 @@ void network::processPendingDatagrams()
             emit serverFound();
             udpSocket->readDatagram( data, 0 );
             datagramBuffer.clear();
-            break;
+//            break;
         }
         if (datagramBuffer.size() > 0xffff)
             datagramBuffer.clear();

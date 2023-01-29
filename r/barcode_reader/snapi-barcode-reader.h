@@ -29,7 +29,7 @@ public:
 protected:
     //async();
 private:
-    libusb_wrapper h;
+    libusb_wrapper usb_w;
     //QTimer *loop;
     static snapi_barcode_reader* m_instance;
     uint16_t VID = 0x05E0;

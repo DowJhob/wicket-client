@@ -76,10 +76,10 @@ void snapi_barcode_reader::deque()
 
 void snapi_barcode_reader::start()
 {
-    connect(&h, &libusb_wrapper::intrrpt_msg_sig, this, &snapi_barcode_reader::parseSNAPImessage, Qt::QueuedConnection);
-    connect(&h, &libusb_wrapper::device_arrived_sig, this, &snapi_barcode_reader::SNAPI_scaner_init, Qt::QueuedConnection);
-    connect(&h, &libusb_wrapper::device_left_sig, this, [this](){dev_handle = nullptr;}, Qt::QueuedConnection);
-    h.start();
+    connect(&usb_w, &libusb_wrapper::intrrpt_msg_sig, this, &snapi_barcode_reader::parseSNAPImessage, Qt::QueuedConnection);
+    connect(&usb_w, &libusb_wrapper::device_arrived_sig, this, &snapi_barcode_reader::SNAPI_scaner_init, Qt::QueuedConnection);
+    connect(&usb_w, &libusb_wrapper::device_left_sig, this, [this](){dev_handle = nullptr;}, Qt::QueuedConnection);
+    usb_w.start();
     SNAPI_scaner_init();
     deque();
     //set_param(SNAPI_IMAGE_JPG, 32, 500);
@@ -117,7 +117,7 @@ void snapi_barcode_reader::beep()
 
 void snapi_barcode_reader::SNAPI_scaner_init()
 {
-    dev_handle = h.dev_handle;
+    dev_handle = usb_w.dev_handle;
     //--------Init usb--------------
     qDebug() << "SNAPI_scaner_init: ";
     int rc = 0;
