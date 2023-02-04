@@ -181,7 +181,7 @@ void libusb_wrapper::fds()
 
 void libusb_wrapper::loop()
 {
-    int p = poll(fds_list, count, 100);
+    int p = poll(fds_list, count, 10000);
     if (p >= 0 )
         //libusb_handle_events(nullptr);
         if ( int rc = libusb_handle_events_timeout(nullptr, &zero_tv) != LIBUSB_SUCCESS )

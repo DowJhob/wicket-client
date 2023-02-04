@@ -19,7 +19,7 @@ class libusb_wrapper : public QThread
     Q_OBJECT
 public:
     struct libusb_device_handle *dev_handle = nullptr;
-    timeval zero_tv { 0, 10000 };
+    timeval zero_tv { 0, 1000 };
     libusb_wrapper();
     ~libusb_wrapper()Q_DECL_OVERRIDE;
 
