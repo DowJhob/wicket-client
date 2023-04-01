@@ -22,6 +22,8 @@ public:
     timeval zero_tv { 0, 1000 };
     libusb_wrapper();
     ~libusb_wrapper()Q_DECL_OVERRIDE;
+    bool device_init();
+    void fds();
 
 protected:
     void run() Q_DECL_OVERRIDE;
@@ -50,9 +52,7 @@ private:
     static void LIBUSB_CALL intrrpt_cb_wrppr( libusb_transfer *transfer);
     bool usb_init();
     void cb_reg();
-    bool device_init();
 
-    void fds();
 
 private slots:
     void loop();

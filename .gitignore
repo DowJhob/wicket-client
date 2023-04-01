@@ -6,4 +6,7 @@ Thumbs.db
 [Bb]in
 [Rr]elease*/
 [Dd]ebug*/
+[Bb]uild/
 r/r.pro.user.cfd54cc
+*.stash
+*.o

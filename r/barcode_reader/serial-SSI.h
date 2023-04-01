@@ -1,5 +1,5 @@
-#ifndef SERIAL_H
-#define SERIAL_H
+#ifndef SERIAL-SSI_H
+#define SERIAL-SSI_H
 
 #include <QDebug>
 #include <QSerialPortInfo>
@@ -51,4 +51,4 @@ signals:
 
 };
 
-#endif // SERIAL_H
+#endif // SERIAL-SSI_H

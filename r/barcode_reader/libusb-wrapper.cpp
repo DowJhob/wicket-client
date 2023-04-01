@@ -7,8 +7,8 @@ libusb_wrapper::libusb_wrapper()
     connect(this, &libusb_wrapper::loop_sig, this, &libusb_wrapper::loop, Qt::QueuedConnection);
     if (!usb_init())
         return;
-    device_init();
-    fds();
+    //device_init();
+    //fds();
 }
 
 libusb_wrapper::~libusb_wrapper()

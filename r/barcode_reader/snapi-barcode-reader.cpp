@@ -78,14 +78,20 @@ void snapi_barcode_reader::start()
 {
     connect(&usb_w, &libusb_wrapper::intrrpt_msg_sig, this, &snapi_barcode_reader::parseSNAPImessage, Qt::QueuedConnection);
     connect(&usb_w, &libusb_wrapper::device_arrived_sig, this, &snapi_barcode_reader::SNAPI_scaner_init, Qt::QueuedConnection);
-    connect(&usb_w, &libusb_wrapper::device_left_sig, this, [this](){dev_handle = nullptr;}, Qt::QueuedConnection);
-    usb_w.start();
-    SNAPI_scaner_init();
-    deque();
-    //set_param(SNAPI_IMAGE_JPG, 32, 500);
-    //set_param(SNAPI_TRIGGER_MODE, 32, 500);
-    //set_param(SNAPI_PULL_TRIGGER, 2, 500);
-    //set_param(SNAPI_RELEASE_TRIGGER, 2, 500);
+    connect(&usb_w, &libusb_wrapper::device_left_sig, this, [this](){
+        usb_w.exit(0);
+        dev_handle = nullptr;
+    }, Qt::QueuedConnection);
+
+    if(usb_w.device_init())
+    {
+        SNAPI_scaner_init();
+        deque();
+        //set_param(SNAPI_IMAGE_JPG, 32, 500);
+        //set_param(SNAPI_TRIGGER_MODE, 32, 500);
+        //set_param(SNAPI_PULL_TRIGGER, 2, 500);
+        //set_param(SNAPI_RELEASE_TRIGGER, 2, 500);
+    }
 }
 
 void snapi_barcode_reader::parseSNAPImessage(barcode_msg data)
@@ -117,6 +123,9 @@ void snapi_barcode_reader::beep()
 
 void snapi_barcode_reader::SNAPI_scaner_init()
 {
+    usb_w.fds();
+    usb_w.start();
+
     dev_handle = usb_w.dev_handle;
     //--------Init usb--------------
     qDebug() << "SNAPI_scaner_init: ";
@@ -142,16 +151,16 @@ void snapi_barcode_reader::SNAPI_scaner_init()
     //qDebug() << "data: " << QByteArray::fromRawData((char*)data, rc);
     //}
 
-//    //--------Init usb 1------------
-//    set_param( SNAPI_INIT_1, 32, 300 );
-//    set_param( ENABLE_SCANNER, 2, 300);
-//    //---------Init command 1------')
-//    //set_param(SNAPI_COMMAND_1, 32, 300);
-//    set_param(SNAPI_COMMAND_NN, 32, 300);
-//    set_param(SNAPI_COMMAND_magic_1, 32, 300);
-//    set_param(SNAPI_COMMAND_magic_2, 32, 300);
-//    set_param(SNAPI_COMMAND_magic_3, 32, 300);
-//    set_param( SNAPI_BEEP2, 10, 100 );
+    //    //--------Init usb 1------------
+    //    set_param( SNAPI_INIT_1, 32, 300 );
+    //    set_param( ENABLE_SCANNER, 2, 300);
+    //    //---------Init command 1------')
+    //    //set_param(SNAPI_COMMAND_1, 32, 300);
+    //    set_param(SNAPI_COMMAND_NN, 32, 300);
+    //    set_param(SNAPI_COMMAND_magic_1, 32, 300);
+    //    set_param(SNAPI_COMMAND_magic_2, 32, 300);
+    //    set_param(SNAPI_COMMAND_magic_3, 32, 300);
+    //    set_param( SNAPI_BEEP2, 10, 100 );
 
     //--------Init usb 1------------
     comm c;

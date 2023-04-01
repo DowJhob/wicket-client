@@ -35,65 +35,39 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-#        PN532-PN532_HSU/PN532/PN532.cpp \
-#        PN532-PN532_HSU/PN532/emulatetag.cpp \
-#        PN532-PN532_HSU/PN532/llcp.cpp \
-#        PN532-PN532_HSU/PN532/mac_link.cpp \
-#        PN532-PN532_HSU/PN532/snep.cpp \
-#        PN532-PN532_HSU/PN532/PN532_HSU.cpp \
+        barcode_reader/barcode_reader-serial.cpp \
         barcode_reader/libusb-wrapper.cpp \
-#        barcode_reader/serial.cpp \
+        barcode_reader/serial-SSI.cpp \
         controller.cpp \
         main.cpp \
         network.cpp \
         nikiret.cpp \
+#        barcode_reader/qextserial/qextserialenumerator.cpp \
+#        barcode_reader/qextserial/qextserialenumerator_linux.cpp \
         widgets/mainStackedWgt.cpp \
         widgets/showCertInfo.cpp \
         widgets/showStateWgt.cpp
-#        wicketFSM/w0.nestedstate.cpp \
-#        wicketFSM/w1.main-fsm.cpp \
-#        wicketFSM/w2.wicketlocker.cpp \
-#        wicketFSM/w3.countercheck.cpp \
-#        wicketFSM/w3.covid-cert-cheker.cpp \
-#        wicketFSM/wicketfsm.cpp
 
 INSTALLS += target
 target.path = target.path = /usr
 target.files = r
 
 HEADERS += common_types.h \
-#    NFC.h \
-#    PN532-PN532_HSU/PN532/PN532.h \
-#    PN532-PN532_HSU/PN532/PN532Interface.h \
-#    PN532-PN532_HSU/PN532/PN532_debug.h \
-#    PN532-PN532_HSU/PN532/emulatetag.h \
-#    PN532-PN532_HSU/PN532/llcp.h \
-#    PN532-PN532_HSU/PN532/mac_link.h \
-#    PN532-PN532_HSU/PN532/snep.h \
-#    PN532-PN532_HSU/PN532/PN532_HSU.h \
-#    NFC_copy.h \
-#controller.h \
-#    barcode_qt.h \
     barcode_reader/barcode_msg.h \
+    barcode_reader/barcode_reader-serial.h \
     barcode_reader/libusb-wrapper.h \
-#    barcode_reader/serial.h \
+    barcode_reader/serial-SSI.h \
     command.h \
-#    htmlwidget.h \
     controller.h \
     libs/libusb/include/libusb.h \
     network.h \
     nikiret.h \
-#    test_timer.h \
+#    barcode_reader/qextserial/qextserialenumerator.h \
+#    barcode_reader/qextserial/qextserialenumerator_p.h \
     widgets/mainStackedWgt.h \
     widgets/showCertInfo.h \
     widgets/showStateWgt.h
-#    updater.h \
-#    wicketFSM/w0.nestedstate.h \
-#    wicketFSM/w1.main-fsm.h \
-#    wicketFSM/w2.wicketlocker.h \
-#    wicketFSM/w3.countercheck.h \
-#    wicketFSM/w3.covid-cert-cheker.h \
-#    wicketFSM/wicketfsm.h
+
 
 unix{
     HEADERS += \
