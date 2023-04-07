@@ -19,7 +19,7 @@ class libusb_wrapper : public QThread
     Q_OBJECT
 public:
     struct libusb_device_handle *dev_handle = nullptr;
-    timeval zero_tv { 0, 1000 };
+    timeval zero_tv { 0, 0 };
     libusb_wrapper();
     ~libusb_wrapper()Q_DECL_OVERRIDE;
     bool device_init();
@@ -50,9 +50,6 @@ private:
     static int LIBUSB_CALL hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev, libusb_hotplug_event event, void *user_data);
     //static void LIBUSB_CALL bulk_cb_wrppr( libusb_transfer *transfer);
     static void LIBUSB_CALL intrrpt_cb_wrppr( libusb_transfer *transfer);
-    bool usb_init();
-    void cb_reg();
-
 
 private slots:
     void loop();

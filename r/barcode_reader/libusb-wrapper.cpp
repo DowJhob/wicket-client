@@ -5,10 +5,38 @@ libusb_wrapper* libusb_wrapper::m_instance = nullptr;
 libusb_wrapper::libusb_wrapper()
 {
     connect(this, &libusb_wrapper::loop_sig, this, &libusb_wrapper::loop, Qt::QueuedConnection);
-    if (!usb_init())
+    int r = 0;
+    /// library init
+    printf("%s - %d.%d.%d.%d", libusb_get_version()->describe, libusb_get_version()->major, libusb_get_version()->minor
+           , libusb_get_version()->micro, libusb_get_version()->nano);
+    if ( (r = libusb_init(nullptr)) != LIBUSB_SUCCESS )
+    {
+        printf("libusb_init error: %s\n", libusb_error_name(r));
         return;
-    //device_init();
-    //fds();
+    }
+    ///callback register
+    r = libusb_hotplug_register_callback(nullptr, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
+                                             LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                                             //LIBUSB_HOTPLUG_ENUMERATE,
+                                             0,
+                                             VID, PID,
+                                             LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, this,
+                                          &callback_handle);
+
+     if (LIBUSB_SUCCESS != r)
+     {
+         printf("\nError creating a hotplug callback\n");
+         libusb_exit(nullptr);
+         //return false;
+     }
+ //    else
+     {
+     printf(" -> hotplug callback created");
+     //fflush(stdout);
+     }
+// =======================================
+    device_init();
+    fds();
 }
 
 libusb_wrapper::~libusb_wrapper()
@@ -24,20 +52,6 @@ void libusb_wrapper::run()
     exec();
 }
 
-bool libusb_wrapper::usb_init()
-{
-    int r = 0;
-    printf("%s - %d.%d.%d.%d", libusb_get_version()->describe, libusb_get_version()->major, libusb_get_version()->minor
-           , libusb_get_version()->micro, libusb_get_version()->nano);
-    if ( (r = libusb_init(nullptr)) != LIBUSB_SUCCESS )
-    {
-        printf("libusb_init error: %s\n", libusb_error_name(r));
-        return false;
-    }
-    cb_reg();
-    return true;
-}
-
 int libusb_wrapper::hotplug_callback(libusb_context *ctx, libusb_device *dev, libusb_hotplug_event event, void *user_data)
 {
     //qDebug() << "hot";
@@ -49,8 +63,9 @@ int libusb_wrapper::hotplug_callback(libusb_context *ctx, libusb_device *dev, li
     }
     if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event)
     {
-        //printf("Reader connect %d\n", readerInstance->status);
+        printf("Reader connect\n");
         readerInstance->device_init();
+        readerInstance->fds();
         emit readerInstance->device_arrived_sig();
     } else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
         if (readerInstance->dev_handle != nullptr)
@@ -112,11 +127,10 @@ bool libusb_wrapper::device_init()
 {
     int r;
 
-    while ( (dev_handle = libusb_open_device_with_vid_pid( nullptr, VID, PID )) == nullptr )
+    if ( (dev_handle = libusb_open_device_with_vid_pid( nullptr, VID, PID )) == nullptr )
     {
         printf("\ndont get device handle: libusb reinit\n");
         libusb_exit(nullptr);
-        usb_init();
     }
 
     printf(" -> device_getted handle");
@@ -125,13 +139,25 @@ bool libusb_wrapper::device_init()
         if( libusb_kernel_driver_active(dev_handle, iface))
             r = libusb_detach_kernel_driver( dev_handle, iface );
         if(( r != LIBUSB_SUCCESS) )
+        {
             printf("libusb_detach_kernel_driver error: - %s\n", libusb_error_name(r));
+            return false;
+        }
         if((r = libusb_set_configuration(dev_handle, config)) != LIBUSB_SUCCESS)
+        {
             printf("NOT set configuration: - %s\n", libusb_error_name(r));
+        return false;
+    }
         if((r = libusb_set_interface_alt_setting(dev_handle, iface, alt_config)) != LIBUSB_SUCCESS && r != LIBUSB_ERROR_NOT_FOUND)
+        {
             printf("NOT set ALT configuration: - %s\n", libusb_error_name(r));
+            return false;
+        }
         if((r = libusb_claim_interface(dev_handle, iface)) != LIBUSB_SUCCESS)
+        {
             printf("libusb_claim_interface - %s\n", libusb_error_name(r));
+            return false;
+        }
 
 
         irq_transfer = libusb_alloc_transfer(0);
@@ -188,27 +214,4 @@ void libusb_wrapper::loop()
             printf("handle event error: %s|%s\n", libusb_error_name(rc), libusb_strerror(rc));
     emit loop();
     //qDebug() << "loop  ";
-}
-
-void libusb_wrapper::cb_reg()
-{
-    int r = libusb_hotplug_register_callback(nullptr, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
-                                             LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
-                                             //LIBUSB_HOTPLUG_ENUMERATE,
-                                             0,
-                                             VID, PID,
-                                             LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, this,
-                                          &callback_handle);
-
-     if (LIBUSB_SUCCESS != r)
-     {
-         printf("\nError creating a hotplug callback\n");
-         libusb_exit(nullptr);
-         //return false;
-     }
- //    else
-     {
-     printf(" -> hotplug callback created");
-     //fflush(stdout);
-     }
 }

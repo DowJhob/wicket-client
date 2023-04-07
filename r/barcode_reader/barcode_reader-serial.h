@@ -2,28 +2,44 @@
 #define BARCODE_READER-SERIAL_H
 
 #include <QObject>
-#include  "qextserial/qextserialenumerator.h"
+#include <QDebug>
+#include <QThread>
+#include <QSerialPortInfo>
+#include <QSerialPort>
 
-class barcode_reader : public QObject
+#include "qdevicewatcher/qdevicewatcher.h"
+
+class barcode_reader_s : public QThread
 {
     Q_OBJECT
 public:
-    QString productID = "0000";
-    QString vendorID = "0000";
+    barcode_reader_s();
 
-    barcode_reader();
-    QString portName{};
+protected:
+    virtual bool event(QEvent *e);
 
-    QextSerialEnumerator *enumr;
+private:
+    QDeviceWatcher *watcher;
+
+    void getAvalPrts();
+    void open_prt();
+    QString portName = "/dev/ttyACM0";
+    uint16_t     VID = 0x05E0;
+    uint16_t     PID = 0x1701;
+
+    QSerialPort *port;
 
 public slots:
-    void arrived(const QextPortInfo &info);
-    void removed(const QextPortInfo &info);
+    void slotDeviceAdded(const QString &dev);
+    void slotDeviceRemoved(const QString &dev);
+    void slotDeviceChanged(const QString &dev);
+
+private slots:
+    void packetSlicer();
+    void errorHandler(QSerialPort::SerialPortError error);
 
 signals:
-    void readyRead_barcode(QByteArray);
-
-    void init_completed();
+    void barcode(QByteArray);
     void log(QString);
 };
 

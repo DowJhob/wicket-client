@@ -37,13 +37,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         barcode_reader/barcode_reader-serial.cpp \
         barcode_reader/libusb-wrapper.cpp \
-        barcode_reader/serial-SSI.cpp \
+#        barcode_reader/serial-SSI.cpp \
+    barcode_reader/qdevicewatcher/qdevicewatcher.cpp \
+    barcode_reader/qdevicewatcher/qdevicewatcher_linux.cpp \
         controller.cpp \
         main.cpp \
         network.cpp \
         nikiret.cpp \
-#        barcode_reader/qextserial/qextserialenumerator.cpp \
-#        barcode_reader/qextserial/qextserialenumerator_linux.cpp \
+        barcode_reader/qextserial/qextserialenumerator.cpp \
+        barcode_reader/qextserial/qextserialenumerator_linux.cpp \
         widgets/mainStackedWgt.cpp \
         widgets/showCertInfo.cpp \
         widgets/showStateWgt.cpp
@@ -56,14 +58,16 @@ HEADERS += common_types.h \
     barcode_reader/barcode_msg.h \
     barcode_reader/barcode_reader-serial.h \
     barcode_reader/libusb-wrapper.h \
-    barcode_reader/serial-SSI.h \
+#    barcode_reader/serial-SSI.h \
+    barcode_reader/qdevicewatcher/qdevicewatcher.h \
+    barcode_reader/qdevicewatcher/qdevicewatcher_p.h \
     command.h \
     controller.h \
     libs/libusb/include/libusb.h \
     network.h \
     nikiret.h \
-#    barcode_reader/qextserial/qextserialenumerator.h \
-#    barcode_reader/qextserial/qextserialenumerator_p.h \
+    barcode_reader/qextserial/qextserialenumerator.h \
+    barcode_reader/qextserial/qextserialenumerator_p.h \
     widgets/mainStackedWgt.h \
     widgets/showCertInfo.h \
     widgets/showStateWgt.h
@@ -104,3 +108,21 @@ INCLUDEPATH += libs/libusb/include
 
 RESOURCES += \
     picture.qrc
+
+
+
+
+
+
+
+
+
+
+
+
+DEFINES += QESP_UDEV
+
+LIBS += -ludev
+
+# moc doesn't detect Q_OS_LINUX correctly, so add this to make it work
+linux*:DEFINES += __linux__
